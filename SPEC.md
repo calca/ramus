@@ -22,10 +22,11 @@ plugin system, niente sync proprietaria.
 - **React + TypeScript + Vite** — UI
 - **Tiptap** (ProseMirror) — editor outliner
 - **SQLite** via `rusqlite` — indice derivato (dalla milestone 2)
+- **tantivy** — ricerca full-text (dalla milestone 2)
 
 Dipendenze Rust iniziali: `serde`, `serde_json`, `notify`, `pulldown-cmark`,
-`thiserror`, `dirs`.
-Da aggiungere più avanti, **non ora**: `tantivy` (M2), `git2` o `gitoxide` (M3).
+`thiserror`, `dirs`. Aggiunte in M2: `rusqlite`, `tantivy`.
+Da aggiungere più avanti, **non ora**: `git2` o `gitoxide` (M3).
 
 ## Struttura del repository
 
@@ -187,7 +188,7 @@ il marchio contro il bordo.
 
 ## Milestone
 
-**M1 — Journal funzionante** (chiudere questa prima di iniziare le altre)
+**M1 — Journal funzionante** (completa)
 - Creazione vault di default al primo avvio, senza chiedere nulla
 - Apertura automatica del journal di oggi
 - Outliner con indent/outdent e navigazione da tastiera
@@ -198,11 +199,18 @@ il marchio contro il bordo.
   sostituisce la navigazione a giorno singolo (precedente/successivo)
   originariamente prevista qui, vedi `specs/2026-09-02-journal-vista-verticale.md`
 
-**M2 — Link e ricerca**
-- Parsing di `[[link]]` e `#tag`, autocomplete durante la digitazione
+**M2 — Link e ricerca** (completa)
+- Parsing di `[[link]]` e `#tag`, autocomplete durante la digitazione —
+  autocomplete dei tag arrivato dopo l'indice SQLite (serviva
+  `list_tags`), vedi `specs/2026-09-02-autocomplete-tag.md`
 - Indice SQLite rigenerabile con pagine, link e blocchi
-- Pannello backlink sulla pagina aperta
-- Ricerca full-text con `tantivy`
+- Pannello backlink sulla pagina aperta — backlink da un journal
+  mostrati come testo non cliccabile, non esiste ancora una vista per
+  un singolo giorno isolato dal journal verticale, vedi
+  `specs/2026-09-02-pannello-backlink.md`
+- Ricerca full-text con `tantivy` — granularità per pagina/giorno
+  intero (non per blocco), scorciatoia configurabile in Impostazioni,
+  vedi `specs/2026-09-02-ricerca-full-text.md`
 
 **M3 — Git**
 - Commit automatico su intervallo configurabile
