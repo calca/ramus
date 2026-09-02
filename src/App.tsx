@@ -324,7 +324,7 @@ function App() {
           title={isCompact ? "Espandi finestra" : "Comprimi finestra"}
           onClick={() => void toggleCompact()}
         >
-          ⇔
+          {isCompact ? "«" : "»"}
         </button>
         {config && (
           <button

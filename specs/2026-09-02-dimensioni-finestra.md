@@ -167,6 +167,11 @@ della modalità compatta con un po' di margine).
    restringono "verso l'interno" invece che verso destra. Richiede
    anche `core:window:allow-set-position`, non nel set di default
    (stesso schema di `allow-set-size`/`allow-start-dragging`).
+5. **Icona del bottone sempre uguale**: `⇔` non cambiava fra i due
+   stati, solo il tooltip. Sostituita con due glifi distinti — `»`
+   quando l'azione è comprimere, `«` quando è espandere — stessa
+   convenzione delle frecce doppie usata per i toggle di pannelli
+   laterali in molti editor.
 
 ## Fuori scope
 
