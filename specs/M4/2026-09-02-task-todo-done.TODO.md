@@ -114,8 +114,77 @@ stesso principio "un tasto solo" già usato altrove nell'app (es.
 compact-toggle). Il cursore resta nella stessa posizione relativa al
 testo (non salta all'inizio/fine) quando possibile.
 
+## Spostare un task a oggi
+
+Un task da fare scritto giorni fa e ancora non fatto tende a
+scomparire scorrendo verso il basso nella vista journal. Un'azione
+esplicita per riportarlo sotto gli occhi: spostarlo (non copiarlo,
+non un riferimento — un vero spostamento, coerente con "niente block
+reference" già fuori scope in SPEC.md) nel journal di oggi.
+
+### Dove appare
+
+Un piccolo bottone icona (`→`, tooltip "Sposta a oggi"), visibile solo
+al passaggio del mouse sul blocco (`li:hover`, stesso principio già
+in uso per non aggiungere rumore permanente), **solo su blocchi
+`[ ]` non fatti** (un task già fatto non ha bisogno di essere
+"riportato a oggi" — vedi "Domande aperte" se si vuole comunque
+includerli) **la cui pagina non è già il journal di oggi**. Questa
+seconda condizione è generale, non solo "altri giorni di journal":
+vale anche per un task scritto dentro una pagina (`pages/*.md`) — la
+regola è semplicemente "non è già qui", non ha bisogno di un caso
+speciale per pagine vs. journal.
+
+Nessun bottone su un blocco che non è un task, né su un task già
+dentro il journal di oggi (non c'è dove spostarlo).
+
+### Cosa si sposta
+
+L'intero sottoalbero (il task e i suoi figli, se ne ha) — stesso
+principio già scritto per il riordino da tastiera
+(`specs/M4/2026-09-02-riordino-blocchi-tastiera.TODO.md`, "il blocco
+spostato porta con sé i suoi figli"): un sotto-task o una nota
+attaccata al task non deve restare orfana nel giorno vecchio.
+
+### Dove finisce in "oggi"
+
+In fondo ai blocchi di primo livello del journal di oggi (append,
+niente logica di inserimento in mezzo al testo che l'utente sta già
+scrivendo).
+
+### Meccanica (ordine che evita di perdere dati)
+
+1. Legge la pagina di oggi (`open_today`/`read_page`, già esistenti),
+   aggiunge il sottoalbero spostato in fondo, **scrive prima questa**
+   (`write_page` sul journal di oggi).
+2. Solo dopo un salvataggio riuscito, rimuove il sottoalbero dalla
+   pagina sorgente e scrive quella (`write_page` sulla pagina
+   d'origine). Se il primo passo fallisce, non si tocca la sorgente —
+   il task resta dov'era, nessuna perdita: scrivere-poi-cancellare, mai
+   il contrario.
+3. Se la pagina di oggi era la sezione già montata nella vista journal
+   (quasi sempre il caso), l'aggiornamento arriva tramite lo stesso
+   meccanismo già usato per una modifica esterna rilevata dal watcher
+   (`vault://file-changed` → ricarica se non dirty) — **oppure**,
+   se l'utente ha modifiche pendenti non salvate proprio in quella
+   sezione, si applica la stessa logica di "avviso, mai sovrascrivere"
+   già esistente in `App.tsx`. Nessuna logica nuova, si riusa il
+   percorso già gestito per l'esterno — l'operazione di spostamento è
+   trattata dal punto di vista del frontend come se un altro processo
+   avesse toccato il file, cosa che di fatto avviene (due `write_page`
+   sequenziali, non coordinati con lo stato locale dell'editor).
+
+### Solo mouse in questa spec
+
+Nessuna scorciatoia da tastiera per questa azione: è rara e
+deliberata, non ha bisogno di essere fulminea — coerente con la scelta
+di non affollare ulteriormente l'elenco di scorciatoie fisse
+dell'editor.
+
 ## Fuori scope per questa spec
 
+- Spostare anche task `[x]` già fatti: solo `[ ]` non fatti (vedi
+  "Domande aperte").
 - Vista/pannello "tutti i task aperti nel vault" (un'agenda): servirebbe
   scansionare tutto il vault, esattamente il lavoro già fatto
   dall'indice SQLite (M2) — estensione naturale ma separata, non
@@ -140,6 +209,13 @@ testo (non salta all'inizio/fine) quando possibile.
 2. Ciclo a tre stati con un solo tasto (proposto) — o preferisci due
    azioni distinte (una per "rendi/rimuovi task", una per "segna
    fatto/da fare"), più tasti ma più esplicite?
+3. "Sposta a oggi" solo su task `[ ]` non fatti (proposto) — o
+   vuoi che l'azione compaia anche su task `[x]` già fatti?
+4. Il bottone appare anche su un task già dentro una sezione journal
+   diversa da oggi ma già caricata/visibile nello scroll, non solo su
+   task raggiunti scrollando molto indietro — va bene che sia
+   universale (qualunque giorno/pagina diverso da oggi), o preferisci
+   limitarlo a un caso più specifico?
 
 ## Test da scrivere
 
