@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="128" height="128" role="img" aria-label="Ramus">
+  <g transform="translate(16, 16)">
+    <path d="M26 24 V74 H52 M26 42 H52 M58 48 V60 H70"
+          fill="none" stroke="#2F6B4F" stroke-width="4"
+          stroke-linecap="round" stroke-linejoin="round"/>
+    <circle cx="26" cy="18" r="6" fill="#2F6B4F"/>
+    <circle cx="58" cy="42" r="5.5" fill="#2F6B4F"/>
+    <circle cx="76" cy="60" r="5" fill="#2F6B4F"/>
+    <circle cx="58" cy="74" r="5.5" fill="#C98A2E"/>
+  </g>
+</svg>
