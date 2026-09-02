@@ -6,6 +6,7 @@
 // da linkTagHighlight.ts.
 
 import { Extension } from "@tiptap/core";
+import { PluginKey } from "@tiptap/pm/state";
 import { ReactRenderer } from "@tiptap/react";
 import Suggestion from "@tiptap/suggestion";
 
@@ -14,6 +15,11 @@ import { listTags } from "../lib/commands";
 import { positionSuggestionPopup } from "./suggestionPopup";
 
 const MAX_SUGGESTIONS = 8;
+
+// Chiave distinta da quella di linkAutocomplete.ts: vedi il commento lì,
+// stesso motivo (default condiviso di @tiptap/suggestion altrimenti in
+// collisione fra le due estensioni sullo stesso editor).
+const TAG_SUGGESTION_KEY = new PluginKey("tagAutocomplete");
 
 async function fetchCandidates(query: string): Promise<string[]> {
   const tags = await listTags();
@@ -28,6 +34,7 @@ export const TagAutocomplete = Extension.create({
   addProseMirrorPlugins() {
     return [
       Suggestion<string, string>({
+        pluginKey: TAG_SUGGESTION_KEY,
         editor: this.editor,
         char: "#",
         items: ({ query }) => fetchCandidates(query),

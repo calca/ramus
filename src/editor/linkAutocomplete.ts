@@ -5,6 +5,7 @@
 // una dipendenza in meno).
 
 import { Extension } from "@tiptap/core";
+import { PluginKey } from "@tiptap/pm/state";
 import { ReactRenderer } from "@tiptap/react";
 import Suggestion from "@tiptap/suggestion";
 
@@ -17,6 +18,12 @@ import { listPages, openPage } from "../lib/commands";
 import { positionSuggestionPopup } from "./suggestionPopup";
 
 const MAX_SUGGESTIONS = 8;
+
+// @tiptap/suggestion usa una PluginKey condivisa di default ("suggestion"):
+// due estensioni Suggestion sullo stesso editor senza chiave esplicita
+// collidono ("Adding different instances of a keyed plugin"). Serve una
+// chiave distinta per estensione — vedi anche tagAutocomplete.ts.
+const LINK_SUGGESTION_KEY = new PluginKey("linkAutocomplete");
 
 async function fetchCandidates(query: string): Promise<LinkCandidate[]> {
   const pages = await listPages();
@@ -40,6 +47,7 @@ export const LinkAutocomplete = Extension.create({
   addProseMirrorPlugins() {
     return [
       Suggestion<LinkCandidate, LinkCandidate>({
+        pluginKey: LINK_SUGGESTION_KEY,
         editor: this.editor,
         char: "[[",
         items: ({ query }) => fetchCandidates(query),
