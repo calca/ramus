@@ -14,6 +14,7 @@ import {
   type LinkSuggestionListHandle,
 } from "../components/LinkSuggestionList";
 import { listPages, openPage } from "../lib/commands";
+import { positionSuggestionPopup } from "./suggestionPopup";
 
 const MAX_SUGGESTIONS = 8;
 
@@ -31,16 +32,6 @@ async function fetchCandidates(query: string): Promise<LinkCandidate[]> {
     candidates.push({ kind: "create", title: trimmed });
   }
   return candidates;
-}
-
-function positionPopup(element: HTMLElement, clientRect?: (() => DOMRect | null) | null) {
-  const rect = clientRect?.();
-  if (!rect) {
-    return;
-  }
-  element.style.position = "fixed";
-  element.style.left = `${rect.left}px`;
-  element.style.top = `${rect.bottom + 4}px`;
 }
 
 export const LinkAutocomplete = Extension.create({
@@ -68,13 +59,13 @@ export const LinkAutocomplete = Extension.create({
                 editor: props.editor,
               });
               const element = component.element as HTMLElement;
-              positionPopup(element, props.clientRect);
+              positionSuggestionPopup(element, props.clientRect);
               document.body.appendChild(element);
             },
             onUpdate: (props) => {
               component?.updateProps({ items: props.items, command: props.command });
               if (component) {
-                positionPopup(component.element as HTMLElement, props.clientRect);
+                positionSuggestionPopup(component.element as HTMLElement, props.clientRect);
               }
             },
             onKeyDown: (props) => {
