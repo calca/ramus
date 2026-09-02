@@ -25,8 +25,8 @@ Due richieste distinte:
   "app": {
     "windows": [
       {
-        "minWidth": 360,
-        "minHeight": 480
+        "minWidth": 420,
+        "minHeight": 560
       }
     ]
   }
@@ -35,9 +35,12 @@ Due richieste distinte:
 
 Campi verificati nei sorgenti di `tauri-utils 2.9.3` (`min_width`,
 `min_height` nella struct di config, camelCase in JSON, coerente col
-resto di `tauri.conf.json`). `360` è scelto per stare comodamente sotto
-la larghezza compatta proposta sotto (420px) — il minimo deve poter
-contenere anche la modalità compatta, non solo quella normale.
+resto di `tauri.conf.json`). `360`/`480` iniziali risultati troppo
+piccoli all'uso; alzati a `420`/`560`. `minWidth` combacia esattamente
+con `COMPACT_WIDTH` (420, vedi sotto): il minimo assoluto della
+finestra è la larghezza compatta stessa, non qualcosa di ancora più
+stretto — la modalità compatta diventa "il pavimento", non un valore
+sotto al pavimento.
 
 ### Modalità compatta
 
