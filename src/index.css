@@ -79,6 +79,20 @@ body {
   line-height: 1;
 }
 
+/* Finestra stretta (modalità compatta, o solo ridimensionata a mano):
+   niente contenuto tagliato o sovrapposto. Il titolo lascia spazio, il
+   resto dei controlli va a capo invece di stiparsi su una riga sola. */
+@media (max-width: 480px) {
+  .app-title {
+    display: none;
+  }
+
+  .app-header {
+    flex-wrap: wrap;
+    row-gap: 0.4rem;
+  }
+}
+
 .banner {
   padding: 0.5rem 1.25rem;
   font-size: 0.9rem;

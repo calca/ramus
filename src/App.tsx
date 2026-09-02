@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
+import { LogicalSize } from "@tauri-apps/api/dpi";
 import { listen } from "@tauri-apps/api/event";
 import { getCurrentWindow } from "@tauri-apps/api/window";
 
@@ -14,10 +15,12 @@ import { applyTheme } from "./lib/theme";
 import type { Config, Page } from "./lib/types";
 
 const BATCH_SIZE = 14;
+const COMPACT_WIDTH = 420;
 
 function App() {
   const [config, setConfig] = useState<Config | null>(null);
   const [activePanel, setActivePanel] = useState<"settings" | "about" | null>(null);
+  const [isCompact, setIsCompact] = useState(false);
   const [vaultVersion, setVaultVersion] = useState(0);
   const [pages, setPages] = useState<Page[]>([]);
   const [dirtyPaths, setDirtyPaths] = useState<Set<string>>(new Set());
@@ -32,6 +35,7 @@ function App() {
   const editorHandles = useRef(new Map<string, EditorHandle>());
   const sectionElements = useRef(new Map<string, HTMLElement>());
   const sentinelRef = useRef<HTMLDivElement | null>(null);
+  const preCompactSizeRef = useRef<{ width: number; height: number } | null>(null);
 
   useEffect(() => {
     pagesRef.current = pages;
@@ -274,12 +278,39 @@ function App() {
     setConfig(nextConfig);
   }, []);
 
+  /** Restringe la finestra a COMPACT_WIDTH per affiancarla a un'altra
+   * finestra (note, appunti), memorizzando la dimensione attuale per
+   * ripristinarla esattamente all'uscita — non un default fisso. Solo
+   * la larghezza cambia, l'altezza resta quella dell'utente. Nessun
+   * riposizionamento automatico: si trascina dove serve (drag-region
+   * già sull'header). Non persistita: è una preferenza di sessione. */
+  const toggleCompact = useCallback(async () => {
+    const win = getCurrentWindow();
+    if (!isCompact) {
+      const physical = await win.innerSize();
+      const scale = await win.scaleFactor();
+      const current = physical.toLogical(scale);
+      preCompactSizeRef.current = { width: current.width, height: current.height };
+      await win.setSize(new LogicalSize(COMPACT_WIDTH, current.height));
+      setIsCompact(true);
+    } else {
+      const restore = preCompactSizeRef.current;
+      if (restore) {
+        await win.setSize(new LogicalSize(restore.width, restore.height));
+      }
+      setIsCompact(false);
+    }
+  }, [isCompact]);
+
   return (
     <div className="app">
       <header className="app-header" data-tauri-drag-region="true">
         <img src={faviconUrl} alt="" className="app-logo" width={20} height={20} />
         <span className="app-title">Ramus</span>
         <JournalControls onToday={scrollToToday} onJumpToDate={(iso) => void jumpToDate(iso)} />
+        <button type="button" className="settings-button" onClick={() => void toggleCompact()}>
+          {isCompact ? "Espandi" : "Compatta"}
+        </button>
         {config && (
           <button
             type="button"
