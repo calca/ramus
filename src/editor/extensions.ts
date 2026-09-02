@@ -17,6 +17,8 @@ import { Extension } from "@tiptap/core";
 import StarterKit from "@tiptap/starter-kit";
 
 import { CurrentBlockHighlight } from "./currentBlockHighlight";
+import { LinkAutocomplete } from "./linkAutocomplete";
+import { LinkTagHighlight } from "./linkTagHighlight";
 
 const OutlinerBackspace = Extension.create({
   name: "outlinerBackspace",
@@ -56,5 +58,7 @@ export function createExtensions() {
     }),
     OutlinerBackspace,
     CurrentBlockHighlight,
+    LinkTagHighlight,
+    LinkAutocomplete,
   ];
 }

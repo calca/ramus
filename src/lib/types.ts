@@ -8,7 +8,14 @@ export interface Block {
 
 export interface Page {
   path: string;
+  /** Dal front-matter (solo pagine, mai journal). `null` se assente. */
+  title: string | null;
   blocks: Block[];
+}
+
+export interface PageSummary {
+  slug: string;
+  title: string;
 }
 
 export type Theme = "light" | "dark" | "system";

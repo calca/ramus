@@ -22,5 +22,8 @@ impl Block {
 pub struct Page {
     /// Path relativo alla radice del vault (es. "journals/2026-09-01.md").
     pub path: PathBuf,
+    /// Dal front-matter (solo pagine, mai journal). `None` se il file non
+    /// ha front-matter o non ha un campo `title`.
+    pub title: Option<String>,
     pub blocks: Vec<Block>,
 }

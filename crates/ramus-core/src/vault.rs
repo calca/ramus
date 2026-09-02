@@ -3,6 +3,7 @@ use std::path::{Component, Path, PathBuf};
 
 use crate::block::{Block, Page};
 use crate::error::CoreError;
+use crate::frontmatter;
 use crate::journal_date::JournalDate;
 use crate::parser;
 
@@ -17,6 +18,14 @@ pub struct Vault {
 pub struct VaultStats {
     pub journal_count: usize,
     pub page_count: usize,
+}
+
+/// Voce dell'elenco pagine, per l'autocomplete di `[[link]]`.
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
+pub struct PageSummary {
+    pub slug: String,
+    /// Titolo dal front-matter, o lo slug stesso se assente.
+    pub title: String,
 }
 
 impl Vault {
@@ -68,13 +77,20 @@ impl Vault {
                 CoreError::Io { path: abs, source }
             }
         })?;
-        let blocks = parser::parse(&text)?;
+        let (front_matter, body) = frontmatter::split_front_matter(&text);
+        let title = front_matter.and_then(frontmatter::extract_title);
+        let blocks = parser::parse(body)?;
         Ok(Page {
             path: PathBuf::from(relative_path),
+            title,
             blocks,
         })
     }
 
+    /// Il command Tauri passa solo `blocks`, mai il front-matter: se il
+    /// file esistente ne ha uno (titolo di una pagina), va preservato
+    /// intatto — altrimenti la prima battitura in una pagina cancellerebbe
+    /// silenziosamente il suo titolo.
     pub fn write_page(&self, relative_path: &str, blocks: &[Block]) -> Result<(), CoreError> {
         let abs = self.resolve(relative_path)?;
         if let Some(parent) = abs.parent() {
@@ -83,8 +99,12 @@ impl Vault {
                 source,
             })?;
         }
-        let text = parser::render(blocks);
-        fs::write(&abs, text).map_err(|source| CoreError::Io { path: abs, source })
+        let existing_front_matter = fs::read_to_string(&abs)
+            .ok()
+            .and_then(|text| frontmatter::split_front_matter(&text).0.map(str::to_string));
+        let mut out = existing_front_matter.unwrap_or_default();
+        out.push_str(&parser::render(blocks));
+        fs::write(&abs, out).map_err(|source| CoreError::Io { path: abs, source })
     }
 
     /// Apre il journal di oggi, creandolo con un blocco vuoto se non esiste.
@@ -93,6 +113,29 @@ impl Vault {
         let abs = self.resolve(&relative_path)?;
         if !abs.exists() {
             self.write_page(&relative_path, &[Block::new("")])?;
+        }
+        self.read_page(&relative_path)
+    }
+
+    /// Apre la pagina identificata da `name`, creandola se non esiste
+    /// ancora. Lo slug del file è `slugify(name)`; se il file va creato,
+    /// il front-matter iniziale è `title: {name}` — il testo esatto
+    /// passato, non lo slug (permette a `[[link]]` di mostrare un titolo
+    /// leggibile invece di uno slug grezzo).
+    pub fn open_page(&self, name: &str) -> Result<Page, CoreError> {
+        let relative_path = Self::page_relative_path(name);
+        let abs = self.resolve(&relative_path)?;
+        if !abs.exists() {
+            if let Some(parent) = abs.parent() {
+                fs::create_dir_all(parent).map_err(|source| CoreError::Io {
+                    path: parent.to_path_buf(),
+                    source,
+                })?;
+            }
+            let front_matter = format!("---\ntitle: {name}\n---\n");
+            let body = parser::render(&[Block::new("")]);
+            fs::write(&abs, format!("{front_matter}{body}"))
+                .map_err(|source| CoreError::Io { path: abs, source })?;
         }
         self.read_page(&relative_path)
     }
@@ -159,6 +202,28 @@ impl Vault {
             journal_count,
             page_count,
         })
+    }
+
+    /// Pagine esistenti in `pages/`, slug + titolo, ordinate per titolo.
+    /// Titolo assente (nessun front-matter, o front-matter senza
+    /// `title`) ricade sullo slug. File illeggibili vengono saltati
+    /// invece di far fallire l'intera lista: è usata per suggerimenti di
+    /// autocomplete, non deve rompersi per una pagina sola corrotta.
+    pub fn list_pages(&self) -> Result<Vec<PageSummary>, CoreError> {
+        let mut pages: Vec<PageSummary> = read_dir_entries(&self.root.join("pages"))?
+            .into_iter()
+            .filter_map(|entry| {
+                let slug = entry.file_name().to_str()?.strip_suffix(".md")?.to_string();
+                let text = fs::read_to_string(entry.path()).ok()?;
+                let title = frontmatter::split_front_matter(&text)
+                    .0
+                    .and_then(frontmatter::extract_title)
+                    .unwrap_or_else(|| slug.clone());
+                Some(PageSummary { slug, title })
+            })
+            .collect();
+        pages.sort_by(|a, b| a.title.cmp(&b.title));
+        Ok(pages)
     }
 }
 
@@ -423,5 +488,103 @@ mod tests {
         let stats = vault.stats().unwrap();
         assert_eq!(stats.journal_count, 0);
         assert_eq!(stats.page_count, 0);
+    }
+
+    #[test]
+    fn open_page_creates_file_with_title_in_front_matter() {
+        let dir = TempDir::new("open-page-creates");
+        let vault = Vault::new(dir.path().to_path_buf());
+        let page = vault.open_page("Progetto X").unwrap();
+        assert_eq!(page.title, Some("Progetto X".to_string()));
+        assert_eq!(page.blocks, vec![Block::new("")]);
+        assert_eq!(page.path, PathBuf::from("pages/progetto-x.md"));
+    }
+
+    #[test]
+    fn open_page_on_existing_page_does_not_overwrite() {
+        let dir = TempDir::new("open-page-existing");
+        let vault = Vault::new(dir.path().to_path_buf());
+        let first = vault.open_page("Progetto X").unwrap();
+        vault
+            .write_page(&first.path.to_string_lossy(), &[Block::new("scritto")])
+            .unwrap();
+        let second = vault.open_page("Progetto X").unwrap();
+        assert_eq!(second.title, Some("Progetto X".to_string()));
+        assert_eq!(second.blocks, vec![Block::new("scritto")]);
+    }
+
+    #[test]
+    fn write_page_preserves_existing_front_matter() {
+        let dir = TempDir::new("write-preserves-front-matter");
+        let vault = Vault::new(dir.path().to_path_buf());
+        let page = vault.open_page("Progetto X").unwrap();
+        vault
+            .write_page(
+                &page.path.to_string_lossy(),
+                &[Block::new("nuovo contenuto")],
+            )
+            .unwrap();
+        let reloaded = vault.read_page(&page.path.to_string_lossy()).unwrap();
+        assert_eq!(reloaded.title, Some("Progetto X".to_string()));
+        assert_eq!(reloaded.blocks, vec![Block::new("nuovo contenuto")]);
+    }
+
+    #[test]
+    fn write_page_on_journal_is_unaffected_by_front_matter_logic() {
+        let dir = TempDir::new("write-journal-unaffected");
+        let vault = Vault::new(dir.path().to_path_buf());
+        let today = vault.open_today().unwrap();
+        vault
+            .write_page(&today.path.to_string_lossy(), &[Block::new("scritto")])
+            .unwrap();
+        let reloaded = vault.read_page(&today.path.to_string_lossy()).unwrap();
+        assert_eq!(reloaded.title, None);
+        assert_eq!(reloaded.blocks, vec![Block::new("scritto")]);
+    }
+
+    #[test]
+    fn list_pages_returns_slug_and_title_sorted_by_title() {
+        let dir = TempDir::new("list-pages-sorted");
+        let vault = Vault::new(dir.path().to_path_buf());
+        vault.open_page("Zeta").unwrap();
+        vault.open_page("Alpha").unwrap();
+        let pages = vault.list_pages().unwrap();
+        assert_eq!(
+            pages,
+            vec![
+                PageSummary {
+                    slug: "alpha".to_string(),
+                    title: "Alpha".to_string(),
+                },
+                PageSummary {
+                    slug: "zeta".to_string(),
+                    title: "Zeta".to_string(),
+                },
+            ]
+        );
+    }
+
+    #[test]
+    fn list_pages_falls_back_to_slug_without_title() {
+        let dir = TempDir::new("list-pages-no-title");
+        let vault = Vault::new(dir.path().to_path_buf());
+        vault
+            .write_page("pages/senza-titolo.md", &[Block::new("x")])
+            .unwrap();
+        let pages = vault.list_pages().unwrap();
+        assert_eq!(
+            pages,
+            vec![PageSummary {
+                slug: "senza-titolo".to_string(),
+                title: "senza-titolo".to_string(),
+            }]
+        );
+    }
+
+    #[test]
+    fn list_pages_on_empty_vault_is_empty_not_error() {
+        let dir = TempDir::new("list-pages-empty");
+        let vault = Vault::new(dir.path().to_path_buf());
+        assert_eq!(vault.list_pages().unwrap(), Vec::new());
     }
 }

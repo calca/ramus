@@ -4,7 +4,9 @@
 use std::path::PathBuf;
 use std::sync::{Mutex, MutexGuard};
 
-use ramus_core::{watcher, Block, Config, CoreError, JournalDate, Page, Theme, Vault, VaultStats};
+use ramus_core::{
+    watcher, Block, Config, CoreError, JournalDate, Page, PageSummary, Theme, Vault, VaultStats,
+};
 use tauri::{AppHandle, Emitter, State};
 use tauri_plugin_dialog::DialogExt;
 
@@ -115,6 +117,20 @@ pub fn set_theme(theme: Theme, state: State<AppState>) -> Result<Config, CoreErr
     let mut config = lock_config(&state)?;
     config.set_theme(theme)?;
     Ok(config.clone())
+}
+
+#[tauri::command]
+pub fn list_pages(state: State<AppState>) -> Result<Vec<PageSummary>, CoreError> {
+    let config = lock_config(&state)?;
+    Vault::new(config.vault_path.clone()).list_pages()
+}
+
+#[tauri::command]
+pub fn open_page(name: String, state: State<AppState>) -> Result<Page, CoreError> {
+    let config = lock_config(&state)?;
+    let vault = Vault::new(config.vault_path.clone());
+    vault.ensure_exists()?;
+    vault.open_page(&name)
 }
 
 /// Apre la dialog nativa "scegli cartella". `None` se l'utente annulla.

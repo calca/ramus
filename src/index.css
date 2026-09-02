@@ -360,3 +360,45 @@ body {
   max-width: 22rem;
   margin: 0.5rem 0 0.25rem;
 }
+
+/* [[link]] e #tag: solo sap, mai amber (SPEC.md — "l'amber non va usato
+   per link, tag o notifiche"). Parentesi quadre restano visibili. */
+.editor-link,
+.editor-tag {
+  color: var(--ramus-sap);
+}
+
+.editor-link {
+  cursor: pointer;
+}
+
+.link-suggestion-list {
+  z-index: 20;
+  background: var(--ramus-paper);
+  color: var(--ramus-ink);
+  border: 1px solid color-mix(in srgb, var(--ramus-stone) 30%, transparent);
+  border-radius: 8px;
+  box-shadow: 0 4px 16px color-mix(in srgb, black 20%, transparent);
+  padding: 0.3rem;
+  min-width: 12rem;
+  max-width: 20rem;
+  display: flex;
+  flex-direction: column;
+}
+
+.link-suggestion-item {
+  display: block;
+  width: 100%;
+  text-align: left;
+  border: none;
+  background: transparent;
+  color: var(--ramus-ink);
+  border-radius: 5px;
+  padding: 0.35rem 0.5rem;
+  font-size: 0.9rem;
+  cursor: pointer;
+}
+
+.link-suggestion-item.is-selected {
+  background: color-mix(in srgb, var(--ramus-sap) 18%, transparent);
+}

@@ -3,7 +3,7 @@
 
 import { invoke } from "@tauri-apps/api/core";
 
-import type { Block, Config, Page, Theme, VaultStats } from "./types";
+import type { Block, Config, Page, PageSummary, Theme, VaultStats } from "./types";
 
 export function getConfig(): Promise<Config> {
   return invoke<Config>("get_config");
@@ -42,5 +42,14 @@ export function vaultStats(): Promise<VaultStats> {
 
 export function setTheme(theme: Theme): Promise<Config> {
   return invoke<Config>("set_theme", { theme });
+}
+
+export function listPages(): Promise<PageSummary[]> {
+  return invoke<PageSummary[]>("list_pages");
+}
+
+/** Apre (creando se non esiste) la pagina identificata da `name`. */
+export function openPage(name: string): Promise<Page> {
+  return invoke<Page>("open_page", { name });
 }
 
