@@ -409,9 +409,9 @@ body {
   padding: 3rem 1.25rem 3rem;
 }
 
-.page-view-header {
+.page-view-content {
   max-width: 40rem;
-  margin: 0 auto 2rem;
+  margin: 0 auto;
 }
 
 .page-view-back {
@@ -427,5 +427,5 @@ body {
 
 .page-view-title {
   font-size: 1.4rem;
-  margin: 0;
+  margin: 0 0 2rem;
 }

@@ -13,18 +13,18 @@ interface PageViewProps {
 export function PageView({ page, onDirtyChange, onLinkClick, onBack, registerEditorHandle }: PageViewProps) {
   return (
     <div className="page-view">
-      <div className="page-view-header">
+      <div className="page-view-content">
         <button type="button" className="page-view-back" onClick={onBack}>
           ← Journal
         </button>
         <h1 className="page-view-title">{page.title ?? page.path}</h1>
+        <Editor
+          ref={registerEditorHandle}
+          page={page}
+          onDirtyChange={onDirtyChange}
+          onLinkClick={onLinkClick}
+        />
       </div>
-      <Editor
-        ref={registerEditorHandle}
-        page={page}
-        onDirtyChange={onDirtyChange}
-        onLinkClick={onLinkClick}
-      />
     </div>
   );
 }
