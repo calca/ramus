@@ -299,6 +299,7 @@ body {
    AboutPanel, che riusa la stessa classe ma è già centrato nel suo
    .about-content): separatore sopra, link centrato. */
 .settings-panel > .settings-about-link {
+  width: 100%;
   margin-top: 1.25rem;
   padding-top: 1rem;
   text-align: center;
