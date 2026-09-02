@@ -4,6 +4,10 @@
   --ramus-amber: #C98A2E;
   --ramus-stone: #8A857C;
   --ramus-paper: #F5F1E8;
+  /* Senza questo, i controlli nativi (calendario del date picker,
+     scrollbar, ecc.) restano sempre chiari: non seguono le variabili
+     CSS, seguono color-scheme. */
+  color-scheme: light;
 }
 
 /* Tema "sistema" (nessun data-theme esplicito): segue il sistema operativo. */
@@ -14,6 +18,7 @@
     --ramus-amber: #E0A745;
     --ramus-stone: #9C978D;
     --ramus-paper: #16150F;
+    color-scheme: dark;
   }
 }
 
@@ -24,4 +29,5 @@
   --ramus-amber: #E0A745;
   --ramus-stone: #9C978D;
   --ramus-paper: #16150F;
+  color-scheme: dark;
 }
