@@ -68,6 +68,39 @@ un nuovo render. Stesso limite già presente altrove nel codice (es.
 caricamento del modulo) — non è una regressione, è coerente con
 l'effort già investito nel resto dell'app su questo dettaglio.
 
+## Formato data "carino" (giorno + mese, anno solo se diverso)
+
+Aggiunta dopo il primo giro di implementazione: la parte data
+dell'header non è più la stringa ISO grezza (`2026-09-02`) ma un
+formato leggibile — `"2 settembre"` nell'anno corrente,
+`"15 marzo 2025"` quando l'anno è diverso da quello corrente (l'anno è
+rumore quando è ovvio, utile quando non lo è). Risultato:
+`"Oggi 2 settembre"`, `"3 giorni fa 30 agosto"`,
+`"Mercoledì 19 agosto"`, `"Sabato 15 marzo 2025"`.
+
+```ts
+const PRETTY_DATE_FORMATTER = new Intl.DateTimeFormat("it-IT", { day: "numeric", month: "long" });
+const PRETTY_DATE_WITH_YEAR_FORMATTER = new Intl.DateTimeFormat("it-IT", {
+  day: "numeric",
+  month: "long",
+  year: "numeric",
+});
+
+function formatPrettyDate(iso: string): string {
+  const date = parseIsoDate(iso);
+  const isCurrentYear = date.getFullYear() === new Date().getFullYear();
+  return (isCurrentYear ? PRETTY_DATE_FORMATTER : PRETTY_DATE_WITH_YEAR_FORMATTER).format(date);
+}
+```
+
+**Effetto collaterale corretto insieme**: i nomi dei mesi in italiano
+sono minuscoli per convenzione ("settembre", non "Settembre"). La CSS
+`.journal-section-date { text-transform: capitalize }` esistente
+avrebbe capitalizzato anche il mese a metà stringa (risultato scorretto
+tipo "2 Settembre"). Rimossa dal CSS: la maiuscola sulla prima lettera
+si fa ora in `formatJournalHeader` stesso, una volta sola, sull'intera
+stringa già composta (`capitalizeFirst`), non parola per parola.
+
 ## Fuori scope
 
 - Localizzazione in altre lingue (l'app è in italiano ovunque altrove,

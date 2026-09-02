@@ -131,7 +131,6 @@ body {
   font-size: 0.95rem;
   font-weight: 600;
   color: var(--ramus-stone);
-  text-transform: capitalize;
   margin: 0 0 0.5rem;
   transition: font-size 150ms ease;
 }
