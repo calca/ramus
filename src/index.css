@@ -131,7 +131,7 @@ body {
   font-size: 0.95rem;
   font-weight: 600;
   color: var(--ramus-stone);
-  margin: 0 0 0.5rem;
+  margin: 0 0 1.1rem;
   transition: font-size 150ms ease;
 }
 
