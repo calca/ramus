@@ -80,7 +80,17 @@ finché (se mai) si aggiungerà un target mobile. Non richiede pulizia.
    arrotondato: la maschera (squircle su macOS, ecc.) la applica il
    sistema operativo, non serve pre-arrotondare l'SVG sorgente.
 
-2. **Le icone cambiate non facevano scattare una ricompilazione**:
+2. **Angoli vivi invece che arrotondati**: in dev mode su macOS l'icona
+   del Dock viene impostata con `NSApplication.setApplicationIconImage`,
+   chiamata diretta che mostra l'immagine così com'è — **non** applica
+   la maschera arrotondata automatica che macOS riserva alle app
+   installate/pacchettizzate via Finder/LaunchServices. Il rettangolo di
+   sfondo va quindi arrotondato direttamente nel sorgente, non lasciato
+   al sistema operativo: `rx="23" ry="23"` su un canvas 128×128
+   (~18%, la proporzione usata nei template ufficiali Apple per le
+   icone macOS).
+
+3. **Le icone cambiate non facevano scattare una ricompilazione**:
    `tauri-build` dichiara `cargo:rerun-if-changed` solo per
    `tauri.conf.json`, non per i file dentro `icons/`. Sostituire le
    icone non bastava perché Cargo non vedeva nessun input cambiato e
