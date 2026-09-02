@@ -218,7 +218,12 @@ il marchio contro il bordo.
 - Stato della sync visibile nella UI; in caso di conflitto, stop e avviso
   esplicito, mai merge automatico silenzioso
 
-**M4 — AI**
+**M4 — UI**
+- Da specificare più avanti. Rifinitura dell'interfaccia raccolta durante
+  l'uso reale dell'app, non legata a una singola feature — header più
+  compatto, status bar in basso, idee simili che emergono nel tempo.
+
+**M5 — AI**
 - Da specificare più avanti. Vincolo già deciso: nessun invio automatico di
   contenuti a servizi esterni. Ogni chiamata deve essere esplicita per blocco
   o per pagina, con indicazione chiara di cosa viene inviato.

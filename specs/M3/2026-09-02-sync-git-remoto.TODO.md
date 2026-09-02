@@ -106,18 +106,25 @@ pub enum SyncState {
 `get_sync_status()` (command già esistente) lo restituisce senza
 cambiare firma esterna (solo il campo in più).
 
-## Badge nell'header
+## Badge di stato
 
-Icona nell'`app-header`, accanto al bottone impostazioni, visibile solo
-quando `state` non è `Disabled`/`Idle` (nessun rumore visivo quando
-tutto va bene, coerente con la sobrietà generale — lo stato "tutto
-sincronizzato" non ha bisogno di essere annunciato). `Conflict` usa lo
-stesso rosso di `.banner-error` (non l'amber, riservato altrove — qui
-non è comunque un caso ambiguo, un conflitto Git è un errore vero e
-proprio, non una notifica). `Syncing`/`Offline` usano `--ramus-stone`
-(neutro, informativo, non un errore). Click sul badge: apre
-`SettingsPanel` direttamente sulla sezione Sync (stesso pannello, non
-un secondo posto dove guardare lo stato).
+**Aggiornamento**: `specs/M4/2026-09-02-header-status-bar.TODO.md`
+(M4) sposta la navigazione del journal dall'header a una nuova status
+bar in basso, riservando lì lo spazio per questo badge — se M4 è già
+implementata quando si costruisce questo pezzo, il badge va nella
+status bar, non nell'header. Il resto di questa sezione descrive il
+comportamento del badge, indipendente da dove vive fisicamente.
+
+Icona/testo visibile solo quando `state` non è `Disabled`/`Idle`
+(nessun rumore visivo quando tutto va bene, coerente con la sobrietà
+generale — lo stato "tutto sincronizzato" non ha bisogno di essere
+annunciato). `Conflict` usa lo stesso rosso di `.banner-error` (non
+l'amber, riservato altrove — qui non è comunque un caso ambiguo, un
+conflitto Git è un errore vero e proprio, non una notifica).
+`Syncing`/`Offline` usano `--ramus-stone` (neutro, informativo, non un
+errore). Click sul badge: apre `SettingsPanel` direttamente sulla
+sezione Sync (stesso pannello, non un secondo posto dove guardare lo
+stato).
 
 ## Fuori scope per questa spec
 
