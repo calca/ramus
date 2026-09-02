@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { LogicalSize } from "@tauri-apps/api/dpi";
+import { LogicalPosition, LogicalSize } from "@tauri-apps/api/dpi";
 import { listen } from "@tauri-apps/api/event";
 import { getCurrentWindow } from "@tauri-apps/api/window";
 
@@ -281,22 +281,28 @@ function App() {
   /** Restringe la finestra a COMPACT_WIDTH per affiancarla a un'altra
    * finestra (note, appunti), memorizzando la dimensione attuale per
    * ripristinarla esattamente all'uscita — non un default fisso. Solo
-   * la larghezza cambia, l'altezza resta quella dell'utente. Nessun
-   * riposizionamento automatico: si trascina dove serve (drag-region
-   * già sull'header). Non persistita: è una preferenza di sessione. */
+   * la larghezza cambia, l'altezza resta quella dell'utente. Il bordo
+   * destro resta fisso in entrambe le direzioni (si sposta la X): comprimere
+   * si restringe verso l'interno, espandere cresce verso l'interno dello
+   * schermo invece di uscire dal bordo destro del monitor. Non persistita:
+   * è una preferenza di sessione. */
   const toggleCompact = useCallback(async () => {
     const win = getCurrentWindow();
+    const scale = await win.scaleFactor();
+    const currentSize = (await win.outerSize()).toLogical(scale);
+    const currentPos = (await win.outerPosition()).toLogical(scale);
+    const rightEdge = currentPos.x + currentSize.width;
+
     if (!isCompact) {
-      const physical = await win.innerSize();
-      const scale = await win.scaleFactor();
-      const current = physical.toLogical(scale);
-      preCompactSizeRef.current = { width: current.width, height: current.height };
-      await win.setSize(new LogicalSize(COMPACT_WIDTH, current.height));
+      preCompactSizeRef.current = { width: currentSize.width, height: currentSize.height };
+      await win.setSize(new LogicalSize(COMPACT_WIDTH, currentSize.height));
+      await win.setPosition(new LogicalPosition(rightEdge - COMPACT_WIDTH, currentPos.y));
       setIsCompact(true);
     } else {
       const restore = preCompactSizeRef.current;
       if (restore) {
         await win.setSize(new LogicalSize(restore.width, restore.height));
+        await win.setPosition(new LogicalPosition(rightEdge - restore.width, currentPos.y));
       }
       setIsCompact(false);
     }

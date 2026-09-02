@@ -1,9 +1,9 @@
 # Dimensioni finestra: minimo + modalità compatta
 
-Stato: implementata. Nessun riposizionamento automatico, nessuna
-persistenza. 420/480px restano stime di partenza — non verificabili a
-vista in questo sandbox, da tarare guardando l'app affiancata a una
-finestra di note reale.
+Stato: implementata. Bordo destro fisso in compattazione ed espansione
+(corretto dopo il primo giro), nessuna persistenza. 420/560/480px
+restano stime — non verificabili a vista in questo sandbox, da tarare
+guardando l'app affiancata a una finestra di note reale.
 
 ## Motivazione
 
@@ -59,13 +59,13 @@ Comportamento:
 - A "Espandi": si ripristina la dimensione memorizzata (non un valore
   fisso) — se l'utente aveva ridimensionato la finestra a 1000×700
   prima di comprimerla, torna a 1000×700, non al default 800×600.
-- **Nessun riposizionamento automatico** (non si sposta la finestra
-  contro il bordo destro dello schermo da sola): l'utente la trascina
-  dove vuole — ora è facile, l'`app-header` ha già
-  `data-tauri-drag-region` dalla spec della title bar overlay. Scelta
-  deliberata per restare semplice e non presumere un layout schermo
-  che potremmo indovinare male (multi-monitor, split view nativo di
-  macOS, ecc.) — vedi "Domande aperte" se invece si vuole automatico.
+- **Il bordo destro resta fisso** (corretto dopo il primo giro, vedi
+  "Bug scoperti" più sotto): comprimere ed espandere spostano anche la
+  X della finestra, non solo la larghezza — la crescita/il restringimento
+  avvengono verso l'interno dello schermo, non escono dal bordo destro
+  del monitor. Non è uno "snap" contro un bordo specifico dello schermo
+  (nessuna lettura del monitor/`currentMonitor()`): è relativo alla
+  posizione attuale della finestra, qualunque essa sia.
 - **Non persistita**: si torna sempre alla modalità normale a ogni
   riavvio dell'app. È una preferenza di sessione di lavoro (affianca
   Ramus a un'altra finestra per un po'), non una configurazione
@@ -76,22 +76,25 @@ Comportamento:
 ### API
 
 ```ts
-import { LogicalSize } from "@tauri-apps/api/dpi";
+import { LogicalPosition, LogicalSize } from "@tauri-apps/api/dpi";
 import { getCurrentWindow } from "@tauri-apps/api/window";
 
 const win = getCurrentWindow();
-const physical = await win.innerSize();
 const scale = await win.scaleFactor();
-const current = physical.toLogical(scale); // { width, height }
+const currentSize = (await win.outerSize()).toLogical(scale);
+const currentPos = (await win.outerPosition()).toLogical(scale);
+const rightEdge = currentPos.x + currentSize.width;
 
-await win.setSize(new LogicalSize(420, current.height));
+await win.setSize(new LogicalSize(420, currentSize.height));
+await win.setPosition(new LogicalPosition(rightEdge - 420, currentPos.y));
 ```
 
 Verificato in `node_modules/@tauri-apps/api/{window,dpi}.js`:
-`innerSize()`/`scaleFactor()`/`toLogical()` esistono con questa firma,
-`setSize` accetta un `LogicalSize`. Nessun nuovo command Tauri, nessuna
-modifica al core: è tutto frontend, stato locale in `App.tsx` (un
-`useState`/`useRef` per larghezza+altezza pre-compattazione).
+`outerSize()`/`outerPosition()`/`scaleFactor()`/`toLogical()` esistono
+con questa firma, `setSize`/`setPosition` accettano `LogicalSize`/
+`LogicalPosition`. Nessun nuovo command Tauri, nessuna modifica al
+core: è tutto frontend, stato locale in `App.tsx` (un `useRef` per
+larghezza+altezza pre-compattazione).
 
 ### Header responsive sotto ai 480px
 
@@ -127,12 +130,6 @@ della modalità compatta con un po' di margine).
   della media query sono proposte di partenza — non verificabili a
   vista in questo sandbox, da confermare/tarare guardando l'app
   affiancata a una finestra di note reale.
-- Riposizionamento automatico contro il bordo destro dello schermo
-  all'attivazione: proposto **di no** (vedi sopra). Se invece lo si
-  vuole, si può aggiungere con `currentMonitor()` +
-  `setPosition()` — cambio piccolo, ma va deciso esplicitamente perché
-  è un comportamento più invasivo (sposta la finestra senza che
-  l'utente l'abbia chiesto).
 - Persistenza della modalità compatta fra riavvii: proposto di no (vedi
   sopra). Se serve, è un campo nuovo in `Config` (stesso pattern di
   `theme`), da trattare come una spec a parte per non mischiare stato
@@ -158,6 +155,18 @@ della modalità compatta con un po' di margine).
    uscire dalla modalità compatta, spinto a destra con
    `margin-left: auto` (l'`app-title` che prima lo spingeva è già
    nascosto sotto 480px, quindi va spinto esplicitamente lui).
+4. **Espandere usciva dal bordo destro del monitor**: `setSize` da solo
+   cambia larghezza/altezza ma non la posizione — la finestra cresce
+   sempre verso destra dal suo angolo in alto a sinistra. Se il bordo
+   destro della finestra era già vicino al bordo destro dello schermo
+   (il caso d'uso stesso: finestra compatta affiancata a destra),
+   espandere la spingeva fuori dallo schermo. Corretto calcolando il
+   bordo destro attuale (`posizione.x + larghezza`) prima di
+   ridimensionare, e chiamando anche `setPosition` per tenerlo fisso in
+   entrambe le direzioni — comprimere ed espandere ora crescono/si
+   restringono "verso l'interno" invece che verso destra. Richiede
+   anche `core:window:allow-set-position`, non nel set di default
+   (stesso schema di `allow-set-size`/`allow-start-dragging`).
 
 ## Fuori scope
 
