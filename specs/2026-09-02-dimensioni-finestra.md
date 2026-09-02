@@ -150,6 +150,14 @@ della modalità compatta con un po' di margine).
    stile icon-only dell'ingranaggio impostazioni (`⇔`), con
    `aria-label`/`title` che cambia fra "Comprimi finestra"/"Espandi
    finestra" invece del testo visibile fisso "Compatta"/"Espandi".
+3. **In modalità compatta si vedevano ancora tutti i controlli**: oltre
+   alla media query CSS sulla larghezza (che nasconde solo il titolo),
+   in stato compatto (`isCompact`, classe `is-compact` sull'header) si
+   nascondono anche `.journal-controls` (data picker, Oggi) e
+   l'ingranaggio impostazioni — resta solo il logo e il bottone per
+   uscire dalla modalità compatta, spinto a destra con
+   `margin-left: auto` (l'`app-title` che prima lo spingeva è già
+   nascosto sotto 480px, quindi va spinto esplicitamente lui).
 
 ## Fuori scope
 

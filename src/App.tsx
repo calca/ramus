@@ -304,13 +304,16 @@ function App() {
 
   return (
     <div className="app">
-      <header className="app-header" data-tauri-drag-region="true">
+      <header
+        className={isCompact ? "app-header is-compact" : "app-header"}
+        data-tauri-drag-region="true"
+      >
         <img src={faviconUrl} alt="" className="app-logo" width={20} height={20} />
         <span className="app-title">Ramus</span>
         <JournalControls onToday={scrollToToday} onJumpToDate={(iso) => void jumpToDate(iso)} />
         <button
           type="button"
-          className="settings-button"
+          className="settings-button compact-toggle"
           aria-label={isCompact ? "Espandi finestra" : "Comprimi finestra"}
           title={isCompact ? "Espandi finestra" : "Comprimi finestra"}
           onClick={() => void toggleCompact()}

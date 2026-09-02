@@ -93,6 +93,16 @@ body {
   }
 }
 
+/* Modalità compatta: solo logo e bottone per uscirne, spinto a destra. */
+.app-header.is-compact .journal-controls,
+.app-header.is-compact .settings-button:not(.compact-toggle) {
+  display: none;
+}
+
+.app-header.is-compact .compact-toggle {
+  margin-left: auto;
+}
+
 .banner {
   padding: 0.5rem 1.25rem;
   font-size: 0.9rem;
