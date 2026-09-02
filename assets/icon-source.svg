@@ -1,4 +1,5 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="128" height="128" role="img" aria-label="Ramus">
+  <rect width="128" height="128" fill="#F5F1E8"/>
   <g transform="translate(16, 16)">
     <path d="M26 24 V74 H52 M26 42 H52 M58 48 V60 H70"
           fill="none" stroke="#2F6B4F" stroke-width="4"

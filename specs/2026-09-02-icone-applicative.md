@@ -69,6 +69,29 @@ anche se il progetto non ha `tauri android init`/`tauri ios init`
 tool, non specifico di questo progetto — restano semplicemente inutilizzate
 finché (se mai) si aggiungerà un target mobile. Non richiede pulizia.
 
+### Bug scoperti dopo il primo giro di implementazione
+
+1. **Sfondo trasparente**: `icon-source.svg` non aveva uno sfondo — solo
+   il segno su tela trasparente, come `logo.svg` (pensato per essere
+   disegnato sopra lo sfondo dell'app, non per essere un'icona di
+   sistema a sé stante). Nel Dock risultava un segno "fluttuante" senza
+   silhouette. Corretto aggiungendo `<rect width="128" height="128"
+   fill="#F5F1E8"/>` (paper) dietro al segno — un quadrato pieno, non
+   arrotondato: la maschera (squircle su macOS, ecc.) la applica il
+   sistema operativo, non serve pre-arrotondare l'SVG sorgente.
+
+2. **Le icone cambiate non facevano scattare una ricompilazione**:
+   `tauri-build` dichiara `cargo:rerun-if-changed` solo per
+   `tauri.conf.json`, non per i file dentro `icons/`. Sostituire le
+   icone non bastava perché Cargo non vedeva nessun input cambiato e
+   riusava il binario già compilato — con i vecchi byte icona ancora
+   incorporati (su macOS in dev mode l'icona del Dock viene incorporata
+   nel binario a tempo di compilazione). Corretto in `src-tauri/build.rs`
+   con `println!("cargo:rerun-if-changed=icons")`. Verificato: dopo
+   questa correzione, rigenerare le icone fa comparire "Compiling ramus
+   v0.1.0" nel log di `tauri dev` (ricompilazione vera), non solo un
+   relink a costo zero.
+
 ## Fuori scope
 
 - Favicon web (`assets/favicon.svg`, usato per la finestra/tab, non fa
