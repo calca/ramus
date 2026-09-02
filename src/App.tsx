@@ -9,11 +9,13 @@ import type { EditorHandle } from "./components/Editor";
 import { JournalControls } from "./components/JournalControls";
 import { JournalSection } from "./components/JournalSection";
 import { PageView } from "./components/PageView";
+import { SearchPanel } from "./components/SearchPanel";
 import { SettingsPanel } from "./components/SettingsPanel";
 import { getConfig, listJournals, openPage, openToday, readPage } from "./lib/commands";
 import { journalDateFromPath } from "./lib/journal";
+import { matchesShortcut } from "./lib/shortcut";
 import { applyTheme } from "./lib/theme";
-import type { Config, Page } from "./lib/types";
+import type { Config, Page, SearchHit } from "./lib/types";
 
 const BATCH_SIZE = 14;
 const COMPACT_WIDTH = 420;
@@ -22,7 +24,7 @@ type View = { kind: "journal" } | { kind: "page"; page: Page };
 
 function App() {
   const [config, setConfig] = useState<Config | null>(null);
-  const [activePanel, setActivePanel] = useState<"settings" | "about" | null>(null);
+  const [activePanel, setActivePanel] = useState<"settings" | "about" | "search" | null>(null);
   const [isCompact, setIsCompact] = useState(false);
   const [view, setView] = useState<View>({ kind: "journal" });
   const [vaultVersion, setVaultVersion] = useState(0);
@@ -250,6 +252,23 @@ function App() {
     };
   }, []);
 
+  // Scorciatoia per aprire il pannello di ricerca (configurabile in
+  // Impostazioni, vedi src/lib/shortcut.ts): un listener globale, non
+  // legato al focus di un elemento specifico.
+  useEffect(() => {
+    if (!config) {
+      return;
+    }
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (matchesShortcut(event, config.search_shortcut)) {
+        event.preventDefault();
+        setActivePanel("search");
+      }
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [config]);
+
   // Flush su chiusura della finestra: nessuna sezione aperta perde modifiche.
   useEffect(() => {
     let allowClose = false;
@@ -295,6 +314,10 @@ function App() {
     setConfig(nextConfig);
   }, []);
 
+  const handleSearchShortcutChanged = useCallback((nextConfig: Config) => {
+    setConfig(nextConfig);
+  }, []);
+
   /** Apre (creando se manca) la pagina cliccata e ci passa la vista. Flush
    * di tutti gli editor montati prima di navigare, stesso Promise.all già
    * usato alla chiusura finestra. */
@@ -312,6 +335,26 @@ function App() {
     await Promise.all(Array.from(editorHandles.current.values(), (handle) => handle.flush()));
     setView({ kind: "journal" });
   }, []);
+
+  /** Selezione di un risultato di ricerca: una pagina naviga come un
+   * [[link]] cliccato (stessa navigateToPage); un giorno di journal usa
+   * la stessa jumpToDate già usata da "salta a data" — il giorno esiste
+   * per certo (viene dall'indice), il match è sempre esatto. */
+  const handleSearchSelect = useCallback(
+    async (hit: SearchHit) => {
+      setActivePanel(null);
+      if (hit.kind === "page") {
+        const fallback = hit.path.replace(/^pages\//, "").replace(/\.md$/, "");
+        await navigateToPage(hit.title ?? fallback);
+      } else {
+        if (viewRef.current.kind === "page") {
+          await returnToJournal();
+        }
+        await jumpToDate(journalDateFromPath(hit.path));
+      }
+    },
+    [navigateToPage, returnToJournal, jumpToDate],
+  );
 
   /** Restringe la finestra a COMPACT_WIDTH per affiancarla a un'altra
    * finestra (note, appunti), memorizzando la dimensione attuale per
@@ -367,6 +410,16 @@ function App() {
           <button
             type="button"
             className="settings-button"
+            aria-label="Cerca"
+            onClick={() => setActivePanel("search")}
+          >
+            🔍
+          </button>
+        )}
+        {config && (
+          <button
+            type="button"
+            className="settings-button"
             aria-label="Impostazioni"
             onClick={() => setActivePanel("settings")}
           >
@@ -409,10 +462,17 @@ function App() {
           onClose={() => setActivePanel(null)}
           onVaultChanged={handleVaultChanged}
           onThemeChanged={handleThemeChanged}
+          onSearchShortcutChanged={handleSearchShortcutChanged}
           onShowAbout={() => setActivePanel("about")}
         />
       )}
       {activePanel === "about" && <AboutPanel onClose={() => setActivePanel(null)} />}
+      {activePanel === "search" && (
+        <SearchPanel
+          onClose={() => setActivePanel(null)}
+          onSelect={(hit) => void handleSearchSelect(hit)}
+        />
+      )}
     </div>
   );
 }

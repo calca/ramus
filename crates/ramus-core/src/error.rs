@@ -32,6 +32,9 @@ pub enum CoreError {
 
     #[error("errore di indice: {0}")]
     Index(#[from] rusqlite::Error),
+
+    #[error("errore di ricerca: {0}")]
+    Search(#[from] tantivy::TantivyError),
 }
 
 impl Serialize for CoreError {

@@ -28,6 +28,15 @@ pub struct Backlink {
     pub block_content: String,
 }
 
+/// Cosa ha effettivamente cambiato un `Index::sync`: guida `SearchIndex`
+/// (indice tantivy, `search.rs`) senza che debba tenere una propria
+/// contabilità di mtime — vedi specs/2026-09-02-ricerca-full-text.md.
+#[derive(Debug, Clone, Default, PartialEq, Eq)]
+pub struct SyncOutcome {
+    pub refreshed: Vec<String>,
+    pub removed: Vec<String>,
+}
+
 impl Index {
     /// Apre (creando se serve) `<vault_root>/.ramus/index.sqlite3` e allinea
     /// lo schema. Non sincronizza il contenuto: chiamare [`Index::sync`]
@@ -49,7 +58,7 @@ impl Index {
     /// ciò che manca o è cambiato da allora, rimuovendo le righe di file
     /// non più presenti su disco. Un indice vuoto è il caso degenere dello
     /// stesso algoritmo: tutto risulta "assente" e viene reindicizzato.
-    pub fn sync(&self, vault: &Vault) -> Result<(), CoreError> {
+    pub fn sync(&self, vault: &Vault) -> Result<SyncOutcome, CoreError> {
         let disk_pages = list_disk_pages(vault)?;
 
         let mut stmt = self.conn.prepare("SELECT path, mtime FROM pages")?;
@@ -60,22 +69,26 @@ impl Index {
             .collect::<Result<_, rusqlite::Error>>()?;
         drop(stmt);
 
+        let mut refreshed = Vec::new();
         for (relative_path, mtime) in &disk_pages {
             let unchanged = indexed.get(relative_path).is_some_and(|prev| prev == mtime);
             if !unchanged {
                 self.refresh_page(vault, relative_path)?;
+                refreshed.push(relative_path.clone());
             }
         }
 
         let disk_paths: HashSet<&str> = disk_pages.iter().map(|(path, _)| path.as_str()).collect();
+        let mut removed = Vec::new();
         for path in indexed.keys() {
             if !disk_paths.contains(path.as_str()) {
                 self.conn
                     .execute("DELETE FROM pages WHERE path = ?1", params![path])?;
+                removed.push(path.clone());
             }
         }
 
-        Ok(())
+        Ok(SyncOutcome { refreshed, removed })
     }
 
     /// Rilegge una pagina dal disco e sostituisce le sue righe nell'indice
@@ -274,8 +287,10 @@ fn file_mtime(path: &Path) -> Result<i64, CoreError> {
 
 /// Appiattisce l'albero dei blocchi in ordine di visita pre-order: la
 /// gerarchia non serve nell'indice (deciso in
-/// specs/2026-09-02-indice-sqlite.md), solo un ordine stabile.
-fn flatten_blocks(blocks: &[Block]) -> Vec<&Block> {
+/// specs/2026-09-02-indice-sqlite.md), solo un ordine stabile. `pub(crate)`:
+/// riusata anche da `search.rs` per lo stesso motivo (niente duplicazione,
+/// vedi specs/2026-09-02-ricerca-full-text.md).
+pub(crate) fn flatten_blocks(blocks: &[Block]) -> Vec<&Block> {
     fn walk<'a>(blocks: &'a [Block], flat: &mut Vec<&'a Block>) {
         for block in blocks {
             flat.push(block);
@@ -480,6 +495,33 @@ mod tests {
         assert_eq!(backlinks.len(), 1);
         assert_eq!(backlinks[0].source_path, "journals/2026-01-01.md");
         assert_eq!(backlinks[0].block_content, "nota su [[Progetto X]] #lavoro");
+    }
+
+    #[test]
+    fn sync_outcome_reports_refreshed_and_removed_paths() {
+        let dir = TempDir::new("sync-outcome");
+        let (vault, index) = open_index(dir.path());
+        vault
+            .write_page("pages/uno.md", &[Block::new("#uno")])
+            .unwrap();
+        vault
+            .write_page("pages/due.md", &[Block::new("#due")])
+            .unwrap();
+
+        let first = index.sync(&vault).unwrap();
+        let mut refreshed = first.refreshed.clone();
+        refreshed.sort();
+        assert_eq!(refreshed, vec!["pages/due.md", "pages/uno.md"]);
+        assert_eq!(first.removed, Vec::<String>::new());
+
+        let unchanged = index.sync(&vault).unwrap();
+        assert_eq!(unchanged.refreshed, Vec::<String>::new());
+        assert_eq!(unchanged.removed, Vec::<String>::new());
+
+        std::fs::remove_file(dir.path().join("pages/uno.md")).unwrap();
+        let after_removal = index.sync(&vault).unwrap();
+        assert_eq!(after_removal.refreshed, Vec::<String>::new());
+        assert_eq!(after_removal.removed, vec!["pages/uno.md".to_string()]);
     }
 
     #[test]

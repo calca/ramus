@@ -19,3 +19,8 @@ chrono = { version = "0.4", default-features = false, features = ["clock", "std"
 # nella sezione Stack di SPEC.md. `bundled` compila sqlite3 in-process, niente
 # libreria di sistema da richiedere all'utente.
 rusqlite = { version = "0.40", features = ["bundled"] }
+# tantivy (ricerca full-text, M2 di SPEC.md — nominata esplicitamente nella
+# milestone, non solo "un motore di ricerca"): tokenizzazione, ranking per
+# rilevanza e snippet con evidenziazione già pronti, inutile reimplementarli
+# a mano come si fa per i parser del formato su disco.
+tantivy = "0.26"

@@ -1,8 +1,13 @@
 # Ricerca full-text con tantivy
 
-Stato: proposta, in attesa di conferma. Contiene più decisioni aperte
-delle altre spec di M2 (vedi "Domande aperte") — più che le altre, va
-letta e corretta prima di procedere.
+Stato: implementata. Domande aperte risolte così: (1) riuso del diff
+di `Index::sync` — confermato, `SyncOutcome` guida `SearchIndex` senza
+contabilità di mtime propria; (2) scorciatoia Cmd/Ctrl+K **più
+configurabile in Impostazioni** (estensione non prevista nella proposta
+originale — nuovo campo `Config::search_shortcut`, cattura da tastiera
+in `SettingsPanel`, vedi `src/lib/shortcut.ts`); (3) snippet con
+evidenziazione HTML — confermato; (4) granularità per pagina/giorno —
+confermata.
 
 ## Motivazione
 
@@ -261,13 +266,38 @@ Quarto pannello modale, stesso schema di `SettingsPanel`/`AboutPanel`
 ### Apertura del pannello
 
 Bottone nell'header (`.app-header`), accanto all'ingranaggio
-impostazioni — icona lente 🔍, stesso stile di `.settings-button`. Più
-scorciatoia da tastiera **Cmd/Ctrl+K** (listener globale in `App.tsx`,
-`event.preventDefault()` per non entrare in conflitto con eventuali
-scorciatoie native del browser/OS — verificare in fase di
-implementazione se WebView2/WebKit intercettano già quella
-combinazione). Nascosto in modalità compatta, stesso trattamento già
-riservato a `.settings-button:not(.compact-toggle)`.
+impostazioni — icona lente 🔍, stesso stile di `.settings-button`.
+Nascosto in modalità compatta, stesso trattamento già riservato a
+`.settings-button:not(.compact-toggle)`.
+
+### Scorciatoia configurabile (estensione decisa in fase di conferma)
+
+Non solo Cmd/Ctrl+K fisso: `Config` guadagna
+`pub search_shortcut: String` (default `"Mod+K"`, stesso trattamento
+di `theme` per compatibilità con `config.json` precedenti), con
+`Config::set_search_shortcut` e il command `set_search_shortcut`.
+
+`src/lib/shortcut.ts` (nuovo): formato canonico `"Mod+K"` /
+`"Mod+Shift+F"` — "Mod" è il modificatore primario della piattaforma
+(Cmd su macOS, Ctrl altrove) ed è **sempre obbligatorio**: senza,
+qualunque lettera digitata normalmente nell'editor aprirebbe il
+pannello, rompendo la scrittura. `normalizeShortcut(event)` cattura un
+`KeyboardEvent` in questa forma (`null` se manca il modificatore
+primario); `matchesShortcut(event, shortcut)` confronta un evento
+contro lo shortcut salvato; `formatShortcut(shortcut)` lo rende
+leggibile per la UI (`⌘K` su macOS, `Ctrl+K` altrove).
+
+`SettingsPanel` guadagna una sezione "Ricerca": un bottone che mostra
+la scorciatoia corrente e, al click, entra in modalità "registrazione"
+— il prossimo keydown valido (con modificatore primario) viene
+catturato e salvato. Il listener di cattura è in fase `capture` con
+`stopPropagation()`: durante la registrazione, Escape annulla solo la
+registrazione invece di chiudere anche l'intero pannello (altrimenti
+il listener Escape di `Modal`, in bubble su `window`, lo vedrebbe
+comunque).
+
+`App.tsx`: un `useEffect` con un listener `keydown` globale confronta
+ogni evento con `config.search_shortcut` via `matchesShortcut`.
 
 ### Selezione di un risultato
 

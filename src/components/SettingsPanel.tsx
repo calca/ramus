@@ -1,8 +1,15 @@
 import { useEffect, useState } from "react";
 import { revealItemInDir } from "@tauri-apps/plugin-opener";
 
+import {
+  pickVaultFolder,
+  setSearchShortcut as setSearchShortcutCommand,
+  setTheme as setThemeCommand,
+  setVaultPath,
+  vaultStats,
+} from "../lib/commands";
+import { formatShortcut, normalizeShortcut } from "../lib/shortcut";
 import { applyTheme } from "../lib/theme";
-import { pickVaultFolder, setTheme as setThemeCommand, setVaultPath, vaultStats } from "../lib/commands";
 import type { Config, Theme, VaultStats } from "../lib/types";
 import { Modal } from "./Modal";
 
@@ -11,6 +18,7 @@ interface SettingsPanelProps {
   onClose: () => void;
   onVaultChanged: (config: Config) => void;
   onThemeChanged: (config: Config) => void;
+  onSearchShortcutChanged: (config: Config) => void;
   onShowAbout: () => void;
 }
 
@@ -25,11 +33,13 @@ export function SettingsPanel({
   onClose,
   onVaultChanged,
   onThemeChanged,
+  onSearchShortcutChanged,
   onShowAbout,
 }: SettingsPanelProps) {
   const [stats, setStats] = useState<VaultStats | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [recordingShortcut, setRecordingShortcut] = useState(false);
 
   useEffect(() => {
     void vaultStats()
@@ -77,6 +87,34 @@ export function SettingsPanel({
     }
   };
 
+  // Cattura in fase capture + stopPropagation: mentre si registra una
+  // scorciatoia, Escape deve annullare la registrazione, non chiudere
+  // anche l'intero pannello (il listener Escape di Modal è in bubble,
+  // su window, e altrimenti la vedrebbe comunque).
+  useEffect(() => {
+    if (!recordingShortcut) {
+      return;
+    }
+    const onKeyDown = (event: KeyboardEvent) => {
+      event.preventDefault();
+      event.stopPropagation();
+      if (event.key === "Escape") {
+        setRecordingShortcut(false);
+        return;
+      }
+      const shortcut = normalizeShortcut(event);
+      if (shortcut) {
+        setRecordingShortcut(false);
+        setError(null);
+        void setSearchShortcutCommand(shortcut)
+          .then(onSearchShortcutChanged)
+          .catch((err: unknown) => setError(String(err)));
+      }
+    };
+    window.addEventListener("keydown", onKeyDown, { capture: true });
+    return () => window.removeEventListener("keydown", onKeyDown, { capture: true });
+  }, [recordingShortcut, onSearchShortcutChanged]);
+
   return (
     <Modal onClose={onClose} ariaLabel="Impostazioni">
       <header className="settings-panel-header">
@@ -122,6 +160,17 @@ export function SettingsPanel({
             </label>
           ))}
         </div>
+      </section>
+
+      <section className="settings-section">
+        <h3>Ricerca</h3>
+        <button
+          type="button"
+          className="settings-shortcut-button"
+          onClick={() => setRecordingShortcut(true)}
+        >
+          {recordingShortcut ? "Premi una combinazione…" : formatShortcut(config.search_shortcut)}
+        </button>
       </section>
 
       <button type="button" className="settings-about-link" onClick={onShowAbout}>

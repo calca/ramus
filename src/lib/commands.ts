@@ -3,7 +3,16 @@
 
 import { invoke } from "@tauri-apps/api/core";
 
-import type { Backlink, Block, Config, Page, PageSummary, Theme, VaultStats } from "./types";
+import type {
+  Backlink,
+  Block,
+  Config,
+  Page,
+  PageSummary,
+  SearchHit,
+  Theme,
+  VaultStats,
+} from "./types";
 
 export function getConfig(): Promise<Config> {
   return invoke<Config>("get_config");
@@ -61,5 +70,14 @@ export function findBacklinks(targetTitle: string): Promise<Backlink[]> {
 /** Tag distinti presenti nel vault, in ordine alfabetico. */
 export function listTags(): Promise<string[]> {
   return invoke<string[]>("list_tags");
+}
+
+/** Ricerca full-text su titolo + contenuto di pagine e journal. */
+export function search(query: string): Promise<SearchHit[]> {
+  return invoke<SearchHit[]>("search", { query });
+}
+
+export function setSearchShortcut(shortcut: string): Promise<Config> {
+  return invoke<Config>("set_search_shortcut", { shortcut });
 }
 

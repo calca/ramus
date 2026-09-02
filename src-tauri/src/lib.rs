@@ -3,7 +3,7 @@ mod commands;
 use std::sync::Mutex;
 
 use commands::AppState;
-use ramus_core::{Config, Index, Vault};
+use ramus_core::{Config, Index, SearchIndex, Vault};
 use tauri::Manager;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
@@ -20,11 +20,24 @@ pub fn run() {
             let watcher = commands::spawn_watcher(app.handle(), vault_root.clone())?;
 
             let index = Index::open(&vault_root)?;
-            index.sync(&vault)?;
+            let outcome = index.sync(&vault)?;
+
+            // L'indice di ricerca è "dumb" (vedi
+            // specs/2026-09-02-ricerca-full-text.md): riceve esattamente i
+            // path che Index::sync ha già rilevato come nuovi/cambiati/
+            // rimossi, nessuna contabilità di mtime propria.
+            let search_index = SearchIndex::open(&vault_root)?;
+            for path in &outcome.refreshed {
+                search_index.refresh_page(&vault, path)?;
+            }
+            for path in &outcome.removed {
+                search_index.remove_page(path)?;
+            }
 
             app.manage(AppState {
                 config: Mutex::new(config),
                 index: Mutex::new(index),
+                search_index: Mutex::new(search_index),
                 watcher: Mutex::new(Some(watcher)),
             });
 
@@ -44,6 +57,8 @@ pub fn run() {
             commands::open_page,
             commands::find_backlinks,
             commands::list_tags,
+            commands::search,
+            commands::set_search_shortcut,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

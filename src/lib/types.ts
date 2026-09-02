@@ -23,6 +23,7 @@ export type Theme = "light" | "dark" | "system";
 export interface Config {
   vault_path: string;
   theme: Theme;
+  search_shortcut: string;
 }
 
 export interface VaultStats {
@@ -34,4 +35,11 @@ export interface Backlink {
   source_path: string;
   source_title: string | null;
   block_content: string;
+}
+
+export interface SearchHit {
+  path: string;
+  kind: "page" | "journal";
+  title: string | null;
+  snippet_html: string;
 }

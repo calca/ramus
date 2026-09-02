@@ -5,8 +5,8 @@ use std::path::PathBuf;
 use std::sync::{Mutex, MutexGuard};
 
 use ramus_core::{
-    watcher, Backlink, Block, Config, CoreError, Index, JournalDate, Page, PageSummary, Theme,
-    Vault, VaultStats,
+    watcher, Backlink, Block, Config, CoreError, Index, JournalDate, Page, PageSummary, SearchHit,
+    SearchIndex, Theme, Vault, VaultStats,
 };
 use tauri::{AppHandle, Emitter, Manager, State};
 use tauri_plugin_dialog::DialogExt;
@@ -14,6 +14,7 @@ use tauri_plugin_dialog::DialogExt;
 pub struct AppState {
     pub config: Mutex<Config>,
     pub index: Mutex<Index>,
+    pub search_index: Mutex<SearchIndex>,
     // Mai letto direttamente: il campo esiste per tenere in vita il watcher
     // (viene fermato quando droppato) e per poterlo sostituire quando il
     // vault path cambia a runtime.
@@ -35,6 +36,15 @@ fn lock_index<'a>(state: &'a State<AppState>) -> Result<MutexGuard<'a, Index>, C
         .map_err(|_| CoreError::Config("stato dell'indice corrotto".to_string()))
 }
 
+fn lock_search_index<'a>(
+    state: &'a State<AppState>,
+) -> Result<MutexGuard<'a, SearchIndex>, CoreError> {
+    state
+        .search_index
+        .lock()
+        .map_err(|_| CoreError::Config("stato dell'indice di ricerca corrotto".to_string()))
+}
+
 /// Osserva `root` ed emette `vault://file-changed` per ogni file toccato
 /// dall'esterno. Condiviso fra il setup iniziale e `set_vault_path`, che
 /// deve ricreare il watcher ogni volta che il vault cambia a runtime.
@@ -46,13 +56,17 @@ pub(crate) fn spawn_watcher(
     watcher::watch_vault(root, move |change| {
         let relative_path = change.relative_path.to_string_lossy().to_string();
 
-        // Tiene l'indice allineato anche per modifiche esterne (non passate
-        // da write_page). Un file rimosso resta stale fino al prossimo
-        // `sync` completo (apertura vault): coerente con
+        // Tiene entrambi gli indici allineati anche per modifiche esterne
+        // (non passate da write_page). Un file rimosso resta stale fino al
+        // prossimo `sync` completo (apertura vault): coerente con
         // specs/2026-09-02-indice-sqlite.md, non vale la complessità di
         // gestirlo anche qui.
         if let Some(state) = app_handle.try_state::<AppState>() {
-            if let (Ok(config), Ok(index)) = (state.config.lock(), state.index.lock()) {
+            if let (Ok(config), Ok(index), Ok(search_index)) = (
+                state.config.lock(),
+                state.index.lock(),
+                state.search_index.lock(),
+            ) {
                 let vault = Vault::new(config.vault_path.clone());
                 if vault
                     .resolve(&relative_path)
@@ -60,6 +74,7 @@ pub(crate) fn spawn_watcher(
                     .unwrap_or(false)
                 {
                     let _ = index.refresh_page(&vault, &relative_path);
+                    let _ = search_index.refresh_page(&vault, &relative_path);
                 }
             }
         }
@@ -95,12 +110,25 @@ pub fn set_vault_path(
         .map_err(|_| CoreError::Config("stato del watcher corrotto".to_string()))?;
     *watcher_guard = Some(new_watcher);
 
-    // L'indice era per il vault precedente: se ne apre uno nuovo per la
-    // cartella appena scelta e lo si allinea subito al suo contenuto.
+    // Gli indici erano per il vault precedente: se ne aprono di nuovi per
+    // la cartella appena scelta e li si allinea subito al suo contenuto.
+    // L'indice di ricerca è "dumb" (vedi specs/2026-09-02-ricerca-full-text.md):
+    // riceve esattamente i path che l'indice SQLite ha rilevato come
+    // nuovi/cambiati/rimossi, nessuna logica di staleness propria.
     let new_index = Index::open(&vault.root)?;
-    new_index.sync(&vault)?;
+    let outcome = new_index.sync(&vault)?;
+    let new_search_index = SearchIndex::open(&vault.root)?;
+    for path in &outcome.refreshed {
+        new_search_index.refresh_page(&vault, path)?;
+    }
+    for path in &outcome.removed {
+        new_search_index.remove_page(path)?;
+    }
+
     let mut index_guard = lock_index(&state)?;
     *index_guard = new_index;
+    let mut search_index_guard = lock_search_index(&state)?;
+    *search_index_guard = new_search_index;
 
     Ok(config.clone())
 }
@@ -111,7 +139,9 @@ pub fn open_today(state: State<AppState>) -> Result<Page, CoreError> {
     let vault = Vault::new(config.vault_path.clone());
     vault.ensure_exists()?;
     let page = vault.open_today()?;
-    lock_index(&state)?.refresh_page(&vault, &page.path.to_string_lossy())?;
+    let relative_path = page.path.to_string_lossy();
+    lock_index(&state)?.refresh_page(&vault, &relative_path)?;
+    lock_search_index(&state)?.refresh_page(&vault, &relative_path)?;
     Ok(page)
 }
 
@@ -130,7 +160,8 @@ pub fn write_page(
     let config = lock_config(&state)?;
     let vault = Vault::new(config.vault_path.clone());
     vault.write_page(&path, &blocks)?;
-    lock_index(&state)?.refresh_page(&vault, &path)
+    lock_index(&state)?.refresh_page(&vault, &path)?;
+    lock_search_index(&state)?.refresh_page(&vault, &path)
 }
 
 #[tauri::command]
@@ -171,7 +202,9 @@ pub fn open_page(name: String, state: State<AppState>) -> Result<Page, CoreError
     let vault = Vault::new(config.vault_path.clone());
     vault.ensure_exists()?;
     let page = vault.open_page(&name)?;
-    lock_index(&state)?.refresh_page(&vault, &page.path.to_string_lossy())?;
+    let relative_path = page.path.to_string_lossy();
+    lock_index(&state)?.refresh_page(&vault, &relative_path)?;
+    lock_search_index(&state)?.refresh_page(&vault, &relative_path)?;
     Ok(page)
 }
 
@@ -186,6 +219,18 @@ pub fn find_backlinks(
 #[tauri::command]
 pub fn list_tags(state: State<AppState>) -> Result<Vec<String>, CoreError> {
     lock_index(&state)?.list_tags()
+}
+
+#[tauri::command]
+pub fn search(query: String, state: State<AppState>) -> Result<Vec<SearchHit>, CoreError> {
+    lock_search_index(&state)?.search(&query)
+}
+
+#[tauri::command]
+pub fn set_search_shortcut(shortcut: String, state: State<AppState>) -> Result<Config, CoreError> {
+    let mut config = lock_config(&state)?;
+    config.set_search_shortcut(shortcut)?;
+    Ok(config.clone())
 }
 
 /// Apre la dialog nativa "scegli cartella". `None` se l'utente annulla.

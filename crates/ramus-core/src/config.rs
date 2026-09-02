@@ -24,6 +24,16 @@ pub struct Config {
     /// deserializzazione fallirebbe al primo avvio dopo l'aggiornamento.
     #[serde(default)]
     pub theme: Theme,
+    /// Scorciatoia per aprire il pannello di ricerca, es. "Mod+K" ("Mod" =
+    /// Cmd su macOS, Ctrl altrove — normalizzato lato frontend). Stesso
+    /// trattamento di `theme`: `default` per compatibilità con i
+    /// `config.json` scritti prima di questo campo.
+    #[serde(default = "default_search_shortcut")]
+    pub search_shortcut: String,
+}
+
+fn default_search_shortcut() -> String {
+    "Mod+K".to_string()
 }
 
 impl Config {
@@ -75,6 +85,7 @@ impl Config {
             let config = Config {
                 vault_path: Self::default_vault_path(),
                 theme: Theme::default(),
+                search_shortcut: default_search_shortcut(),
             };
             config.save(&path)?;
             Ok(config)
@@ -90,6 +101,12 @@ impl Config {
     /// Aggiorna e persiste il tema.
     pub fn set_theme(&mut self, theme: Theme) -> Result<(), CoreError> {
         self.theme = theme;
+        self.save(&Self::config_file_path())
+    }
+
+    /// Aggiorna e persiste la scorciatoia di ricerca.
+    pub fn set_search_shortcut(&mut self, shortcut: String) -> Result<(), CoreError> {
+        self.search_shortcut = shortcut;
         self.save(&Self::config_file_path())
     }
 }
@@ -114,5 +131,12 @@ mod tests {
     #[test]
     fn theme_serializes_lowercase() {
         assert_eq!(serde_json::to_string(&Theme::Dark).unwrap(), "\"dark\"");
+    }
+
+    #[test]
+    fn config_without_search_shortcut_field_defaults_to_mod_k() {
+        let json = r#"{"vault_path":"/home/x/Journal"}"#;
+        let config: Config = serde_json::from_str(json).unwrap();
+        assert_eq!(config.search_shortcut, "Mod+K");
     }
 }
