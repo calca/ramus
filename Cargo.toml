@@ -1,0 +1,6 @@
+[workspace]
+resolver = "2"
+members = ["crates/ramus-core", "src-tauri"]
+
+[workspace.package]
+edition = "2021"

@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 140 190" width="140" height="190" role="img" aria-label="Stecco, la mascotte di Ramus">
+  <path d="M32 136 L12 144 M78 134 L102 116"
+        fill="none" stroke="#2F6B4F" stroke-width="10"
+        stroke-linecap="round" stroke-linejoin="round"/>
+  <rect x="28" y="110" width="54" height="66" rx="27" fill="#2F6B4F"/>
+  <g transform="rotate(-11 55 116)">
+    <path d="M29 42 Q15 14 5 5 M81 42 Q95 14 105 5"
+          fill="none" stroke="#2F6B4F" stroke-width="4.5" stroke-linecap="round"/>
+    <circle cx="3" cy="3" r="6" fill="#C98A2E"/>
+    <circle cx="107" cy="3" r="6" fill="#C98A2E"/>
+    <rect x="0" y="32" width="110" height="88" rx="44" fill="#2F6B4F"/>
+    <circle cx="31" cy="76" r="18" fill="#F5F1E8"/>
+    <circle cx="79" cy="76" r="18" fill="#F5F1E8"/>
+    <circle cx="34" cy="80" r="8.5" fill="#1C1A17"/>
+    <circle cx="82" cy="80" r="8.5" fill="#1C1A17"/>
+    <circle cx="30" cy="75" r="3.4" fill="#F5F1E8"/>
+    <circle cx="78" cy="75" r="3.4" fill="#F5F1E8"/>
+    <path d="M47 103 Q56 110 65 103" fill="none" stroke="#1C1A17" stroke-width="3" stroke-linecap="round"/>
+  </g>
+</svg>

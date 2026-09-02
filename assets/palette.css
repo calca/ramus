@@ -1,0 +1,15 @@
+:root {
+  --ramus-ink: #1C1A17;
+  --ramus-sap: #2F6B4F;
+  --ramus-amber: #C98A2E;
+  --ramus-stone: #8A857C;
+  --ramus-paper: #F5F1E8;
+}
+
+[data-theme="dark"] {
+  --ramus-ink: #F5F1E8;
+  --ramus-sap: #4E9B77;
+  --ramus-amber: #E0A745;
+  --ramus-stone: #9C978D;
+  --ramus-paper: #16150F;
+}
