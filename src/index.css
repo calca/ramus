@@ -402,3 +402,30 @@ body {
 .link-suggestion-item.is-selected {
   background: color-mix(in srgb, var(--ramus-sap) 18%, transparent);
 }
+
+.page-view {
+  flex: 1;
+  overflow-y: auto;
+  padding: 1.5rem 1.25rem 3rem;
+}
+
+.page-view-header {
+  max-width: 40rem;
+  margin: 0 auto 1.5rem;
+}
+
+.page-view-back {
+  display: block;
+  border: none;
+  background: transparent;
+  color: var(--ramus-sap);
+  cursor: pointer;
+  font-size: 0.85rem;
+  padding: 0;
+  margin-bottom: 0.75rem;
+}
+
+.page-view-title {
+  font-size: 1.4rem;
+  margin: 0;
+}

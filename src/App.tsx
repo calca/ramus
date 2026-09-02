@@ -8,8 +8,9 @@ import { AboutPanel } from "./components/AboutPanel";
 import type { EditorHandle } from "./components/Editor";
 import { JournalControls } from "./components/JournalControls";
 import { JournalSection } from "./components/JournalSection";
+import { PageView } from "./components/PageView";
 import { SettingsPanel } from "./components/SettingsPanel";
-import { getConfig, listJournals, openToday, readPage } from "./lib/commands";
+import { getConfig, listJournals, openPage, openToday, readPage } from "./lib/commands";
 import { journalDateFromPath } from "./lib/journal";
 import { applyTheme } from "./lib/theme";
 import type { Config, Page } from "./lib/types";
@@ -17,10 +18,13 @@ import type { Config, Page } from "./lib/types";
 const BATCH_SIZE = 14;
 const COMPACT_WIDTH = 420;
 
+type View = { kind: "journal" } | { kind: "page"; page: Page };
+
 function App() {
   const [config, setConfig] = useState<Config | null>(null);
   const [activePanel, setActivePanel] = useState<"settings" | "about" | null>(null);
   const [isCompact, setIsCompact] = useState(false);
+  const [view, setView] = useState<View>({ kind: "journal" });
   const [vaultVersion, setVaultVersion] = useState(0);
   const [pages, setPages] = useState<Page[]>([]);
   const [dirtyPaths, setDirtyPaths] = useState<Set<string>>(new Set());
@@ -36,6 +40,11 @@ function App() {
   const sectionElements = useRef(new Map<string, HTMLElement>());
   const sentinelRef = useRef<HTMLDivElement | null>(null);
   const preCompactSizeRef = useRef<{ width: number; height: number } | null>(null);
+  const viewRef = useRef<View>({ kind: "journal" });
+
+  useEffect(() => {
+    viewRef.current = view;
+  }, [view]);
 
   useEffect(() => {
     pagesRef.current = pages;
@@ -207,7 +216,9 @@ function App() {
   useEffect(() => {
     const unlistenPromise = listen<string>("vault://file-changed", (event) => {
       const path = event.payload;
-      if (!pagesRef.current.some((p) => p.path === path)) {
+      const inJournal = pagesRef.current.some((p) => p.path === path);
+      const inPageView = viewRef.current.kind === "page" && viewRef.current.page.path === path;
+      if (!inJournal && !inPageView) {
         return;
       }
       if (dirtyRef.current.has(path)) {
@@ -217,6 +228,9 @@ function App() {
       void readPage(path)
         .then((fresh) => {
           setPages((prev) => prev.map((p) => (p.path === path ? fresh : p)));
+          if (viewRef.current.kind === "page" && viewRef.current.page.path === path) {
+            setView({ kind: "page", page: fresh });
+          }
           setExternalWarnings((prev) => {
             if (!prev.has(path)) {
               return prev;
@@ -258,6 +272,9 @@ function App() {
     (nextConfig: Config) => {
       setConfig(nextConfig);
       setActivePanel(null);
+      // La pagina eventualmente aperta appartiene al vault vecchio: non ha
+      // più senso restare a guardarla.
+      setView({ kind: "journal" });
       // Il vault nuovo può avere un contenuto completamente diverso (non è
       // una copia): si scarta tutto lo stato della vista journal e si
       // ricomincia da capo. vaultVersion forza il remount delle sezioni
@@ -276,6 +293,24 @@ function App() {
 
   const handleThemeChanged = useCallback((nextConfig: Config) => {
     setConfig(nextConfig);
+  }, []);
+
+  /** Apre (creando se manca) la pagina cliccata e ci passa la vista. Flush
+   * di tutti gli editor montati prima di navigare, stesso Promise.all già
+   * usato alla chiusura finestra. */
+  const navigateToPage = useCallback(async (title: string) => {
+    await Promise.all(Array.from(editorHandles.current.values(), (handle) => handle.flush()));
+    try {
+      const page = await openPage(title);
+      setView({ kind: "page", page });
+    } catch (error) {
+      setLoadError(String(error));
+    }
+  }, []);
+
+  const returnToJournal = useCallback(async () => {
+    await Promise.all(Array.from(editorHandles.current.values(), (handle) => handle.flush()));
+    setView({ kind: "journal" });
   }, []);
 
   /** Restringe la finestra a COMPACT_WIDTH per affiancarla a un'altra
@@ -316,7 +351,9 @@ function App() {
       >
         <img src={faviconUrl} alt="" className="app-logo" width={20} height={20} />
         <span className="app-title">Ramus</span>
-        <JournalControls onToday={scrollToToday} onJumpToDate={(iso) => void jumpToDate(iso)} />
+        {view.kind === "journal" && (
+          <JournalControls onToday={scrollToToday} onJumpToDate={(iso) => void jumpToDate(iso)} />
+        )}
         <button
           type="button"
           className="settings-button compact-toggle"
@@ -340,7 +377,7 @@ function App() {
 
       {loadError && <div className="banner banner-error">{loadError}</div>}
 
-      <main className="app-body">
+      <main className="app-body" style={view.kind === "journal" ? undefined : { display: "none" }}>
         {pages.map((page, index) => (
           <JournalSection
             key={`${vaultVersion}:${page.path}`}
@@ -348,12 +385,23 @@ function App() {
             isToday={index === 0}
             externalChangeWarning={externalWarnings.has(page.path)}
             onDirtyChange={setDirty}
+            onLinkClick={(title) => void navigateToPage(title)}
             registerElement={registerElement}
             registerEditorHandle={registerEditorHandle}
           />
         ))}
         {hasMore && <div ref={sentinelRef} className="journal-sentinel" />}
       </main>
+
+      {view.kind === "page" && (
+        <PageView
+          page={view.page}
+          onDirtyChange={(dirty) => setDirty(view.page.path, dirty)}
+          onLinkClick={(title) => void navigateToPage(title)}
+          onBack={() => void returnToJournal()}
+          registerEditorHandle={(handle) => registerEditorHandle(view.page.path, handle)}
+        />
+      )}
 
       {activePanel === "settings" && config && (
         <SettingsPanel

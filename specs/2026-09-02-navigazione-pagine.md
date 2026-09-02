@@ -1,8 +1,13 @@
 # Navigazione: apertura pagina dal click su `[[link]]`
 
-Stato: pronta per l'implementazione. Dipende da
-`specs/2026-09-02-link-tag-parsing.md` (usa `Page.title`, `open_page`,
-`slugify`, la decorazione `.editor-link`) — va implementata dopo.
+Stato: implementata. Una semplificazione rispetto al testo originale:
+la vista journal resta sempre montata (nascosta via CSS, come
+descritto sotto — scroll ed editor preservati), ma `PageView` è
+montata/smontata in JSX come `SettingsPanel`/`AboutPanel` invece di
+restare anch'essa sempre viva. Costo accettato: rivisitare la stessa
+pagina dopo essere tornati al journal la ricrea da zero (un piccolo
+refetch + reinizializzazione dell'editor), non una perdita di dati
+(il flush avviene comunque prima di ogni navigazione).
 
 ## Motivazione
 

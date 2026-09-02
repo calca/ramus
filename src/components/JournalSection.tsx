@@ -10,6 +10,7 @@ interface JournalSectionProps {
   isToday: boolean;
   externalChangeWarning: boolean;
   onDirtyChange: (path: string, dirty: boolean) => void;
+  onLinkClick: (title: string) => void;
   registerElement: (path: string, element: HTMLElement | null) => void;
   registerEditorHandle: (path: string, handle: EditorHandle | null) => void;
 }
@@ -19,6 +20,7 @@ export function JournalSection({
   isToday,
   externalChangeWarning,
   onDirtyChange,
+  onLinkClick,
   registerElement,
   registerEditorHandle,
 }: JournalSectionProps) {
@@ -46,7 +48,12 @@ export function JournalSection({
           perderle.
         </div>
       )}
-      <Editor ref={setEditorHandle} page={page} onDirtyChange={handleDirtyChange} />
+      <Editor
+        ref={setEditorHandle}
+        page={page}
+        onDirtyChange={handleDirtyChange}
+        onLinkClick={onLinkClick}
+      />
     </section>
   );
 }

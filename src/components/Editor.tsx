@@ -1,4 +1,5 @@
 import { forwardRef, useEffect, useImperativeHandle, useRef } from "react";
+import type { MouseEvent } from "react";
 import { EditorContent, useEditor } from "@tiptap/react";
 
 import { writePage } from "../lib/commands";
@@ -18,10 +19,13 @@ export interface EditorHandle {
 interface EditorProps {
   page: Page;
   onDirtyChange: (dirty: boolean) => void;
+  /** Click su un [[link]] (la decorazione .editor-link porta il testo del
+   * link in data-title — nessun bisogno di ri-matchare la regex qui). */
+  onLinkClick?: (title: string) => void;
 }
 
 export const Editor = forwardRef<EditorHandle, EditorProps>(function Editor(
-  { page, onDirtyChange },
+  { page, onDirtyChange, onLinkClick },
   ref,
 ) {
   const pendingBlocksRef = useRef<Block[] | null>(null);
@@ -69,5 +73,13 @@ export const Editor = forwardRef<EditorHandle, EditorProps>(function Editor(
     return () => window.removeEventListener("blur", onBlur);
   }, [page.path]);
 
-  return <EditorContent className="ramus-editor" editor={editor} />;
+  const handleClick = (event: MouseEvent<HTMLDivElement>) => {
+    const link = (event.target as HTMLElement).closest(".editor-link");
+    const title = link?.getAttribute("data-title");
+    if (title) {
+      onLinkClick?.(title);
+    }
+  };
+
+  return <EditorContent className="ramus-editor" editor={editor} onClick={handleClick} />;
 });
