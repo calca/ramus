@@ -113,6 +113,10 @@ Azioni proposte per la v1 (tutte già esistenti come funzioni in
   nell'header.
 - **Impostazioni** (`setActivePanel("settings")`)
 - **Informazioni su Ramus** (`setActivePanel("about")`)
+- **Mostra scorciatoie** — aggiunta da
+  `specs/M4/2026-09-02-scorciatoie-configurabili.TODO.md` quando
+  implementata (apre la cheatsheet), non fa parte del taglio iniziale
+  di questa spec.
 
 Costruite dinamicamente (non un array statico puro, alcune sono
 condizionali sullo stato corrente) da una funzione
