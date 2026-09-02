@@ -287,13 +287,22 @@ body {
 
 .settings-about-link {
   display: block;
-  margin-top: 1.25rem;
   border: none;
   background: transparent;
   color: var(--ramus-sap);
   cursor: pointer;
   font-size: 0.85rem;
   padding: 0;
+}
+
+/* Solo nel pannello Impostazioni (non nel link "Codice sorgente" di
+   AboutPanel, che riusa la stessa classe ma è già centrato nel suo
+   .about-content): separatore sopra, link centrato. */
+.settings-panel > .settings-about-link {
+  margin-top: 1.25rem;
+  padding-top: 1rem;
+  text-align: center;
+  border-top: 1px solid color-mix(in srgb, var(--ramus-stone) 20%, transparent);
 }
 
 .about-content {

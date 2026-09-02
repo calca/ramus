@@ -108,6 +108,19 @@ export function Modal({ onClose, ariaLabel, children }: ModalProps) {
 identico. Stile CSS invariato: `.settings-backdrop`/`.settings-panel`
 restano nomi generici, non specifici delle Impostazioni — già lo erano.
 
+### Rifinitura: separatore e link centrato in Impostazioni
+
+Il link "Informazioni su Ramus" in fondo alle Impostazioni ha un
+separatore sopra (stesso stone-a-bassa-opacità già usato altrove, es.
+fra sezioni journal) ed è centrato, invece di allineato a sinistra come
+il resto del pannello. Il link "Codice sorgente" di `AboutPanel` riusa
+la stessa classe CSS (`.settings-about-link`) ma **non** eredita
+separatore/centratura: la regola è scoperta con il selettore
+`.settings-panel > .settings-about-link` (figlio diretto), che matcha
+solo l'uso in `SettingsPanel` — in `AboutPanel` il bottone è annidato
+dentro `.about-content`, non è figlio diretto di `.settings-panel`, e
+lì è già centrato dal genitore flex.
+
 ## Fuori scope
 
 - Changelog/release notes nella pagina About: non richiesto, SPEC.md
