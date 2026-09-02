@@ -33,7 +33,26 @@ function parseIsoDate(iso: string): Date {
 
 const WEEKDAY_FORMATTER = new Intl.DateTimeFormat("it-IT", { weekday: "long" });
 
-/** Header leggibile per una sezione di journal, es. "mercoledì 2026-09-02". */
+function daysBetween(fromIso: string, toIso: string): number {
+  const msPerDay = 24 * 60 * 60 * 1000;
+  const diff = parseIsoDate(toIso).getTime() - parseIsoDate(fromIso).getTime();
+  // Math.round, non una divisione secca: un giorno di cambio ora
+  // legale/solare dura 23 o 25 ore, non esattamente 24.
+  return Math.round(diff / msPerDay);
+}
+
+function relativeLabel(iso: string): string | null {
+  const days = daysBetween(iso, formatIsoDate(new Date()));
+  if (days === 0) return "Oggi";
+  if (days === 1) return "Ieri";
+  if (days >= 2 && days <= 6) return `${days} giorni fa`;
+  return null;
+}
+
+/** Header leggibile per una sezione di journal: relativo negli ultimi
+ * sette giorni ("Oggi 2026-09-02", "3 giorni fa 2026-08-30"), altrimenti
+ * assoluto ("mercoledì 2026-08-19"). */
 export function formatJournalHeader(iso: string): string {
-  return `${WEEKDAY_FORMATTER.format(parseIsoDate(iso))} ${iso}`;
+  const label = relativeLabel(iso) ?? WEEKDAY_FORMATTER.format(parseIsoDate(iso));
+  return `${label} ${iso}`;
 }
