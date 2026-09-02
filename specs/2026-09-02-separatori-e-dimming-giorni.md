@@ -99,23 +99,28 @@ verificabile a vista in questo sandbox (nessun accesso a
 screen-recording). Da confermare/correggere guardando l'app, come già
 fatto per il padding della title bar overlay.
 
-## Font leggermente più grande sul giorno a fuoco
+## Font leggermente più grande sul titolo del giorno a fuoco
 
 Aggiunta dopo il primo giro di implementazione, stesso meccanismo
-`:focus-within` (nessun nuovo stato):
+`:focus-within` (nessun nuovo stato). Prima versione applicava
+l'aumento al testo dei blocchi (`.ramus-editor`); corretto per
+applicarlo **solo al titolo** (`.journal-section-date`, la data del
+giorno) — il testo dei blocchi resta della stessa dimensione:
 
 ```css
-.journal-section:focus-within .ramus-editor {
-  font-size: 1.05em;
+.journal-section-date {
+  /* ... */
   transition: font-size 150ms ease;
+}
+
+.journal-section:focus-within .journal-section-date {
+  font-size: 1.05rem; /* base 0.95rem */
 }
 ```
 
-Rinforza l'enfasi del dimming: il giorno su cui si scrive non solo
-resta a piena opacità, ma si legge un filo più grande delle altre
-sezioni (affievolite). L'header della data (`.journal-section-date`) è
-in `rem`, non scala con questo — resta della stessa dimensione,
-volutamente: solo il testo dei blocchi cresce.
+Rinforza l'enfasi del dimming: il titolo del giorno su cui si scrive
+non solo resta a piena opacità, ma si legge un filo più grande di
+quello delle altre sezioni (affievolite).
 
 ## Fuori scope
 

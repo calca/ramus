@@ -121,12 +121,6 @@ body {
   transition: opacity 150ms ease;
 }
 
-/* Il giorno con focus si legge un filo più grande delle altre sezioni. */
-.journal-section:focus-within .ramus-editor {
-  font-size: 1.05em;
-  transition: font-size 150ms ease;
-}
-
 .journal-section .banner {
   padding: 0.4rem 0.6rem;
   border-radius: 6px;
@@ -139,6 +133,13 @@ body {
   color: var(--ramus-stone);
   text-transform: capitalize;
   margin: 0 0 0.5rem;
+  transition: font-size 150ms ease;
+}
+
+/* Solo il titolo (il giorno) del giorno con focus si legge un filo più
+   grande — il testo dei blocchi resta della stessa dimensione. */
+.journal-section:focus-within .journal-section-date {
+  font-size: 1.05rem;
 }
 
 .journal-section-date-today {
