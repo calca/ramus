@@ -135,6 +135,19 @@ della modalità compatta con un po' di margine).
   `theme`), da trattare come una spec a parte per non mischiare stato
   di sessione con configurazione permanente.
 
+### Bug scoperti dopo il primo giro di implementazione
+
+1. **Il bottone non faceva nulla**: `allow-set-size` non è nel set di
+   default della finestra (`core:default`) — stesso identico problema
+   di `allow-start-dragging` nella spec della title bar overlay.
+   `innerSize`/`scaleFactor` (lettura) sono coperti dal default,
+   `setSize` (scrittura) no. Aggiunto `core:window:allow-set-size`
+   esplicito in `capabilities/default.json`.
+2. **Bottone testuale invece che icona**: sostituito con lo stesso
+   stile icon-only dell'ingranaggio impostazioni (`⇔`), con
+   `aria-label`/`title` che cambia fra "Comprimi finestra"/"Espandi
+   finestra" invece del testo visibile fisso "Compatta"/"Espandi".
+
 ## Fuori scope
 
 - Layout dell'editor/contenuto adattivo oltre l'header (il corpo della

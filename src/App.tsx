@@ -308,8 +308,14 @@ function App() {
         <img src={faviconUrl} alt="" className="app-logo" width={20} height={20} />
         <span className="app-title">Ramus</span>
         <JournalControls onToday={scrollToToday} onJumpToDate={(iso) => void jumpToDate(iso)} />
-        <button type="button" className="settings-button" onClick={() => void toggleCompact()}>
-          {isCompact ? "Espandi" : "Compatta"}
+        <button
+          type="button"
+          className="settings-button"
+          aria-label={isCompact ? "Espandi finestra" : "Comprimi finestra"}
+          title={isCompact ? "Espandi finestra" : "Comprimi finestra"}
+          onClick={() => void toggleCompact()}
+        >
+          ⇔
         </button>
         {config && (
           <button
