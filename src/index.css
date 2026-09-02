@@ -102,7 +102,23 @@ body {
 
 .journal-section {
   max-width: 40rem;
-  margin: 0 auto 2.5rem;
+  margin: 0 auto;
+  padding-bottom: 2.5rem;
+}
+
+.journal-section + .journal-section {
+  border-top: 1px solid color-mix(in srgb, var(--ramus-stone) 20%, transparent);
+  padding-top: 2rem;
+}
+
+/* Affievolisce i giorni senza focus, ma solo quando qualcuno ce l'ha:
+   altrimenti al primo avvio (nessun editor a fuoco) risulterebbe tutto
+   spento. Richiede :has() (WebKit 15.4+/Chromium 105+/Firefox 121+):
+   dove non supportato la regola viene semplicemente ignorata, nessun
+   errore, solo niente dimming. */
+.app-body:has(.journal-section:focus-within) .journal-section:not(:focus-within) {
+  opacity: 0.5;
+  transition: opacity 150ms ease;
 }
 
 .journal-section .banner {
