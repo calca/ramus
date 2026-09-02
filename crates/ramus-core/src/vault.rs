@@ -10,6 +10,15 @@ pub struct Vault {
     pub root: PathBuf,
 }
 
+/// Conteggio delle note nel vault: usato solo per la sezione "info" delle
+/// impostazioni, non per la vista journal (che resta su `list_journals`
+/// paginato).
+#[derive(Debug, Clone, Copy, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
+pub struct VaultStats {
+    pub journal_count: usize,
+    pub page_count: usize,
+}
+
 impl Vault {
     pub fn new(root: PathBuf) -> Self {
         Self { root }
@@ -99,25 +108,9 @@ impl Vault {
         limit: usize,
     ) -> Result<Vec<Page>, CoreError> {
         let limit = limit.min(MAX_LIST_JOURNALS_LIMIT);
-        let journals_dir = self.root.join("journals");
-
-        let entries = match fs::read_dir(&journals_dir) {
-            Ok(entries) => entries,
-            Err(source) if source.kind() == std::io::ErrorKind::NotFound => return Ok(Vec::new()),
-            Err(source) => {
-                return Err(CoreError::Io {
-                    path: journals_dir,
-                    source,
-                })
-            }
-        };
 
         let mut dates = Vec::new();
-        for entry in entries {
-            let entry = entry.map_err(|source| CoreError::Io {
-                path: journals_dir.clone(),
-                source,
-            })?;
+        for entry in read_dir_entries(&self.root.join("journals"))? {
             let Some(date) = entry
                 .file_name()
                 .to_str()
@@ -139,9 +132,60 @@ impl Vault {
             .map(|date| self.read_page(&Self::journal_relative_path(date)))
             .collect()
     }
+
+    /// Conteggio di journal e pagine nel vault. Solo `read_dir`, nessun
+    /// parsing del contenuto dei file.
+    pub fn stats(&self) -> Result<VaultStats, CoreError> {
+        let journal_count = read_dir_entries(&self.root.join("journals"))?
+            .into_iter()
+            .filter(|entry| {
+                entry
+                    .file_name()
+                    .to_str()
+                    .and_then(|name| name.strip_suffix(".md"))
+                    .is_some_and(|stem| JournalDate::parse(stem).is_some())
+            })
+            .count();
+        let page_count = read_dir_entries(&self.root.join("pages"))?
+            .into_iter()
+            .filter(|entry| {
+                entry
+                    .file_name()
+                    .to_str()
+                    .is_some_and(|name| name.ends_with(".md"))
+            })
+            .count();
+        Ok(VaultStats {
+            journal_count,
+            page_count,
+        })
+    }
 }
 
 const MAX_LIST_JOURNALS_LIMIT: usize = 90;
+
+/// `fs::read_dir` che tratta una cartella mancante come vuota (sottocartella
+/// del vault non ancora scritta, non un errore).
+fn read_dir_entries(dir: &Path) -> Result<Vec<fs::DirEntry>, CoreError> {
+    let entries = match fs::read_dir(dir) {
+        Ok(entries) => entries,
+        Err(source) if source.kind() == std::io::ErrorKind::NotFound => return Ok(Vec::new()),
+        Err(source) => {
+            return Err(CoreError::Io {
+                path: dir.to_path_buf(),
+                source,
+            })
+        }
+    };
+    entries
+        .map(|entry| {
+            entry.map_err(|source| CoreError::Io {
+                path: dir.to_path_buf(),
+                source,
+            })
+        })
+        .collect()
+}
 
 /// Converte un nome in slug: minuscolo, spazi sostituiti da trattini.
 pub fn slugify(name: &str) -> String {
@@ -353,5 +397,31 @@ mod tests {
         let dir = TempDir::new("list-empty-vault");
         let vault = Vault::new(dir.path().to_path_buf());
         assert_eq!(vault.list_journals(None, 10).unwrap(), Vec::new());
+    }
+
+    #[test]
+    fn stats_counts_journals_and_pages_ignoring_junk() {
+        let dir = TempDir::new("stats-counts");
+        let vault = Vault::new(dir.path().to_path_buf());
+        write_journal(&vault, "2026-01-01", "a");
+        write_journal(&vault, "2026-01-02", "b");
+        vault
+            .write_page("pages/uno.md", &[Block::new("x")])
+            .unwrap();
+        std::fs::write(dir.path().join("journals/README.md"), "not a date").unwrap();
+        std::fs::write(dir.path().join("pages/note.txt"), "not markdown").unwrap();
+
+        let stats = vault.stats().unwrap();
+        assert_eq!(stats.journal_count, 2);
+        assert_eq!(stats.page_count, 1);
+    }
+
+    #[test]
+    fn stats_on_empty_vault_is_zero_not_error() {
+        let dir = TempDir::new("stats-empty-vault");
+        let vault = Vault::new(dir.path().to_path_buf());
+        let stats = vault.stats().unwrap();
+        assert_eq!(stats.journal_count, 0);
+        assert_eq!(stats.page_count, 0);
     }
 }

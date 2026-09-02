@@ -6,13 +6,18 @@ import faviconUrl from "../assets/favicon.svg";
 import type { EditorHandle } from "./components/Editor";
 import { JournalControls } from "./components/JournalControls";
 import { JournalSection } from "./components/JournalSection";
-import { listJournals, openToday, readPage } from "./lib/commands";
+import { SettingsPanel } from "./components/SettingsPanel";
+import { getConfig, listJournals, openToday, readPage } from "./lib/commands";
 import { journalDateFromPath } from "./lib/journal";
-import type { Page } from "./lib/types";
+import { applyTheme } from "./lib/theme";
+import type { Config, Page } from "./lib/types";
 
 const BATCH_SIZE = 14;
 
 function App() {
+  const [config, setConfig] = useState<Config | null>(null);
+  const [settingsOpen, setSettingsOpen] = useState(false);
+  const [vaultVersion, setVaultVersion] = useState(0);
   const [pages, setPages] = useState<Page[]>([]);
   const [dirtyPaths, setDirtyPaths] = useState<Set<string>>(new Set());
   const [externalWarnings, setExternalWarnings] = useState<Set<string>>(new Set());
@@ -89,6 +94,22 @@ function App() {
     return batch;
   }, []);
 
+  /** Apre oggi e il primo blocco di giorni precedenti da zero: usato sia
+   * all'avvio sia dopo un cambio vault (che può avere contenuto del tutto
+   * diverso, non è una copia). */
+  const resetAndLoadJournal = useCallback(async () => {
+    try {
+      const today = await openToday();
+      pagesRef.current = [today];
+      setPages([today]);
+      hasMoreRef.current = true;
+      setHasMore(true);
+      await fetchNextBatch();
+    } catch (error) {
+      setLoadError(String(error));
+    }
+  }, [fetchNextBatch]);
+
   const loadMore = useCallback(async () => {
     if (loadingRef.current || !hasMoreRef.current) {
       return;
@@ -142,20 +163,20 @@ function App() {
     [fetchNextBatch, scrollToPath],
   );
 
-  // Apertura automatica del journal di oggi, poi il primo blocco di giorni
-  // precedenti, senza schermate intermedie.
+  // Config (tema incluso) e apertura automatica del journal di oggi,
+  // senza schermate intermedie.
   useEffect(() => {
     void (async () => {
       try {
-        const today = await openToday();
-        pagesRef.current = [today];
-        setPages([today]);
-        await fetchNextBatch();
+        const cfg = await getConfig();
+        setConfig(cfg);
+        applyTheme(cfg.theme);
       } catch (error) {
         setLoadError(String(error));
       }
+      await resetAndLoadJournal();
     })();
-  }, [fetchNextBatch]);
+  }, [resetAndLoadJournal]);
 
   // Scroll infinito: quando la sentinella in fondo alla lista entra in
   // viewport, si carica il blocco successivo.
@@ -228,12 +249,46 @@ function App() {
     };
   }, []);
 
+  const handleVaultChanged = useCallback(
+    (nextConfig: Config) => {
+      setConfig(nextConfig);
+      setSettingsOpen(false);
+      // Il vault nuovo può avere un contenuto completamente diverso (non è
+      // una copia): si scarta tutto lo stato della vista journal e si
+      // ricomincia da capo. vaultVersion forza il remount delle sezioni
+      // anche per il giorno di oggi, il cui path relativo (dipende solo
+      // dalla data) resterebbe altrimenti identico fra un vault e l'altro.
+      setVaultVersion((v) => v + 1);
+      setDirtyPaths(new Set());
+      dirtyRef.current = new Set();
+      setExternalWarnings(new Set());
+      editorHandles.current.clear();
+      sectionElements.current.clear();
+      void resetAndLoadJournal();
+    },
+    [resetAndLoadJournal],
+  );
+
+  const handleThemeChanged = useCallback((nextConfig: Config) => {
+    setConfig(nextConfig);
+  }, []);
+
   return (
     <div className="app">
       <header className="app-header">
         <img src={faviconUrl} alt="" className="app-logo" width={20} height={20} />
         <span className="app-title">Ramus</span>
         <JournalControls onToday={scrollToToday} onJumpToDate={(iso) => void jumpToDate(iso)} />
+        {config && (
+          <button
+            type="button"
+            className="settings-button"
+            aria-label="Impostazioni"
+            onClick={() => setSettingsOpen(true)}
+          >
+            ⚙
+          </button>
+        )}
       </header>
 
       {loadError && <div className="banner banner-error">{loadError}</div>}
@@ -241,7 +296,7 @@ function App() {
       <main className="app-body">
         {pages.map((page, index) => (
           <JournalSection
-            key={page.path}
+            key={`${vaultVersion}:${page.path}`}
             page={page}
             isToday={index === 0}
             externalChangeWarning={externalWarnings.has(page.path)}
@@ -252,6 +307,15 @@ function App() {
         ))}
         {hasMore && <div ref={sentinelRef} className="journal-sentinel" />}
       </main>
+
+      {settingsOpen && config && (
+        <SettingsPanel
+          config={config}
+          onClose={() => setSettingsOpen(false)}
+          onVaultChanged={handleVaultChanged}
+          onThemeChanged={handleThemeChanged}
+        />
+      )}
     </div>
   );
 }

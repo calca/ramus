@@ -11,6 +11,14 @@ export interface Page {
   blocks: Block[];
 }
 
+export type Theme = "light" | "dark" | "system";
+
 export interface Config {
   vault_path: string;
+  theme: Theme;
+}
+
+export interface VaultStats {
+  journal_count: number;
+  page_count: number;
 }

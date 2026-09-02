@@ -6,7 +6,19 @@
   --ramus-paper: #F5F1E8;
 }
 
-[data-theme="dark"] {
+/* Tema "sistema" (nessun data-theme esplicito): segue il sistema operativo. */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --ramus-ink: #F5F1E8;
+    --ramus-sap: #4E9B77;
+    --ramus-amber: #E0A745;
+    --ramus-stone: #9C978D;
+    --ramus-paper: #16150F;
+  }
+}
+
+/* Tema esplicito dalle Impostazioni: vince sempre sul sistema. */
+:root[data-theme="dark"] {
   --ramus-ink: #F5F1E8;
   --ramus-sap: #4E9B77;
   --ramus-amber: #E0A745;

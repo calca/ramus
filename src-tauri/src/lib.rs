@@ -3,23 +3,20 @@ mod commands;
 use std::sync::Mutex;
 
 use commands::AppState;
-use ramus_core::{watcher, Config, Vault};
-use tauri::{Emitter, Manager};
+use ramus_core::{Config, Vault};
+use tauri::Manager;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_opener::init())
+        .plugin(tauri_plugin_dialog::init())
         .setup(|app| {
             let config = Config::load_or_init()?;
             let vault_root = config.vault_path.clone();
             Vault::new(vault_root.clone()).ensure_exists()?;
 
-            let app_handle = app.handle().clone();
-            let watcher = watcher::watch_vault(vault_root, move |change| {
-                let relative_path = change.relative_path.to_string_lossy().to_string();
-                let _ = app_handle.emit("vault://file-changed", relative_path);
-            })?;
+            let watcher = commands::spawn_watcher(app.handle(), vault_root)?;
 
             app.manage(AppState {
                 config: Mutex::new(config),
@@ -35,6 +32,9 @@ pub fn run() {
             commands::read_page,
             commands::write_page,
             commands::list_journals,
+            commands::pick_vault_folder,
+            commands::vault_stats,
+            commands::set_theme,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

@@ -7,7 +7,7 @@ pub mod vault;
 pub mod watcher;
 
 pub use block::{Block, Page};
-pub use config::Config;
+pub use config::{Config, Theme};
 pub use error::CoreError;
 pub use journal_date::JournalDate;
-pub use vault::Vault;
+pub use vault::{Vault, VaultStats};
