@@ -275,7 +275,7 @@ function App() {
 
   return (
     <div className="app">
-      <header className="app-header">
+      <header className="app-header" data-tauri-drag-region="true">
         <img src={faviconUrl} alt="" className="app-logo" width={20} height={20} />
         <span className="app-title">Ramus</span>
         <JournalControls onToday={scrollToToday} onJumpToDate={(iso) => void jumpToDate(iso)} />
