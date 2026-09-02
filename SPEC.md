@@ -193,7 +193,10 @@ il marchio contro il bordo.
 - Outliner con indent/outdent e navigazione da tastiera
 - Persistenza su file con debounce
 - File watcher con ricarica sicura
-- Navigazione fra giorni (precedente / successivo / oggi)
+- Vista journal verticale stile Logseq: oggi in cima, i giorni
+  precedenti sotto in scroll infinito, più salto a data arbitraria —
+  sostituisce la navigazione a giorno singolo (precedente/successivo)
+  originariamente prevista qui, vedi `specs/2026-09-02-journal-vista-verticale.md`
 
 **M2 — Link e ricerca**
 - Parsing di `[[link]]` e `#tag`, autocomplete durante la digitazione
