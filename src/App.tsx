@@ -3,6 +3,7 @@ import { listen } from "@tauri-apps/api/event";
 import { getCurrentWindow } from "@tauri-apps/api/window";
 
 import faviconUrl from "../assets/favicon.svg";
+import { AboutPanel } from "./components/AboutPanel";
 import type { EditorHandle } from "./components/Editor";
 import { JournalControls } from "./components/JournalControls";
 import { JournalSection } from "./components/JournalSection";
@@ -16,7 +17,7 @@ const BATCH_SIZE = 14;
 
 function App() {
   const [config, setConfig] = useState<Config | null>(null);
-  const [settingsOpen, setSettingsOpen] = useState(false);
+  const [activePanel, setActivePanel] = useState<"settings" | "about" | null>(null);
   const [vaultVersion, setVaultVersion] = useState(0);
   const [pages, setPages] = useState<Page[]>([]);
   const [dirtyPaths, setDirtyPaths] = useState<Set<string>>(new Set());
@@ -252,7 +253,7 @@ function App() {
   const handleVaultChanged = useCallback(
     (nextConfig: Config) => {
       setConfig(nextConfig);
-      setSettingsOpen(false);
+      setActivePanel(null);
       // Il vault nuovo può avere un contenuto completamente diverso (non è
       // una copia): si scarta tutto lo stato della vista journal e si
       // ricomincia da capo. vaultVersion forza il remount delle sezioni
@@ -284,7 +285,7 @@ function App() {
             type="button"
             className="settings-button"
             aria-label="Impostazioni"
-            onClick={() => setSettingsOpen(true)}
+            onClick={() => setActivePanel("settings")}
           >
             ⚙
           </button>
@@ -308,14 +309,16 @@ function App() {
         {hasMore && <div ref={sentinelRef} className="journal-sentinel" />}
       </main>
 
-      {settingsOpen && config && (
+      {activePanel === "settings" && config && (
         <SettingsPanel
           config={config}
-          onClose={() => setSettingsOpen(false)}
+          onClose={() => setActivePanel(null)}
           onVaultChanged={handleVaultChanged}
           onThemeChanged={handleThemeChanged}
+          onShowAbout={() => setActivePanel("about")}
         />
       )}
+      {activePanel === "about" && <AboutPanel onClose={() => setActivePanel(null)} />}
     </div>
   );
 }

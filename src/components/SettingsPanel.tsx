@@ -4,12 +4,14 @@ import { revealItemInDir } from "@tauri-apps/plugin-opener";
 import { applyTheme } from "../lib/theme";
 import { pickVaultFolder, setTheme as setThemeCommand, setVaultPath, vaultStats } from "../lib/commands";
 import type { Config, Theme, VaultStats } from "../lib/types";
+import { Modal } from "./Modal";
 
 interface SettingsPanelProps {
   config: Config;
   onClose: () => void;
   onVaultChanged: (config: Config) => void;
   onThemeChanged: (config: Config) => void;
+  onShowAbout: () => void;
 }
 
 const THEME_LABELS: Record<Theme, string> = {
@@ -18,7 +20,13 @@ const THEME_LABELS: Record<Theme, string> = {
   system: "Sistema",
 };
 
-export function SettingsPanel({ config, onClose, onVaultChanged, onThemeChanged }: SettingsPanelProps) {
+export function SettingsPanel({
+  config,
+  onClose,
+  onVaultChanged,
+  onThemeChanged,
+  onShowAbout,
+}: SettingsPanelProps) {
   const [stats, setStats] = useState<VaultStats | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -28,16 +36,6 @@ export function SettingsPanel({ config, onClose, onVaultChanged, onThemeChanged 
       .then(setStats)
       .catch((err: unknown) => setError(String(err)));
   }, [config.vault_path]);
-
-  useEffect(() => {
-    const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape") {
-        onClose();
-      }
-    };
-    window.addEventListener("keydown", onKeyDown);
-    return () => window.removeEventListener("keydown", onKeyDown);
-  }, [onClose]);
 
   const handleChangeVault = async () => {
     setError(null);
@@ -80,59 +78,55 @@ export function SettingsPanel({ config, onClose, onVaultChanged, onThemeChanged 
   };
 
   return (
-    <div className="settings-backdrop" onClick={onClose}>
-      <div
-        className="settings-panel"
-        role="dialog"
-        aria-modal="true"
-        aria-label="Impostazioni"
-        onClick={(event) => event.stopPropagation()}
-      >
-        <header className="settings-panel-header">
-          <h2>Impostazioni</h2>
-          <button type="button" onClick={onClose} aria-label="Chiudi">
-            ✕
+    <Modal onClose={onClose} ariaLabel="Impostazioni">
+      <header className="settings-panel-header">
+        <h2>Impostazioni</h2>
+        <button type="button" onClick={onClose} aria-label="Chiudi">
+          ✕
+        </button>
+      </header>
+
+      {error && <div className="banner banner-error">{error}</div>}
+
+      <section className="settings-section">
+        <h3>Vault</h3>
+        <p className="settings-vault-path">{config.vault_path}</p>
+        <div className="settings-vault-actions">
+          <button type="button" disabled={busy} onClick={() => void handleChangeVault()}>
+            Cambia
           </button>
-        </header>
+          <button type="button" onClick={() => void handleOpenInFileManager()}>
+            Apri nel file manager
+          </button>
+        </div>
+        {stats && (
+          <p className="settings-vault-stats">
+            {stats.journal_count} journal, {stats.page_count} pagine
+          </p>
+        )}
+      </section>
 
-        {error && <div className="banner banner-error">{error}</div>}
+      <section className="settings-section">
+        <h3>Tema</h3>
+        <div className="settings-theme-options">
+          {(Object.keys(THEME_LABELS) as Theme[]).map((option) => (
+            <label key={option}>
+              <input
+                type="radio"
+                name="theme"
+                value={option}
+                checked={config.theme === option}
+                onChange={() => void handleThemeChange(option)}
+              />
+              {THEME_LABELS[option]}
+            </label>
+          ))}
+        </div>
+      </section>
 
-        <section className="settings-section">
-          <h3>Vault</h3>
-          <p className="settings-vault-path">{config.vault_path}</p>
-          <div className="settings-vault-actions">
-            <button type="button" disabled={busy} onClick={() => void handleChangeVault()}>
-              Cambia
-            </button>
-            <button type="button" onClick={() => void handleOpenInFileManager()}>
-              Apri nel file manager
-            </button>
-          </div>
-          {stats && (
-            <p className="settings-vault-stats">
-              {stats.journal_count} journal, {stats.page_count} pagine
-            </p>
-          )}
-        </section>
-
-        <section className="settings-section">
-          <h3>Tema</h3>
-          <div className="settings-theme-options">
-            {(Object.keys(THEME_LABELS) as Theme[]).map((option) => (
-              <label key={option}>
-                <input
-                  type="radio"
-                  name="theme"
-                  value={option}
-                  checked={config.theme === option}
-                  onChange={() => void handleThemeChange(option)}
-                />
-                {THEME_LABELS[option]}
-              </label>
-            ))}
-          </div>
-        </section>
-      </div>
-    </div>
+      <button type="button" className="settings-about-link" onClick={onShowAbout}>
+        Informazioni su Ramus
+      </button>
+    </Modal>
   );
 }
