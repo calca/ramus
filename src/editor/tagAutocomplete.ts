@@ -1,6 +1,6 @@
 // Autocomplete per #tag: stesso @tiptap/suggestion di linkAutocomplete.ts,
 // ma senza voce "Crea «query»" — un tag è testo libero, non c'è nulla da
-// materializzare su disco (vedi specs/2026-09-02-autocomplete-tag.md). Se
+// materializzare su disco (vedi specs/M2/2026-09-02-autocomplete-tag.DONE.md). Se
 // nessun tag esistente combacia, il popup semplicemente non appare: il
 // testo digitato resta comunque un tag valido, riconosciuto a prescindere
 // da linkTagHighlight.ts.

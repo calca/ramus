@@ -21,7 +21,7 @@ richiede `rust-version 1.86` (il toolchain locale è 1.96, compatibile).
 
 ## Perché un indice separato da quello SQLite
 
-`specs/2026-09-02-indice-sqlite.md` aveva messo esplicitamente "ricerca
+`specs/M2/2026-09-02-indice-sqlite.DONE.md` aveva messo esplicitamente "ricerca
 full-text (tantivy, indice separato)" fuori scope. SQLite (via `LIKE`
 o anche FTS5) potrebbe bastare per un vault piccolo, ma tantivy dà
 tokenizzazione, ranking per rilevanza e snippet con evidenziazione
@@ -178,7 +178,7 @@ con "un match sul titolo è un match valido anche senza estratto".
 
 Per evitare che `SearchIndex` debba tenere una propria contabilità di
 mtime (duplicando la logica già scritta per l'indice SQLite in
-`specs/2026-09-02-indice-sqlite.md`), **`Index::sync` cambia firma**
+`specs/M2/2026-09-02-indice-sqlite.DONE.md`), **`Index::sync` cambia firma**
 per restituire cosa ha effettivamente cambiato:
 
 ```rust

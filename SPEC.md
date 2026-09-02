@@ -197,20 +197,20 @@ il marchio contro il bordo.
 - Vista journal verticale stile Logseq: oggi in cima, i giorni
   precedenti sotto in scroll infinito, più salto a data arbitraria —
   sostituisce la navigazione a giorno singolo (precedente/successivo)
-  originariamente prevista qui, vedi `specs/2026-09-02-journal-vista-verticale.md`
+  originariamente prevista qui, vedi `specs/M1/2026-09-02-journal-vista-verticale.DONE.md`
 
 **M2 — Link e ricerca** (completa)
 - Parsing di `[[link]]` e `#tag`, autocomplete durante la digitazione —
   autocomplete dei tag arrivato dopo l'indice SQLite (serviva
-  `list_tags`), vedi `specs/2026-09-02-autocomplete-tag.md`
+  `list_tags`), vedi `specs/M2/2026-09-02-autocomplete-tag.DONE.md`
 - Indice SQLite rigenerabile con pagine, link e blocchi
 - Pannello backlink sulla pagina aperta — backlink da un journal
   mostrati come testo non cliccabile, non esiste ancora una vista per
   un singolo giorno isolato dal journal verticale, vedi
-  `specs/2026-09-02-pannello-backlink.md`
+  `specs/M2/2026-09-02-pannello-backlink.DONE.md`
 - Ricerca full-text con `tantivy` — granularità per pagina/giorno
   intero (non per blocco), scorciatoia configurabile in Impostazioni,
-  vedi `specs/2026-09-02-ricerca-full-text.md`
+  vedi `specs/M2/2026-09-02-ricerca-full-text.DONE.md`
 
 **M3 — Git**
 - Commit automatico su intervallo configurabile

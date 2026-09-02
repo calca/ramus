@@ -8,7 +8,7 @@ interface BacklinksSectionProps {
 
 /** Sezione "Backlink" sotto l'editor di una pagina: chi la linka, da
  * dove. Nessuna sezione visibile se non c'è nulla da mostrare (vedi
- * specs/2026-09-02-pannello-backlink.md). I backlink da un journal non
+ * specs/M2/2026-09-02-pannello-backlink.DONE.md). I backlink da un journal non
  * sono cliccabili: non esiste ancora una vista/scroll-to-day isolata
  * per un singolo giorno. */
 export function BacklinksSection({ backlinks, onSelect }: BacklinksSectionProps) {

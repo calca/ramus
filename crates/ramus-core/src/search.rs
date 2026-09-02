@@ -1,5 +1,5 @@
 //! Indice full-text (tantivy) di pagine/journal, per pagina intera — vedi
-//! specs/2026-09-02-ricerca-full-text.md. "Dumb": non tiene una propria
+//! specs/M2/2026-09-02-ricerca-full-text.DONE.md. "Dumb": non tiene una propria
 //! contabilità di mtime, viene guidato dal diff già calcolato da
 //! `Index::sync` (`SyncOutcome`, in `index.rs`) e dagli stessi punti di
 //! chiamata già usati per `Index::refresh_page`.

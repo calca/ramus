@@ -14,7 +14,7 @@ export interface TagSuggestionListHandle {
  * LinkSuggestionList (montato/smontato da tagAutocomplete.ts via
  * ReactRenderer), ma su una lista di stringhe invece di candidati con
  * kind "existing"/"create" — un tag non ha nulla da creare, vedi
- * specs/2026-09-02-autocomplete-tag.md. */
+ * specs/M2/2026-09-02-autocomplete-tag.DONE.md. */
 export const TagSuggestionList = forwardRef<TagSuggestionListHandle, TagSuggestionListProps>(
   function TagSuggestionList({ items, command }, ref) {
     const [selected, setSelected] = useState(0);

@@ -1,7 +1,7 @@
 # Vista Journal verticale (stile Logseq)
 
-Stato: decisioni prese, pronta per l'implementazione. `BATCH_SIZE = 14`
-giorni per blocco; è previsto anche un salto a data arbitraria (vedi sotto).
+Stato: implementata. `BATCH_SIZE = 14` giorni per blocco; salto a data
+arbitraria incluso (vedi sotto).
 
 ## Motivazione
 

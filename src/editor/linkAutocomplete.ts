@@ -1,5 +1,5 @@
 // Autocomplete per [[link]]: @tiptap/suggestion per trigger-detection e
-// navigazione da tastiera (motivato in specs/2026-09-02-link-tag-parsing.md
+// navigazione da tastiera (motivato in specs/M2/2026-09-02-link-tag-parsing.DONE.md
 // — superficie fragile da reimplementare a mano), popup posizionato a
 // mano via clientRect() (niente tippy.js: un div position:fixed basta,
 // una dipendenza in meno).

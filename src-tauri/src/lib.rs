@@ -23,7 +23,7 @@ pub fn run() {
             let outcome = index.sync(&vault)?;
 
             // L'indice di ricerca è "dumb" (vedi
-            // specs/2026-09-02-ricerca-full-text.md): riceve esattamente i
+            // specs/M2/2026-09-02-ricerca-full-text.DONE.md): riceve esattamente i
             // path che Index::sync ha già rilevato come nuovi/cambiati/
             // rimossi, nessuna contabilità di mtime propria.
             let search_index = SearchIndex::open(&vault_root)?;

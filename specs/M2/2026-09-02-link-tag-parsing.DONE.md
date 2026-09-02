@@ -200,7 +200,7 @@ popup di suggerimenti arriva dopo.
 
 - Click su un `[[link]]` per navigare alla pagina: non esiste ancora
   una vista pagina (solo la vista journal verticale) — spec separata,
-  vedi `specs/2026-09-02-navigazione-pagine.md`.
+  vedi `specs/M2/2026-09-02-navigazione-pagine.DONE.md`.
 - Autocomplete dei tag (vedi sopra): arriva con l'indice SQLite.
 - Rinominare una pagina (cambiare il `title` di una pagina esistente):
   nessuna UI per farlo — il titolo si imposta solo alla creazione.

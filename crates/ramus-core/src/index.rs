@@ -1,5 +1,5 @@
 //! Indice SQLite di pagine/blocchi/link/tag (vedi
-//! specs/2026-09-02-indice-sqlite.md). Derivato e rigenerabile dai file
+//! specs/M2/2026-09-02-indice-sqlite.DONE.md). Derivato e rigenerabile dai file
 //! markdown (SPEC.md, principio #1): se il file `.sqlite3` viene cancellato,
 //! `sync` lo ricostruisce identico dal vault.
 
@@ -30,7 +30,7 @@ pub struct Backlink {
 
 /// Cosa ha effettivamente cambiato un `Index::sync`: guida `SearchIndex`
 /// (indice tantivy, `search.rs`) senza che debba tenere una propria
-/// contabilità di mtime — vedi specs/2026-09-02-ricerca-full-text.md.
+/// contabilità di mtime — vedi specs/M2/2026-09-02-ricerca-full-text.DONE.md.
 #[derive(Debug, Clone, Default, PartialEq, Eq)]
 pub struct SyncOutcome {
     pub refreshed: Vec<String>,
@@ -287,9 +287,9 @@ fn file_mtime(path: &Path) -> Result<i64, CoreError> {
 
 /// Appiattisce l'albero dei blocchi in ordine di visita pre-order: la
 /// gerarchia non serve nell'indice (deciso in
-/// specs/2026-09-02-indice-sqlite.md), solo un ordine stabile. `pub(crate)`:
+/// specs/M2/2026-09-02-indice-sqlite.DONE.md), solo un ordine stabile. `pub(crate)`:
 /// riusata anche da `search.rs` per lo stesso motivo (niente duplicazione,
-/// vedi specs/2026-09-02-ricerca-full-text.md).
+/// vedi specs/M2/2026-09-02-ricerca-full-text.DONE.md).
 pub(crate) fn flatten_blocks(blocks: &[Block]) -> Vec<&Block> {
     fn walk<'a>(blocks: &'a [Block], flat: &mut Vec<&'a Block>) {
         for block in blocks {

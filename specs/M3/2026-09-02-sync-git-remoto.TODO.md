@@ -1,7 +1,7 @@
 # Sync Git — parte remota (pull, push, conflitti)
 
 Stato: proposta, in attesa di conferma. Presuppone
-`specs/2026-09-02-sync-git-locale.md` già implementata (repo Git
+`specs/M3/2026-09-02-sync-git-locale.TODO.md` già implementata (repo Git
 attivo, commit automatico) — qui si aggiunge solo la parte di rete.
 
 ## Motivazione

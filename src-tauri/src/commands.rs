@@ -59,7 +59,7 @@ pub(crate) fn spawn_watcher(
         // Tiene entrambi gli indici allineati anche per modifiche esterne
         // (non passate da write_page). Un file rimosso resta stale fino al
         // prossimo `sync` completo (apertura vault): coerente con
-        // specs/2026-09-02-indice-sqlite.md, non vale la complessità di
+        // specs/M2/2026-09-02-indice-sqlite.DONE.md, non vale la complessità di
         // gestirlo anche qui.
         if let Some(state) = app_handle.try_state::<AppState>() {
             if let (Ok(config), Ok(index), Ok(search_index)) = (
@@ -112,7 +112,7 @@ pub fn set_vault_path(
 
     // Gli indici erano per il vault precedente: se ne aprono di nuovi per
     // la cartella appena scelta e li si allinea subito al suo contenuto.
-    // L'indice di ricerca è "dumb" (vedi specs/2026-09-02-ricerca-full-text.md):
+    // L'indice di ricerca è "dumb" (vedi specs/M2/2026-09-02-ricerca-full-text.DONE.md):
     // riceve esattamente i path che l'indice SQLite ha rilevato come
     // nuovi/cambiati/rimossi, nessuna logica di staleness propria.
     let new_index = Index::open(&vault.root)?;

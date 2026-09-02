@@ -6,11 +6,11 @@ Stato: implementata. `positionPopup` estratto in
 
 ## Motivazione
 
-Debito esplicitamente rimandato in `specs/2026-09-02-link-tag-parsing.md`
+Debito esplicitamente rimandato in `specs/M2/2026-09-02-link-tag-parsing.DONE.md`
 ("`#tag`: solo riconoscimento, nessun autocomplete... Meglio aspettare
 l'indice: il riconoscimento visivo di `#tag` resta comunque, solo il
 popup di suggerimenti arriva dopo"). L'indice SQLite
-(`specs/2026-09-02-indice-sqlite.md`) è implementato e già espone
+(`specs/M2/2026-09-02-indice-sqlite.DONE.md`) è implementato e già espone
 `Index::list_tags` / il command Tauri `list_tags`, inutilizzati finora.
 Questa spec è il primo consumo di quel command.
 

@@ -7,11 +7,11 @@ nessuna obiezione ricevuta — si procede con la proposta di default).
 ## Motivazione
 
 Terzo pezzo di M2 (SPEC.md): "Pannello backlink sulla pagina aperta".
-`specs/2026-09-02-navigazione-pagine.md` aveva già rimandato
+`specs/M2/2026-09-02-navigazione-pagine.DONE.md` aveva già rimandato
 esplicitamente questa parte in attesa dell'indice SQLite ("Pannello
 backlink vero e proprio... è esattamente il lavoro dell'indice SQLite —
 spec a parte, dopo questa"). L'indice è implementato
-(`specs/2026-09-02-indice-sqlite.md`) ed espone già
+(`specs/M2/2026-09-02-indice-sqlite.DONE.md`) ed espone già
 `Index::find_backlinks` / il command Tauri `find_backlinks` e il
 wrapper frontend `findBacklinks`, tutti inutilizzati finora. Questa
 spec è il primo consumo.
@@ -20,10 +20,10 @@ spec è il primo consumo.
 
 Solo in `PageView.tsx` (mai nella vista journal): un giorno di journal
 non è oggi un target di `[[link]]` valido (deciso fuori scope in
-`specs/2026-09-02-link-tag-parsing.md`), quindi non può avere
+`specs/M2/2026-09-02-link-tag-parsing.DONE.md`), quindi non può avere
 backlink in entrata. Sezione nuova sotto l'editor, dentro lo stesso
 `.page-view-content` centrato (coerente con l'allineamento già corretto
-in `specs/2026-09-02-navigazione-pagine.md` — niente contenitore
+in `specs/M2/2026-09-02-navigazione-pagine.DONE.md` — niente contenitore
 separato con la sua larghezza).
 
 ```tsx
@@ -64,7 +64,7 @@ function backlinkTarget(page: Page): string {
   riguardano cosa linkano **altre** pagine verso questa, e mentre
   `PageView` è aperta l'utente non può modificare altre pagine in
   parallelo (la vista journal resta montata ma non visibile/a fuoco —
-  vedi `specs/2026-09-02-navigazione-pagine.md`). Un link aggiunto
+  vedi `specs/M2/2026-09-02-navigazione-pagine.DONE.md`). Un link aggiunto
   altrove diventa visibile alla prossima apertura di questa pagina,
   già garantito perché `write_page` chiama `Index::refresh_page` prima
   di ogni ritorno (comportamento esistente, nessuna modifica).
@@ -168,7 +168,7 @@ interface BacklinksSectionProps {
   cambiare lo schema dati.
 - Backlink verso un **journal** (linkare `[[2026-09-01]]`): non esiste
   ancora come sintassi valida (fuori scope già in
-  `specs/2026-09-02-link-tag-parsing.md`), quindi non può esistere nel
+  `specs/M2/2026-09-02-link-tag-parsing.DONE.md`), quindi non può esistere nel
   pannello di un journal — coerente col fatto che la sezione non
   esiste affatto nella vista journal.
 - Contare/mostrare quante volte una pagina è linkata (badge numerico

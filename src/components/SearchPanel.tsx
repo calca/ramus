@@ -14,7 +14,7 @@ interface SearchPanelProps {
 const DEBOUNCE_MS = 250;
 
 /** Pannello di ricerca full-text (M2): granularità per pagina/giorno
- * intero, mai per blocco — vedi specs/2026-09-02-ricerca-full-text.md. */
+ * intero, mai per blocco — vedi specs/M2/2026-09-02-ricerca-full-text.DONE.md. */
 export function SearchPanel({ onClose, onSelect }: SearchPanelProps) {
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<SearchHit[]>([]);

@@ -67,3 +67,6 @@ Prima di dichiarare finito un task: `cargo test`, `cargo clippy` e
   richiedere qualcosa che è lì dentro, fermati e chiedi.
 - Modifiche al formato su disco o al modello dati vanno proposte prima di
   essere implementate: rompono la compatibilità con i vault esistenti.
+- Per un task non banale, scrivi prima una spec in `specs/`, aspetta
+  conferma o correzioni, implementa solo dopo un via libera esplicito.
+  Convenzioni di nome, cartella e stato: vedi `specs/README.md`.
