@@ -406,12 +406,12 @@ body {
 .page-view {
   flex: 1;
   overflow-y: auto;
-  padding: 1.5rem 1.25rem 3rem;
+  padding: 3rem 1.25rem 3rem;
 }
 
 .page-view-header {
   max-width: 40rem;
-  margin: 0 auto 1.5rem;
+  margin: 0 auto 2rem;
 }
 
 .page-view-back {
