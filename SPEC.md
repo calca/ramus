@@ -224,9 +224,15 @@ il marchio contro il bordo.
   compatto, status bar in basso, idee simili che emergono nel tempo.
 
 **M5 — AI**
-- Da specificare più avanti. Vincolo già deciso: nessun invio automatico di
-  contenuti a servizi esterni. Ogni chiamata deve essere esplicita per blocco
-  o per pagina, con indicazione chiara di cosa viene inviato.
+- Non un'AI integrata nell'app: un server MCP (`ramus-mcp`, nuovo
+  crate binario, indipendente dalla GUI) che espone il vault a un
+  agente/tool AI già scelto e configurato dall'utente (Claude Code,
+  Claude Desktop, o qualunque client MCP) — vincolo "nessun invio
+  automatico" soddisfatto perché Ramus non contatta mai un'AI, è
+  l'agente a interrogare Ramus. Strumenti di sola lettura (ricerca,
+  lettura pagine/journal, backlink, tag) prima, di scrittura poi —
+  vedi `specs/M5/2026-09-02-mcp-server-lettura.TODO.md` e
+  `specs/M5/2026-09-02-mcp-server-scrittura.TODO.md`.
 
 ## Fuori scope (non implementare, nemmeno "in preparazione")
 
