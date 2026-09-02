@@ -29,3 +29,9 @@ export interface VaultStats {
   journal_count: number;
   page_count: number;
 }
+
+export interface Backlink {
+  source_path: string;
+  source_title: string | null;
+  block_content: string;
+}

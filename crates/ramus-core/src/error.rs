@@ -29,6 +29,9 @@ pub enum CoreError {
 
     #[error("errore di configurazione: {0}")]
     Config(String),
+
+    #[error("errore di indice: {0}")]
+    Index(#[from] rusqlite::Error),
 }
 
 impl Serialize for CoreError {

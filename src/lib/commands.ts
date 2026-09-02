@@ -3,7 +3,7 @@
 
 import { invoke } from "@tauri-apps/api/core";
 
-import type { Block, Config, Page, PageSummary, Theme, VaultStats } from "./types";
+import type { Backlink, Block, Config, Page, PageSummary, Theme, VaultStats } from "./types";
 
 export function getConfig(): Promise<Config> {
   return invoke<Config>("get_config");
@@ -51,5 +51,15 @@ export function listPages(): Promise<PageSummary[]> {
 /** Apre (creando se non esiste) la pagina identificata da `name`. */
 export function openPage(name: string): Promise<Page> {
   return invoke<Page>("open_page", { name });
+}
+
+/** Blocchi che linkano a `targetTitle`, in qualunque pagina o journal. */
+export function findBacklinks(targetTitle: string): Promise<Backlink[]> {
+  return invoke<Backlink[]>("find_backlinks", { targetTitle });
+}
+
+/** Tag distinti presenti nel vault, in ordine alfabetico. */
+export function listTags(): Promise<string[]> {
+  return invoke<string[]>("list_tags");
 }
 

@@ -3,7 +3,7 @@ mod commands;
 use std::sync::Mutex;
 
 use commands::AppState;
-use ramus_core::{Config, Vault};
+use ramus_core::{Config, Index, Vault};
 use tauri::Manager;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
@@ -14,12 +14,17 @@ pub fn run() {
         .setup(|app| {
             let config = Config::load_or_init()?;
             let vault_root = config.vault_path.clone();
-            Vault::new(vault_root.clone()).ensure_exists()?;
+            let vault = Vault::new(vault_root.clone());
+            vault.ensure_exists()?;
 
-            let watcher = commands::spawn_watcher(app.handle(), vault_root)?;
+            let watcher = commands::spawn_watcher(app.handle(), vault_root.clone())?;
+
+            let index = Index::open(&vault_root)?;
+            index.sync(&vault)?;
 
             app.manage(AppState {
                 config: Mutex::new(config),
+                index: Mutex::new(index),
                 watcher: Mutex::new(Some(watcher)),
             });
 
@@ -37,6 +42,8 @@ pub fn run() {
             commands::set_theme,
             commands::list_pages,
             commands::open_page,
+            commands::find_backlinks,
+            commands::list_tags,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

@@ -15,3 +15,7 @@ dirs = "5"
 # nessuna delle piattaforme target: senza una libreria l'app aprirebbe il
 # giorno sbagliato vicino alla mezzanotte per gli utenti fuori UTC.
 chrono = { version = "0.4", default-features = false, features = ["clock", "std"] }
+# rusqlite (indice locale pagine/blocchi/link/tag, M2 di SPEC.md): pre-approvata
+# nella sezione Stack di SPEC.md. `bundled` compila sqlite3 in-process, niente
+# libreria di sistema da richiedere all'utente.
+rusqlite = { version = "0.40", features = ["bundled"] }
