@@ -4,7 +4,7 @@
 use std::path::PathBuf;
 use std::sync::{Mutex, MutexGuard};
 
-use ramus_core::{Block, Config, CoreError, Page, Vault};
+use ramus_core::{Block, Config, CoreError, JournalDate, Page, Vault};
 use tauri::State;
 
 pub struct AppState {
@@ -59,4 +59,17 @@ pub fn write_page(
 ) -> Result<(), CoreError> {
     let config = lock_config(&state)?;
     Vault::new(config.vault_path.clone()).write_page(&path, &blocks)
+}
+
+#[tauri::command]
+pub fn list_journals(
+    before: Option<String>,
+    limit: u32,
+    state: State<AppState>,
+) -> Result<Vec<Page>, CoreError> {
+    let before = before
+        .map(|text| JournalDate::parse(&text).ok_or(CoreError::InvalidDate(text)))
+        .transpose()?;
+    let config = lock_config(&state)?;
+    Vault::new(config.vault_path.clone()).list_journals(before, limit as usize)
 }

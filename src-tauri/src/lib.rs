@@ -34,6 +34,7 @@ pub fn run() {
             commands::open_today,
             commands::read_page,
             commands::write_page,
+            commands::list_journals,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

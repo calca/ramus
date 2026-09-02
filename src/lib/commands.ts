@@ -25,7 +25,9 @@ export function writePage(path: string, blocks: Block[]): Promise<void> {
   return invoke<void>("write_page", { path, blocks });
 }
 
-/** I command Rust restituiscono `CoreError` serializzato come stringa. */
-export function isPageNotFoundError(error: unknown): boolean {
-  return typeof error === "string" && error.startsWith("pagina non trovata");
+/** Journal esistenti, più recente prima, strettamente precedenti a
+ * `before` (data ISO 8601, o `null` per partire dal più recente). */
+export function listJournals(before: string | null, limit: number): Promise<Page[]> {
+  return invoke<Page[]>("list_journals", { before, limit });
 }
+

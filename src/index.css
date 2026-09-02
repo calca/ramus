@@ -39,13 +39,13 @@ body {
   margin-right: auto;
 }
 
-.day-nav {
+.journal-controls {
   display: flex;
   align-items: center;
   gap: 0.5rem;
 }
 
-.day-nav button {
+.journal-controls button {
   border: 1px solid color-mix(in srgb, var(--ramus-stone) 40%, transparent);
   background: transparent;
   color: var(--ramus-ink);
@@ -55,21 +55,14 @@ body {
   font-size: 0.9rem;
 }
 
-.day-nav button:disabled {
-  opacity: 0.4;
-  cursor: default;
-}
-
-.day-nav-date {
-  min-width: 6.5rem;
-  text-align: center;
-  color: var(--ramus-stone);
-  font-variant-numeric: tabular-nums;
-}
-
-.day-nav-date-today {
-  color: var(--ramus-amber);
-  font-weight: 600;
+.journal-date-picker {
+  border: 1px solid color-mix(in srgb, var(--ramus-stone) 40%, transparent);
+  background: transparent;
+  color: var(--ramus-ink);
+  border-radius: 6px;
+  padding: 0.2rem 0.5rem;
+  font-size: 0.85rem;
+  font-family: inherit;
 }
 
 .banner {
@@ -93,10 +86,35 @@ body {
   padding: 1.5rem 1.25rem 3rem;
 }
 
+.journal-section {
+  max-width: 40rem;
+  margin: 0 auto 2.5rem;
+}
+
+.journal-section .banner {
+  padding: 0.4rem 0.6rem;
+  border-radius: 6px;
+  margin-bottom: 0.5rem;
+}
+
+.journal-section-date {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--ramus-stone);
+  text-transform: capitalize;
+  margin: 0 0 0.5rem;
+}
+
+.journal-section-date-today {
+  color: var(--ramus-amber);
+}
+
+.journal-sentinel {
+  height: 1px;
+}
+
 .ramus-editor .ProseMirror {
   outline: none;
-  max-width: 40rem;
-  margin: 0 auto;
   line-height: 1.6;
 }
 

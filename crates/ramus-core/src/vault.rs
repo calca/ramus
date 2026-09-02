@@ -87,7 +87,61 @@ impl Vault {
         }
         self.read_page(&relative_path)
     }
+
+    /// Elenca i journal esistenti in ordine decrescente di data (più
+    /// recente prima), strettamente precedenti a `before` (se `None`, si
+    /// parte dal giorno più recente esistente). Non genera placeholder:
+    /// un giorno senza file non compare. `limit` è clampato a
+    /// [`MAX_LIST_JOURNALS_LIMIT`] per evitare richieste degeneri.
+    pub fn list_journals(
+        &self,
+        before: Option<JournalDate>,
+        limit: usize,
+    ) -> Result<Vec<Page>, CoreError> {
+        let limit = limit.min(MAX_LIST_JOURNALS_LIMIT);
+        let journals_dir = self.root.join("journals");
+
+        let entries = match fs::read_dir(&journals_dir) {
+            Ok(entries) => entries,
+            Err(source) if source.kind() == std::io::ErrorKind::NotFound => return Ok(Vec::new()),
+            Err(source) => {
+                return Err(CoreError::Io {
+                    path: journals_dir,
+                    source,
+                })
+            }
+        };
+
+        let mut dates = Vec::new();
+        for entry in entries {
+            let entry = entry.map_err(|source| CoreError::Io {
+                path: journals_dir.clone(),
+                source,
+            })?;
+            let Some(date) = entry
+                .file_name()
+                .to_str()
+                .and_then(|name| name.strip_suffix(".md"))
+                .and_then(JournalDate::parse)
+            else {
+                continue;
+            };
+            if before.is_some_and(|before| date >= before) {
+                continue;
+            }
+            dates.push(date);
+        }
+        dates.sort_by(|a, b| b.cmp(a));
+        dates.truncate(limit);
+
+        dates
+            .into_iter()
+            .map(|date| self.read_page(&Self::journal_relative_path(date)))
+            .collect()
+    }
 }
+
+const MAX_LIST_JOURNALS_LIMIT: usize = 90;
 
 /// Converte un nome in slug: minuscolo, spazi sostituiti da trattini.
 pub fn slugify(name: &str) -> String {
@@ -217,5 +271,87 @@ mod tests {
             Vault::page_relative_path("Nome Pagina"),
             "pages/nome-pagina.md"
         );
+    }
+
+    fn write_journal(vault: &Vault, iso_date: &str, content: &str) {
+        vault
+            .write_page(&format!("journals/{iso_date}.md"), &[Block::new(content)])
+            .unwrap();
+    }
+
+    #[test]
+    fn list_journals_is_descending() {
+        let dir = TempDir::new("list-descending");
+        let vault = Vault::new(dir.path().to_path_buf());
+        write_journal(&vault, "2026-01-01", "a");
+        write_journal(&vault, "2026-01-03", "c");
+        write_journal(&vault, "2026-01-02", "b");
+
+        let dates: Vec<String> = vault
+            .list_journals(None, 10)
+            .unwrap()
+            .into_iter()
+            .map(|p| p.path.to_string_lossy().to_string())
+            .collect();
+        assert_eq!(
+            dates,
+            vec![
+                "journals/2026-01-03.md",
+                "journals/2026-01-02.md",
+                "journals/2026-01-01.md",
+            ]
+        );
+    }
+
+    #[test]
+    fn list_journals_skips_missing_days() {
+        let dir = TempDir::new("list-skip-missing");
+        let vault = Vault::new(dir.path().to_path_buf());
+        write_journal(&vault, "2026-01-01", "a");
+        write_journal(&vault, "2026-01-05", "e");
+
+        let pages = vault.list_journals(None, 10).unwrap();
+        assert_eq!(pages.len(), 2);
+    }
+
+    #[test]
+    fn list_journals_respects_before_and_limit() {
+        let dir = TempDir::new("list-before-limit");
+        let vault = Vault::new(dir.path().to_path_buf());
+        for day in 1..=5 {
+            write_journal(&vault, &format!("2026-01-0{day}"), "x");
+        }
+
+        let before = JournalDate::parse("2026-01-04").unwrap();
+        let pages = vault.list_journals(Some(before), 2).unwrap();
+        let dates: Vec<String> = pages
+            .into_iter()
+            .map(|p| p.path.to_string_lossy().to_string())
+            .collect();
+        // prima di 2026-01-04, esclusa: 03, 02, 01 — limitate a 2.
+        assert_eq!(
+            dates,
+            vec!["journals/2026-01-03.md", "journals/2026-01-02.md"]
+        );
+    }
+
+    #[test]
+    fn list_journals_ignores_non_date_filenames() {
+        let dir = TempDir::new("list-ignore-junk");
+        let vault = Vault::new(dir.path().to_path_buf());
+        vault.ensure_exists().unwrap();
+        write_journal(&vault, "2026-01-01", "a");
+        std::fs::write(dir.path().join("journals/note.txt"), "not a journal").unwrap();
+        std::fs::write(dir.path().join("journals/README.md"), "not a date").unwrap();
+
+        let pages = vault.list_journals(None, 10).unwrap();
+        assert_eq!(pages.len(), 1);
+    }
+
+    #[test]
+    fn list_journals_on_empty_vault_is_empty_not_error() {
+        let dir = TempDir::new("list-empty-vault");
+        let vault = Vault::new(dir.path().to_path_buf());
+        assert_eq!(vault.list_journals(None, 10).unwrap(), Vec::new());
     }
 }

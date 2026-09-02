@@ -14,6 +14,9 @@ pub enum CoreError {
     #[error("pagina non trovata: {0}")]
     PageNotFound(PathBuf),
 
+    #[error("data non valida, atteso formato YYYY-MM-DD: {0}")]
+    InvalidDate(String),
+
     #[error("riga malformata nel blocco {line}: {reason}")]
     MalformedBlock { line: usize, reason: String },
 
