@@ -429,3 +429,46 @@ body {
   font-size: 1.4rem;
   margin: 0 0 2rem;
 }
+
+.page-view-backlinks {
+  margin-top: 2.5rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid color-mix(in srgb, var(--ramus-stone) 20%, transparent);
+}
+
+.page-view-backlinks h2 {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--ramus-stone);
+  margin: 0 0 0.75rem;
+}
+
+.backlink-item {
+  padding: 0.5rem 0;
+}
+
+.backlink-item + .backlink-item {
+  border-top: 1px solid color-mix(in srgb, var(--ramus-stone) 12%, transparent);
+}
+
+.backlink-item-source {
+  display: block;
+  font-size: 0.8rem;
+  color: var(--ramus-stone);
+  margin: 0 0 0.15rem;
+}
+
+.backlink-item-source.is-clickable {
+  color: var(--ramus-sap);
+  cursor: pointer;
+  background: none;
+  border: none;
+  padding: 0;
+  font: inherit;
+  text-align: left;
+}
+
+.backlink-item-content {
+  font-size: 0.9rem;
+  margin: 0;
+}
