@@ -67,7 +67,7 @@ Ogni punto rimanda alla spec di origine; nessuno viene risolto qui.
   fisiche) va verificata a mano, non è chiaro se serva un adattamento
   finché non si prova.
 
-## M3 — Git (nessun pezzo implementato, entrambe le spec TODO)
+## M3 — Git (pezzo locale implementato, pezzo remoto ancora TODO)
 
 Impatto più grande di tutti gli altri messi insieme — vale la pena
 saperlo **prima** di implementare M3, non dopo:
@@ -82,7 +82,7 @@ saperlo **prima** di implementare M3, non dopo:
   plugin dedicato) — non un adattamento minore, una spec mobile a
   parte quando si arriva a costruire M3 lì.
 - **Timer di sync in background**
-  (`specs/M3/2026-09-02-sync-git-locale.TODO.md`, task
+  (`specs/M3/2026-09-02-sync-git-locale.DONE.md`, task
   `tauri::async_runtime::spawn` con `tokio::time::interval`): su
   desktop funziona perché il processo resta vivo. **Su mobile, e
   specialmente su iOS, il sistema operativo sospende l'esecuzione in

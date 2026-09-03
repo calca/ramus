@@ -25,4 +25,8 @@ serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 notify = "6"
 ramus-core = { path = "../crates/ramus-core" }
+# tokio::time::interval per il task di sync Git automatico (M3): Tauri gira
+# già su un runtime Tokio (tauri::async_runtime), serve solo il tipo per
+# usarne l'API di timing direttamente — nessun runtime nuovo da avviare.
+tokio = { version = "1", features = ["time"] }
 

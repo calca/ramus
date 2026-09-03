@@ -35,6 +35,9 @@ pub enum CoreError {
 
     #[error("errore di ricerca: {0}")]
     Search(#[from] tantivy::TantivyError),
+
+    #[error("errore Git: {0}")]
+    Git(#[from] git2::Error),
 }
 
 impl Serialize for CoreError {

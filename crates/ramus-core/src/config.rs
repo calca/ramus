@@ -30,10 +30,19 @@ pub struct Config {
     /// `config.json` scritti prima di questo campo.
     #[serde(default = "default_search_shortcut")]
     pub search_shortcut: String,
+    /// Ogni quanti minuti il task di sync automatico (M3) controlla se
+    /// committare. Stesso trattamento di `theme`/`search_shortcut` per
+    /// compatibilità con `config.json` scritti prima di questo campo.
+    #[serde(default = "default_git_sync_interval_minutes")]
+    pub git_sync_interval_minutes: u32,
 }
 
 fn default_search_shortcut() -> String {
     "Mod+K".to_string()
+}
+
+fn default_git_sync_interval_minutes() -> u32 {
+    10
 }
 
 impl Config {
@@ -86,6 +95,7 @@ impl Config {
                 vault_path: Self::default_vault_path(),
                 theme: Theme::default(),
                 search_shortcut: default_search_shortcut(),
+                git_sync_interval_minutes: default_git_sync_interval_minutes(),
             };
             config.save(&path)?;
             Ok(config)
@@ -107,6 +117,12 @@ impl Config {
     /// Aggiorna e persiste la scorciatoia di ricerca.
     pub fn set_search_shortcut(&mut self, shortcut: String) -> Result<(), CoreError> {
         self.search_shortcut = shortcut;
+        self.save(&Self::config_file_path())
+    }
+
+    /// Aggiorna e persiste l'intervallo del sync Git automatico.
+    pub fn set_git_sync_interval_minutes(&mut self, minutes: u32) -> Result<(), CoreError> {
+        self.git_sync_interval_minutes = minutes;
         self.save(&Self::config_file_path())
     }
 }
@@ -138,5 +154,12 @@ mod tests {
         let json = r#"{"vault_path":"/home/x/Journal"}"#;
         let config: Config = serde_json::from_str(json).unwrap();
         assert_eq!(config.search_shortcut, "Mod+K");
+    }
+
+    #[test]
+    fn config_without_git_sync_interval_field_defaults_to_ten_minutes() {
+        let json = r#"{"vault_path":"/home/x/Journal"}"#;
+        let config: Config = serde_json::from_str(json).unwrap();
+        assert_eq!(config.git_sync_interval_minutes, 10);
     }
 }

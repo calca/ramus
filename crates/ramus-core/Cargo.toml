@@ -24,3 +24,9 @@ rusqlite = { version = "0.40", features = ["bundled"] }
 # rilevanza e snippet con evidenziazione già pronti, inutile reimplementarli
 # a mano come si fa per i parser del formato su disco.
 tantivy = "0.26"
+# git2 (sync Git, M3 di SPEC.md): verificato contro gitoxide (gix) — gix non
+# espone ancora un push funzionante nel crate principale, git2 (binding a
+# libgit2) ha fetch/push/merge_analysis/credenziali completi e maturi.
+# vendored-libgit2/vendored-openssl: nessuna libreria di sistema richiesta
+# all'utente, stesso principio di rusqlite's `bundled`.
+git2 = { version = "0.21", features = ["vendored-libgit2", "vendored-openssl"] }

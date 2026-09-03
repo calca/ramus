@@ -7,8 +7,8 @@ use std::sync::{Mutex, MutexGuard};
 use std::time::{Duration, Instant};
 
 use ramus_core::{
-    watcher, Backlink, Block, Config, CoreError, Index, JournalDate, Page, PageSummary, SearchHit,
-    SearchIndex, Theme, Vault, VaultStats,
+    git_sync, watcher, Backlink, Block, Config, CoreError, Index, JournalDate, Page, PageSummary,
+    SearchHit, SearchIndex, SyncStatus, Theme, Vault, VaultStats,
 };
 use tauri::{AppHandle, Emitter, Manager, State};
 use tauri_plugin_dialog::DialogExt;
@@ -269,6 +269,30 @@ pub fn search(query: String, state: State<AppState>) -> Result<Vec<SearchHit>, C
 pub fn set_search_shortcut(shortcut: String, state: State<AppState>) -> Result<Config, CoreError> {
     let mut config = lock_config(&state)?;
     config.set_search_shortcut(shortcut)?;
+    Ok(config.clone())
+}
+
+/// Crea il repository (idempotente) e committa subito lo stato attuale del
+/// vault — l'utente non deve aspettare il prossimo tick per vedere il primo
+/// commit dopo aver attivato la sync.
+#[tauri::command]
+pub fn init_git_sync(state: State<AppState>) -> Result<SyncStatus, CoreError> {
+    let config = lock_config(&state)?;
+    git_sync::init_repo(&config.vault_path)?;
+    git_sync::commit_if_dirty(&config.vault_path)?;
+    git_sync::status(&config.vault_path)
+}
+
+#[tauri::command]
+pub fn get_sync_status(state: State<AppState>) -> Result<SyncStatus, CoreError> {
+    let config = lock_config(&state)?;
+    git_sync::status(&config.vault_path)
+}
+
+#[tauri::command]
+pub fn set_git_sync_interval(minutes: u32, state: State<AppState>) -> Result<Config, CoreError> {
+    let mut config = lock_config(&state)?;
+    config.set_git_sync_interval_minutes(minutes)?;
     Ok(config.clone())
 }
 

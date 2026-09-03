@@ -24,6 +24,7 @@ export interface Config {
   vault_path: string;
   theme: Theme;
   search_shortcut: string;
+  git_sync_interval_minutes: number;
 }
 
 export interface VaultStats {
@@ -42,4 +43,11 @@ export interface SearchHit {
   kind: "page" | "journal";
   title: string | null;
   snippet_html: string;
+}
+
+export interface SyncStatus {
+  enabled: boolean;
+  /** Epoch secondi, `null` se nessun commit esiste ancora. */
+  last_commit_at: number | null;
+  dirty: boolean;
 }

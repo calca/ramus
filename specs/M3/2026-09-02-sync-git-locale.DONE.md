@@ -1,6 +1,13 @@
 # Sync Git — parte locale (commit automatico)
 
-Stato: proposta, in attesa di conferma.
+Stato: implementata. Un unico scostamento dal testo originale:
+`init_git_sync` (command Tauri) non si limita a `init_repo` — chiama
+anche `commit_if_dirty` subito dopo, per catturare lo stato attuale
+del vault come primo commit invece di aspettare fino a
+`git_sync_interval_minutes` dopo l'attivazione. La decisione "quando
+è il momento di committare" (`is_due`) vive in `ramus-core` come
+funzione pura testabile, non inline nel task Rust del guscio (CLAUDE.md
+regola 2, "la logica sta nel core").
 
 ## Motivazione
 
@@ -183,14 +190,9 @@ set_git_sync_interval(minutes: u32) -> Result<Config, CoreError>
 
 ## Domande aperte
 
-1. Intervallo di default proposto: **10 minuti**. Va bene?
-2. Timer lato Rust con un task async avviato in `setup()` — primo caso
-   di background task autonomo nell'app. Confermi questa direzione
-   invece di, per esempio, un timer lato frontend che invoca un
-   command a intervalli (più semplice ma si ferma se la finestra è in
-   background/minimizzata a seconda del sistema operativo)?
-3. Messaggio di commit fisso `"Ramus: sync automatico — N file
-   modificati"` — sufficiente, o preferisci un formato diverso?
+Nessuna: tutte e tre confermate come proposto — intervallo di default
+10 minuti, timer lato Rust, messaggio di commit
+`"Ramus: sync automatico — N file modificati"`.
 
 ## Test da scrivere (core)
 

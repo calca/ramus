@@ -23,10 +23,12 @@ plugin system, niente sync proprietaria.
 - **Tiptap** (ProseMirror) — editor outliner
 - **SQLite** via `rusqlite` — indice derivato (dalla milestone 2)
 - **tantivy** — ricerca full-text (dalla milestone 2)
+- **git2** — sync Git (dalla milestone 3)
 
 Dipendenze Rust iniziali: `serde`, `serde_json`, `notify`, `pulldown-cmark`,
-`thiserror`, `dirs`. Aggiunte in M2: `rusqlite`, `tantivy`.
-Da aggiungere più avanti, **non ora**: `git2` o `gitoxide` (M3).
+`thiserror`, `dirs`. Aggiunte in M2: `rusqlite`, `tantivy`. Aggiunta in M3:
+`git2` (scelta su `gitoxide` — verificato, `gix` non espone ancora un push
+funzionante nel crate principale).
 
 ## Struttura del repository
 
@@ -215,8 +217,11 @@ il marchio contro il bordo.
   vedi `specs/M2/2026-09-02-ricerca-full-text.DONE.md`
 
 **M3 — Git**
-- Commit automatico su intervallo configurabile
-- Pull all'avvio, push a intervallo
+- Commit automatico su intervallo configurabile — nessun `git init`
+  forzato, l'utente attiva la sync esplicitamente da Impostazioni;
+  vedi `specs/M3/2026-09-02-sync-git-locale.DONE.md`
+- Pull all'avvio, push a intervallo — vedi
+  `specs/M3/2026-09-02-sync-git-remoto.TODO.md`
 - Stato della sync visibile nella UI; in caso di conflitto, stop e avviso
   esplicito, mai merge automatico silenzioso
 

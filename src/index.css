@@ -320,6 +320,29 @@ body {
   font-family: ui-monospace, monospace;
 }
 
+.settings-sync-status {
+  color: var(--ramus-stone);
+  font-size: 0.85rem;
+  margin: 0 0 0.6rem;
+}
+
+.settings-sync-interval {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.85rem;
+}
+
+.settings-sync-interval select {
+  border: 1px solid color-mix(in srgb, var(--ramus-stone) 40%, transparent);
+  background: var(--ramus-paper);
+  color: var(--ramus-ink);
+  border-radius: 6px;
+  padding: 0.25rem 0.5rem;
+  font-size: 0.85rem;
+  font-family: inherit;
+}
+
 .settings-about-link {
   display: block;
   border: none;

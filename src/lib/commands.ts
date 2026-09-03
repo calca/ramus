@@ -10,6 +10,7 @@ import type {
   Page,
   PageSummary,
   SearchHit,
+  SyncStatus,
   Theme,
   VaultStats,
 } from "./types";
@@ -79,5 +80,19 @@ export function search(query: string): Promise<SearchHit[]> {
 
 export function setSearchShortcut(shortcut: string): Promise<Config> {
   return invoke<Config>("set_search_shortcut", { shortcut });
+}
+
+/** Crea il repository Git (idempotente) e committa subito lo stato
+ * attuale del vault. */
+export function initGitSync(): Promise<SyncStatus> {
+  return invoke<SyncStatus>("init_git_sync");
+}
+
+export function getSyncStatus(): Promise<SyncStatus> {
+  return invoke<SyncStatus>("get_sync_status");
+}
+
+export function setGitSyncInterval(minutes: number): Promise<Config> {
+  return invoke<Config>("set_git_sync_interval", { minutes });
 }
 
