@@ -48,24 +48,52 @@ body {
   gap: 0.5rem;
 }
 
-.journal-controls button {
-  border: 1px solid color-mix(in srgb, var(--ramus-stone) 40%, transparent);
-  background: transparent;
-  color: var(--ramus-ink);
-  border-radius: 6px;
-  padding: 0.25rem 0.6rem;
-  cursor: pointer;
-  font-size: 0.9rem;
-}
-
+/* Icona soltanto: il vecchio bottone "Oggi" testuale è sparito (già
+   raggiungibile da "Vai a oggi" nella command palette), resta solo
+   questo selettore — ridotto alla sola icona nativa del calendario,
+   niente più cifre della data visibili. Pseudo-elementi -webkit-,
+   supportati sia da WKWebView (macOS) sia da WebView2 (Windows), i due
+   motori usati da Tauri — non standard, ma qui non serve compatibilità
+   cross-browser essendo un runtime controllato. */
 .journal-date-picker {
   border: 1px solid color-mix(in srgb, var(--ramus-stone) 40%, transparent);
   background: transparent;
-  color: var(--ramus-ink);
+  color: var(--ramus-stone);
   border-radius: 6px;
-  padding: 0.2rem 0.5rem;
+  width: 1.6rem;
+  padding: 0.15rem 0.3rem;
   font-size: 0.85rem;
   font-family: inherit;
+  cursor: pointer;
+}
+
+.journal-date-picker::-webkit-datetime-edit,
+.journal-date-picker::-webkit-datetime-edit-fields-wrapper,
+.journal-date-picker::-webkit-datetime-edit-text,
+.journal-date-picker::-webkit-datetime-edit-day-field,
+.journal-date-picker::-webkit-datetime-edit-month-field,
+.journal-date-picker::-webkit-datetime-edit-year-field {
+  display: none;
+}
+
+.journal-date-picker::-webkit-calendar-picker-indicator {
+  margin: 0;
+  padding: 0;
+}
+
+/* Bottoni icona compatti della status bar (⚙ Impostazioni, badge sync):
+   più piccoli di .settings-button (header) per "ridurre la dimensione"
+   — stessa lingua visiva di .sync-badge, che ora la riusa invece di
+   duplicarne le proprietà di base. */
+.statusbar-icon-button {
+  border: 1px solid color-mix(in srgb, var(--ramus-stone) 40%, transparent);
+  background: transparent;
+  color: var(--ramus-stone);
+  border-radius: 6px;
+  padding: 0.15rem 0.4rem;
+  cursor: pointer;
+  font-size: 0.85rem;
+  line-height: 1;
 }
 
 .settings-button {
@@ -83,17 +111,6 @@ body {
    (mai per "disabled"/"idle") — neutro per noremote/syncing/offline,
    solo "conflict" usa il rosso già riservato agli errori veri
    (.banner-error), mai l'amber (riservato a giorno corrente/focus). */
-.sync-badge {
-  border: 1px solid color-mix(in srgb, var(--ramus-stone) 40%, transparent);
-  background: transparent;
-  color: var(--ramus-stone);
-  border-radius: 6px;
-  padding: 0.25rem 0.55rem;
-  cursor: pointer;
-  font-size: 0.9rem;
-  line-height: 1;
-}
-
 .sync-badge.is-conflict {
   border-color: color-mix(in srgb, #b3261e 50%, transparent);
   color: #b3261e;
@@ -145,13 +162,6 @@ body {
   display: none;
 }
 
-.app-statusbar .journal-controls button,
-.app-statusbar .journal-date-picker {
-  border-color: color-mix(in srgb, var(--ramus-stone) 30%, transparent);
-  color: var(--ramus-stone);
-  font-size: 0.8rem;
-  padding: 0.15rem 0.5rem;
-}
 
 /* Focus mode (M4): nasconde tutta la chrome, editor e contenuto restano
    dove sono e occupano lo spazio liberato (.app-body { flex: 1 } già

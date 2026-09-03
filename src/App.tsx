@@ -675,16 +675,26 @@ function App() {
 
       <div className={isCompact ? "app-statusbar is-compact" : "app-statusbar"}>
         {view.kind === "journal" && (
-          <JournalControls
-            onToday={() => void scrollToToday()}
-            onJumpToDate={(iso) => void jumpToDate(iso)}
-          />
+          <JournalControls onJumpToDate={(iso) => void jumpToDate(iso)} />
+        )}
+        {config && (
+          <button
+            type="button"
+            className="statusbar-icon-button"
+            aria-label="Impostazioni"
+            title="Impostazioni"
+            onClick={() => setActivePanel("settings")}
+          >
+            ⚙
+          </button>
         )}
         {syncState && !["disabled", "idle"].includes(syncState) && (
           <button
             type="button"
             className={
-              syncState === "conflict" ? "sync-badge is-conflict" : "sync-badge"
+              syncState === "conflict"
+                ? "statusbar-icon-button sync-badge is-conflict"
+                : "statusbar-icon-button sync-badge"
             }
             aria-label={SYNC_BADGE_LABELS[syncState]}
             title={SYNC_BADGE_LABELS[syncState]}

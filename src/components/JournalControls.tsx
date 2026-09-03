@@ -3,13 +3,12 @@ import { useState } from "react";
 import { formatIsoDate } from "../lib/journal";
 
 interface JournalControlsProps {
-  onToday: () => void;
   onJumpToDate: (iso: string) => void;
 }
 
 const TODAY_ISO = formatIsoDate(new Date());
 
-export function JournalControls({ onToday, onJumpToDate }: JournalControlsProps) {
+export function JournalControls({ onJumpToDate }: JournalControlsProps) {
   const [pickerValue, setPickerValue] = useState(TODAY_ISO);
 
   return (
@@ -20,6 +19,7 @@ export function JournalControls({ onToday, onJumpToDate }: JournalControlsProps)
         value={pickerValue}
         max={TODAY_ISO}
         aria-label="Vai a data"
+        title="Vai a data"
         onChange={(event) => {
           const iso = event.currentTarget.value;
           setPickerValue(iso);
@@ -28,9 +28,6 @@ export function JournalControls({ onToday, onJumpToDate }: JournalControlsProps)
           }
         }}
       />
-      <button type="button" onClick={onToday}>
-        Oggi
-      </button>
     </div>
   );
 }
