@@ -1,10 +1,16 @@
 # Impatti del supporto mobile sulle milestone M1-M5
 
-Stato: proposta, in attesa di conferma. Non una spec da implementare
-di per sé — un audit, richiesto esplicitamente insieme all'apertura
-di M6, per catalogare cosa nelle spec già scritte (implementate o
-no) assume un desktop e va rivisto quando si costruisce il mobile.
-Ogni punto rimanda alla spec di origine; nessuno viene risolto qui.
+Stato: completo. Non una spec da implementare di per sé — un audit,
+richiesto esplicitamente insieme all'apertura di M6, per catalogare
+cosa nelle spec già scritte (implementate o no) assume un desktop e
+va rivisto quando si costruisce il mobile. Ogni punto rimanda alla
+spec di origine; nessuno viene risolto qui. "Completo" significa che
+il catalogo copre M1-M5 per intero (tutte e cinque le milestone sono
+chiuse) e resta aggiornato — **non** che i singoli punti elencati
+sono stati implementati: restano lavoro futuro per quando si
+costruisce il resto di M6 (init Android/iOS, build reale su
+device/emulatore), tranne il refactor dei path già fatto — vedi
+`specs/M6/2026-09-03-supporto-mobile-fondamenta.DONE.md`.
 
 ## M1 — Journal funzionante (completa su desktop)
 

@@ -65,7 +65,8 @@ ramus/
     └── Cargo.toml
 ```
 
-Cargo workspace alla radice, membri: `crates/ramus-core` e `src-tauri`.
+Cargo workspace alla radice, membri: `crates/ramus-core`,
+`crates/ramus-mcp` e `src-tauri`.
 
 ## Formato su disco
 
@@ -303,7 +304,7 @@ il marchio contro il bordo.
   (`tauri android/ios init`, build reale) resta da fare. Nessun
   selettore di cartella su mobile (non esiste nell'API), il vault vive
   in un percorso fisso. Impatti su M1-M5 catalogati in
-  `specs/M6/2026-09-03-impatti-milestone-precedenti.TODO.md` — M3
+  `specs/M6/2026-09-03-impatti-milestone-precedenti.DONE.md` — M3
   (credenziali, sync in background) e M4 (scorciatoie da tastiera)
   richiedono adattamenti sostanziali quando ci si arriva, M5 resta
   desktop-only per natura.

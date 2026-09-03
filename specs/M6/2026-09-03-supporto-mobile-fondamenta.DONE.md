@@ -12,7 +12,7 @@ davvero il mobile.
 Le due "Domande aperte" sono state confermate **con una scelta
 diversa dal default proposto** per la prima — vedi sotto. Prima spec
 di M6. Il secondo documento,
-`specs/M6/2026-09-03-impatti-milestone-precedenti.TODO.md`,
+`specs/M6/2026-09-03-impatti-milestone-precedenti.DONE.md`,
 cataloga cosa nelle spec di M1-M5 va adattato — questa si concentra
 sulle fondamenta tecniche condivise da tutto il resto.
 
@@ -134,7 +134,7 @@ paragonabile a quello desktop (sandboxing).
 in un percorso fisso deciso dall'app (vedi sotto). Il bottone "Cambia"
 in `SettingsPanel` va nascosto su build mobile (`#[cfg(desktop)]`/
 equivalente frontend — vedi
-`specs/M6/2026-09-03-impatti-milestone-precedenti.TODO.md` per il
+`specs/M6/2026-09-03-impatti-milestone-precedenti.DONE.md` per il
 dettaglio).
 
 ### 3. Dove vive il vault su mobile: `app_data_dir()` (confermato,
