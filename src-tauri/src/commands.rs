@@ -1,8 +1,10 @@
 //! Command Tauri: wrapper sottili su `ramus-core`. Nessuna decisione di
 //! business logic qui, solo lock dello stato e delega al core.
 
+use std::collections::HashMap;
 use std::path::PathBuf;
 use std::sync::{Mutex, MutexGuard};
+use std::time::{Duration, Instant};
 
 use ramus_core::{
     watcher, Backlink, Block, Config, CoreError, Index, JournalDate, Page, PageSummary, SearchHit,
@@ -10,6 +12,12 @@ use ramus_core::{
 };
 use tauri::{AppHandle, Emitter, Manager, State};
 use tauri_plugin_dialog::DialogExt;
+
+/// Quanto a lungo un path scritto da un command dell'app viene ignorato dal
+/// watcher: copre la latenza fra `fs::write` e la consegna dell'evento del
+/// filesystem, molto più ampia del necessario di proposito (millisecondi
+/// nella pratica) per non rischiare falsi negativi.
+const SELF_WRITE_WINDOW: Duration = Duration::from_secs(2);
 
 pub struct AppState {
     pub config: Mutex<Config>,
@@ -20,6 +28,18 @@ pub struct AppState {
     // vault path cambia a runtime.
     #[allow(dead_code)]
     pub watcher: Mutex<Option<notify::RecommendedWatcher>>,
+    /// Path relativi scritti da un command dell'app (write_page, open_today,
+    /// open_page) con il momento della scrittura — il watcher li confronta
+    /// per non scambiare il proprio salvataggio per una modifica esterna
+    /// (altrimenti ogni battitura mostrerebbe il banner "file cambiato",
+    /// vedi bug segnalato dall'utente).
+    pub recent_writes: Mutex<HashMap<String, Instant>>,
+}
+
+fn mark_self_write(state: &State<AppState>, relative_path: &str) {
+    if let Ok(mut recent) = state.recent_writes.lock() {
+        recent.insert(relative_path.to_string(), Instant::now());
+    }
 }
 
 fn lock_config<'a>(state: &'a State<AppState>) -> Result<MutexGuard<'a, Config>, CoreError> {
@@ -56,26 +76,42 @@ pub(crate) fn spawn_watcher(
     watcher::watch_vault(root, move |change| {
         let relative_path = change.relative_path.to_string_lossy().to_string();
 
-        // Tiene entrambi gli indici allineati anche per modifiche esterne
-        // (non passate da write_page). Un file rimosso resta stale fino al
-        // prossimo `sync` completo (apertura vault): coerente con
-        // specs/M2/2026-09-02-indice-sqlite.DONE.md, non vale la complessità di
-        // gestirlo anche qui.
-        if let Some(state) = app_handle.try_state::<AppState>() {
-            if let (Ok(config), Ok(index), Ok(search_index)) = (
-                state.config.lock(),
-                state.index.lock(),
-                state.search_index.lock(),
-            ) {
-                let vault = Vault::new(config.vault_path.clone());
-                if vault
-                    .resolve(&relative_path)
-                    .map(|abs| abs.exists())
-                    .unwrap_or(false)
-                {
-                    let _ = index.refresh_page(&vault, &relative_path);
-                    let _ = search_index.refresh_page(&vault, &relative_path);
-                }
+        let Some(state) = app_handle.try_state::<AppState>() else {
+            return;
+        };
+
+        // Il salvataggio dell'app stessa tocca lo stesso file che il
+        // watcher osserva: senza questo controllo, ogni scrittura propria
+        // verrebbe scambiata per una modifica esterna (falso positivo del
+        // banner "file cambiato" a ogni battitura).
+        let is_self_write = state
+            .recent_writes
+            .lock()
+            .ok()
+            .and_then(|recent| recent.get(&relative_path).copied())
+            .is_some_and(|written_at| written_at.elapsed() < SELF_WRITE_WINDOW);
+        if is_self_write {
+            return;
+        }
+
+        // Tiene entrambi gli indici allineati per modifiche esterne vere
+        // (non passate dai command dell'app). Un file rimosso resta stale
+        // fino al prossimo `sync` completo (apertura vault): coerente con
+        // specs/M2/2026-09-02-indice-sqlite.DONE.md, non vale la complessità
+        // di gestirlo anche qui.
+        if let (Ok(config), Ok(index), Ok(search_index)) = (
+            state.config.lock(),
+            state.index.lock(),
+            state.search_index.lock(),
+        ) {
+            let vault = Vault::new(config.vault_path.clone());
+            if vault
+                .resolve(&relative_path)
+                .map(|abs| abs.exists())
+                .unwrap_or(false)
+            {
+                let _ = index.refresh_page(&vault, &relative_path);
+                let _ = search_index.refresh_page(&vault, &relative_path);
             }
         }
 
@@ -140,6 +176,7 @@ pub fn open_today(state: State<AppState>) -> Result<Page, CoreError> {
     vault.ensure_exists()?;
     let page = vault.open_today()?;
     let relative_path = page.path.to_string_lossy();
+    mark_self_write(&state, &relative_path);
     lock_index(&state)?.refresh_page(&vault, &relative_path)?;
     lock_search_index(&state)?.refresh_page(&vault, &relative_path)?;
     Ok(page)
@@ -160,6 +197,7 @@ pub fn write_page(
     let config = lock_config(&state)?;
     let vault = Vault::new(config.vault_path.clone());
     vault.write_page(&path, &blocks)?;
+    mark_self_write(&state, &path);
     lock_index(&state)?.refresh_page(&vault, &path)?;
     lock_search_index(&state)?.refresh_page(&vault, &path)
 }
@@ -203,6 +241,7 @@ pub fn open_page(name: String, state: State<AppState>) -> Result<Page, CoreError
     vault.ensure_exists()?;
     let page = vault.open_page(&name)?;
     let relative_path = page.path.to_string_lossy();
+    mark_self_write(&state, &relative_path);
     lock_index(&state)?.refresh_page(&vault, &relative_path)?;
     lock_search_index(&state)?.refresh_page(&vault, &relative_path)?;
     Ok(page)

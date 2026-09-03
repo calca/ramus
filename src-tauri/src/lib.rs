@@ -1,5 +1,6 @@
 mod commands;
 
+use std::collections::HashMap;
 use std::sync::Mutex;
 
 use commands::AppState;
@@ -39,6 +40,7 @@ pub fn run() {
                 index: Mutex::new(index),
                 search_index: Mutex::new(search_index),
                 watcher: Mutex::new(Some(watcher)),
+                recent_writes: Mutex::new(HashMap::new()),
             });
 
             Ok(())
