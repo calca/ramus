@@ -8,6 +8,7 @@ import {
   setGitRemote,
   setGitSyncInterval,
   setShortcut as setShortcutCommand,
+  setTaskRollover,
   setTheme as setThemeCommand,
   setVaultPath,
   vaultStats,
@@ -24,6 +25,7 @@ interface SettingsPanelProps {
   onThemeChanged: (config: Config) => void;
   onShortcutChanged: (config: Config) => void;
   onGitSyncIntervalChanged: (config: Config) => void;
+  onTaskRolloverChanged: (config: Config) => void;
   onShowAbout: () => void;
 }
 
@@ -34,6 +36,7 @@ const THEME_LABELS: Record<Theme, string> = {
 };
 
 const SYNC_INTERVAL_OPTIONS = [5, 10, 30, 60];
+const TASK_ROLLOVER_DAY_OPTIONS = [3, 7, 14, 30];
 
 /** Polling leggero mentre il pannello Sync è aperto: si ferma alla
  * chiusura (l'effetto che lo avvia viene smontato insieme al pannello). */
@@ -71,6 +74,7 @@ export function SettingsPanel({
   onThemeChanged,
   onShortcutChanged,
   onGitSyncIntervalChanged,
+  onTaskRolloverChanged,
   onShowAbout,
 }: SettingsPanelProps) {
   const [stats, setStats] = useState<VaultStats | null>(null);
@@ -143,6 +147,16 @@ export function SettingsPanel({
     try {
       const nextConfig = await setGitSyncInterval(minutes);
       onGitSyncIntervalChanged(nextConfig);
+    } catch (err) {
+      setError(String(err));
+    }
+  };
+
+  const handleTaskRolloverChange = async (enabled: boolean, days: number) => {
+    setError(null);
+    try {
+      const nextConfig = await setTaskRollover(enabled, days);
+      onTaskRolloverChanged(nextConfig);
     } catch (err) {
       setError(String(err));
     }
@@ -266,6 +280,37 @@ export function SettingsPanel({
             </li>
           ))}
         </ul>
+      </section>
+
+      <section className="settings-section">
+        <h3>Task</h3>
+        <label className="settings-task-rollover-toggle">
+          <input
+            type="checkbox"
+            checked={config.task_rollover_enabled}
+            onChange={(event) =>
+              void handleTaskRolloverChange(event.target.checked, config.task_rollover_days)
+            }
+          />
+          Sposta automaticamente a oggi i task non fatti rimasti indietro
+        </label>
+        {config.task_rollover_enabled && (
+          <label className="settings-task-rollover-days">
+            Considera gli ultimi
+            <select
+              value={config.task_rollover_days}
+              onChange={(event) =>
+                void handleTaskRolloverChange(true, Number(event.target.value))
+              }
+            >
+              {TASK_ROLLOVER_DAY_OPTIONS.map((days) => (
+                <option key={days} value={days}>
+                  {days} giorni
+                </option>
+              ))}
+            </select>
+          </label>
+        )}
       </section>
 
       <section className="settings-section">

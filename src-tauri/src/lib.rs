@@ -74,6 +74,7 @@ pub fn run() {
             commands::get_config,
             commands::set_vault_path,
             commands::open_today,
+            commands::roll_over_unfinished_tasks,
             commands::read_page,
             commands::write_page,
             commands::list_journals,
@@ -90,6 +91,7 @@ pub fn run() {
             commands::get_sync_status,
             commands::set_git_sync_interval,
             commands::set_git_remote,
+            commands::set_task_rollover,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

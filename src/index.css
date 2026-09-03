@@ -470,6 +470,31 @@ body {
   margin-top: 0.6rem;
 }
 
+.settings-task-rollover-toggle {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.9rem;
+}
+
+.settings-task-rollover-days {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.85rem;
+  margin-top: 0.5rem;
+}
+
+.settings-task-rollover-days select {
+  border: 1px solid color-mix(in srgb, var(--ramus-stone) 40%, transparent);
+  background: var(--ramus-paper);
+  color: var(--ramus-ink);
+  border-radius: 6px;
+  padding: 0.25rem 0.5rem;
+  font-size: 0.85rem;
+  font-family: inherit;
+}
+
 .settings-sync-remote input {
   flex: 1;
   min-width: 0;
@@ -543,6 +568,21 @@ body {
 
 .editor-link {
   cursor: pointer;
+}
+
+/* Task nei blocchi (M4): il marker resta testo visibile (stesso
+   principio di [[link]], nessun collasso stile live preview), colore di
+   default del testo — non sap/amber, riservati a link/tag e a
+   giorno-corrente/focus (CLAUDE.md/SPEC.md). Il segnale di "fatto" è lo
+   strikethrough sul resto del blocco, non un colore nuovo. */
+.editor-task-marker {
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.ramus-editor li.task-done > p {
+  text-decoration: line-through;
+  opacity: 0.55;
 }
 
 .link-suggestion-list {

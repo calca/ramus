@@ -123,7 +123,7 @@ sostanzialmente un secondo pezzo da progettare.
   un pattern mobile-friendly — l'adattamento principale è il rispetto
   delle safe area (notch, home indicator) via CSS
   `env(safe-area-inset-*)`, non una riprogettazione.
-- **Task nei blocchi** (`specs/M4/2026-09-02-task-todo-done.TODO.md`):
+- **Task nei blocchi** (`specs/M4/2026-09-02-task-todo-done.DONE.md`):
   il click sul marker per il toggle si traduce in un tap senza
   modifiche — nessun impatto. La scorciatoia `Mod-Enter` per il ciclo
   a tre stati resta un problema "tastiera fisica" come sopra, ma qui

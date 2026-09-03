@@ -7,8 +7,9 @@ use std::sync::{Mutex, MutexGuard};
 use std::time::{Duration, Instant};
 
 use ramus_core::{
-    git_sync, watcher, Backlink, Block, Config, CoreError, Index, JournalDate, Page, PageSummary,
-    SearchHit, SearchIndex, SyncState, SyncStatus, Theme, Vault, VaultStats,
+    git_sync, rollover, watcher, Backlink, Block, Config, CoreError, Index, JournalDate, Page,
+    PageSummary, RolloverOutcome, SearchHit, SearchIndex, SyncState, SyncStatus, Theme, Vault,
+    VaultStats,
 };
 use tauri::{AppHandle, Emitter, Manager, State};
 use tauri_plugin_dialog::DialogExt;
@@ -187,6 +188,24 @@ pub fn set_vault_path(
     Ok(config.clone())
 }
 
+/// Sposta i task `[ ] ` non fatti rimasti nella finestra configurata
+/// verso oggi (M4). Chiamata dal frontend prima di aprire il journal di
+/// oggi (avvio, o rollover di mezzanotte a app aperta) — no-op se
+/// `task_rollover_enabled` è `false`. Nessun `mark_self_write` qui: le
+/// pagine sorgente toccate devono restare rilevabili dal file watcher
+/// come una modifica "esterna", per riusare lo stesso percorso già
+/// gestito in `App.tsx` (ricarica silenziosa se non dirty, avviso se
+/// dirty) invece di duplicare quella logica qui.
+#[tauri::command]
+pub fn roll_over_unfinished_tasks(state: State<AppState>) -> Result<RolloverOutcome, CoreError> {
+    let config = lock_config(&state)?;
+    if !config.task_rollover_enabled {
+        return Ok(RolloverOutcome { moved_count: 0 });
+    }
+    let vault = Vault::new(config.vault_path.clone());
+    rollover::roll_over_unfinished_tasks(&vault, config.task_rollover_days)
+}
+
 #[tauri::command]
 pub fn open_today(state: State<AppState>) -> Result<Page, CoreError> {
     let config = lock_config(&state)?;
@@ -315,6 +334,17 @@ pub fn get_sync_status(state: State<AppState>) -> Result<SyncStatus, CoreError> 
 pub fn set_git_sync_interval(minutes: u32, state: State<AppState>) -> Result<Config, CoreError> {
     let mut config = lock_config(&state)?;
     config.set_git_sync_interval_minutes(minutes)?;
+    Ok(config.clone())
+}
+
+#[tauri::command]
+pub fn set_task_rollover(
+    enabled: bool,
+    days: u32,
+    state: State<AppState>,
+) -> Result<Config, CoreError> {
+    let mut config = lock_config(&state)?;
+    config.set_task_rollover(enabled, days)?;
     Ok(config.clone())
 }
 

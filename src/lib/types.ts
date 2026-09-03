@@ -26,6 +26,12 @@ export interface Config {
   /** Chiave = id azione stabile ("command_palette", "cheatsheet", ...). */
   shortcuts: Record<string, string>;
   git_sync_interval_minutes: number;
+  task_rollover_enabled: boolean;
+  task_rollover_days: number;
+}
+
+export interface RolloverOutcome {
+  moved_count: number;
 }
 
 export interface VaultStats {

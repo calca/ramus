@@ -227,9 +227,9 @@ il marchio contro il bordo.
   introduce la status bar); in caso di conflitto, stop e avviso
   esplicito, mai merge automatico silenzioso
 
-**M4 — UI**
+**M4 — UI** (completa)
 - Rifinitura dell'interfaccia raccolta durante l'uso reale dell'app, non
-  legata a una singola feature. In corso.
+  legata a una singola feature.
 - Header ridotto a logo + titolo + 3 icone (comprimi, comandi,
   impostazioni); navigazione del journal e badge di stato sync spostati
   in una status bar sempre presente in fondo alla finestra, nascosta in
@@ -249,6 +249,12 @@ il marchio contro il bordo.
 - Focus mode (`Mod+.`, nasconde header e status bar) e navigazione fra
   giorni del journal da tastiera (`Mod+↑`/`Mod+↓`) — vedi
   `specs/M4/2026-09-02-focus-mode-navigazione-giorni.DONE.md`.
+- Task nei blocchi (`- [ ] `/`- [x] `, sintassi Obsidian/GFM): click
+  sul marker per il toggle, `Mod-Enter` per il ciclo a tre stati
+  (normale → da fare → fatto), e spostamento automatico a oggi dei
+  task non fatti rimasti negli ultimi N giorni (configurabile) al
+  cambio di giorno — vedi
+  `specs/M4/2026-09-02-task-todo-done.DONE.md`.
 
 **M5 — AI**
 - Non un'AI integrata nell'app: un server MCP (`ramus-mcp`, nuovo

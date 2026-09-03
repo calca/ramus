@@ -17,6 +17,7 @@ const EDITOR_SHORTCUTS: { label: string; keys: string }[] = [
   { label: "Esci di un livello (blocco vuoto)", keys: "Backspace" },
   { label: "Sposta blocco su", keys: "Alt+↑" },
   { label: "Sposta blocco giù", keys: "Alt+↓" },
+  { label: "Ciclo task (normale → da fare → fatto)", keys: "Mod+Invio" },
 ];
 
 export function Cheatsheet({ config, onClose }: CheatsheetProps) {

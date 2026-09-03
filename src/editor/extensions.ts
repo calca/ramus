@@ -21,6 +21,8 @@ import { LinkAutocomplete } from "./linkAutocomplete";
 import { LinkTagHighlight } from "./linkTagHighlight";
 import { moveListItem } from "./moveBlock";
 import { TagAutocomplete } from "./tagAutocomplete";
+import { cycleTaskState } from "./taskActions";
+import { TaskHighlight } from "./taskHighlight";
 
 const OutlinerBackspace = Extension.create({
   name: "outlinerBackspace",
@@ -55,6 +57,16 @@ const MoveBlock = Extension.create({
   },
 });
 
+const TaskCycle = Extension.create({
+  name: "taskCycle",
+
+  addKeyboardShortcuts() {
+    return {
+      "Mod-Enter": ({ editor }) => cycleTaskState(editor),
+    };
+  },
+});
+
 export function createExtensions() {
   return [
     StarterKit.configure({
@@ -71,8 +83,10 @@ export function createExtensions() {
     }),
     OutlinerBackspace,
     MoveBlock,
+    TaskCycle,
     CurrentBlockHighlight,
     LinkTagHighlight,
+    TaskHighlight,
     LinkAutocomplete,
     TagAutocomplete,
   ];

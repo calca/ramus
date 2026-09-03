@@ -39,6 +39,15 @@ pub struct Config {
     /// compatibilità con `config.json` scritti prima di questo campo.
     #[serde(default = "default_git_sync_interval_minutes")]
     pub git_sync_interval_minutes: u32,
+    /// Se `true`, i task `[ ] ` non fatti rimasti negli ultimi
+    /// `task_rollover_days` giorni di journal vengono spostati
+    /// automaticamente a oggi al cambio di giorno (M4).
+    #[serde(default = "default_task_rollover_enabled")]
+    pub task_rollover_enabled: bool,
+    /// Ampiezza della finestra di scansione per lo spostamento
+    /// automatico dei task, in giorni prima di oggi.
+    #[serde(default = "default_task_rollover_days")]
+    pub task_rollover_days: u32,
 }
 
 fn default_shortcuts() -> HashMap<String, String> {
@@ -53,6 +62,14 @@ fn default_shortcuts() -> HashMap<String, String> {
 
 fn default_git_sync_interval_minutes() -> u32 {
     10
+}
+
+fn default_task_rollover_enabled() -> bool {
+    true
+}
+
+fn default_task_rollover_days() -> u32 {
+    7
 }
 
 /// Sposta `search_shortcut` (schema pre-M4) sotto `shortcuts.command_palette`
@@ -143,6 +160,8 @@ impl Config {
                 theme: Theme::default(),
                 shortcuts: default_shortcuts(),
                 git_sync_interval_minutes: default_git_sync_interval_minutes(),
+                task_rollover_enabled: default_task_rollover_enabled(),
+                task_rollover_days: default_task_rollover_days(),
             };
             config.save(&path)?;
             Ok(config)
@@ -171,6 +190,16 @@ impl Config {
     /// Aggiorna e persiste l'intervallo del sync Git automatico.
     pub fn set_git_sync_interval_minutes(&mut self, minutes: u32) -> Result<(), CoreError> {
         self.git_sync_interval_minutes = minutes;
+        self.save(&Self::config_file_path())
+    }
+
+    /// Aggiorna e persiste sia l'attivazione sia l'ampiezza (giorni) dello
+    /// spostamento automatico dei task non fatti verso oggi — un solo
+    /// command/setter per entrambi i campi, coerente con l'unica riga di
+    /// impostazione che li mostra insieme in `SettingsPanel`.
+    pub fn set_task_rollover(&mut self, enabled: bool, days: u32) -> Result<(), CoreError> {
+        self.task_rollover_enabled = enabled;
+        self.task_rollover_days = days;
         self.save(&Self::config_file_path())
     }
 }
@@ -228,6 +257,14 @@ mod tests {
         let json = r#"{"vault_path":"/home/x/Journal"}"#;
         let config: Config = serde_json::from_str(json).unwrap();
         assert_eq!(config.git_sync_interval_minutes, 10);
+    }
+
+    #[test]
+    fn config_without_task_rollover_fields_defaults_to_enabled_seven_days() {
+        let json = r#"{"vault_path":"/home/x/Journal"}"#;
+        let config: Config = serde_json::from_str(json).unwrap();
+        assert!(config.task_rollover_enabled);
+        assert_eq!(config.task_rollover_days, 7);
     }
 
     struct TempDir(PathBuf);
@@ -330,6 +367,8 @@ mod tests {
             theme: Theme::default(),
             shortcuts: default_shortcuts(),
             git_sync_interval_minutes: default_git_sync_interval_minutes(),
+            task_rollover_enabled: default_task_rollover_enabled(),
+            task_rollover_days: default_task_rollover_days(),
         };
         config.save(&path).unwrap();
 

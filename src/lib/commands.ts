@@ -9,6 +9,7 @@ import type {
   Config,
   Page,
   PageSummary,
+  RolloverOutcome,
   SearchHit,
   SyncStatus,
   Theme,
@@ -25,6 +26,13 @@ export function setVaultPath(path: string): Promise<Config> {
 
 export function openToday(): Promise<Page> {
   return invoke<Page>("open_today");
+}
+
+/** Sposta i task `[ ] ` non fatti rimasti nella finestra configurata
+ * verso oggi — no-op se `task_rollover_enabled` è `false`. Da chiamare
+ * prima di `openToday()`, non dopo (vedi App.tsx). */
+export function rollOverUnfinishedTasks(): Promise<RolloverOutcome> {
+  return invoke<RolloverOutcome>("roll_over_unfinished_tasks");
 }
 
 export function readPage(path: string): Promise<Page> {
@@ -94,6 +102,10 @@ export function getSyncStatus(): Promise<SyncStatus> {
 
 export function setGitSyncInterval(minutes: number): Promise<Config> {
   return invoke<Config>("set_git_sync_interval", { minutes });
+}
+
+export function setTaskRollover(enabled: boolean, days: number): Promise<Config> {
+  return invoke<Config>("set_task_rollover", { enabled, days });
 }
 
 /** Imposta (o aggiorna) il remote "origin" e prova subito un pull. */

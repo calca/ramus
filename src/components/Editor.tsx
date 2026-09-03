@@ -8,6 +8,7 @@ import { blocksToDoc } from "../editor/deserializer";
 import { createExtensions } from "../editor/extensions";
 import type { PMNode } from "../editor/pmNode";
 import { docToBlocks } from "../editor/serializer";
+import { toggleTaskMarker } from "../editor/taskActions";
 
 const SAVE_DEBOUNCE_MS = 500;
 
@@ -81,7 +82,13 @@ export const Editor = forwardRef<EditorHandle, EditorProps>(function Editor(
   }, [page.path]);
 
   const handleClick = (event: MouseEvent<HTMLDivElement>) => {
-    const link = (event.target as HTMLElement).closest(".editor-link");
+    const target = event.target as HTMLElement;
+    const taskMarker = target.closest(".editor-task-marker");
+    if (taskMarker && editor) {
+      toggleTaskMarker(editor, taskMarker);
+      return;
+    }
+    const link = target.closest(".editor-link");
     const title = link?.getAttribute("data-title");
     if (title) {
       onLinkClick?.(title);

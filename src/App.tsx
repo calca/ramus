@@ -13,7 +13,15 @@ import { JournalControls } from "./components/JournalControls";
 import { JournalSection } from "./components/JournalSection";
 import { PageView } from "./components/PageView";
 import { SettingsPanel } from "./components/SettingsPanel";
-import { getConfig, getSyncStatus, listJournals, openPage, openToday, readPage } from "./lib/commands";
+import {
+  getConfig,
+  getSyncStatus,
+  listJournals,
+  openPage,
+  openToday,
+  readPage,
+  rollOverUnfinishedTasks,
+} from "./lib/commands";
 import { formatIsoDate, journalDateFromPath } from "./lib/journal";
 import { buildActions } from "./lib/paletteActions";
 import { loadRecentPages, pushRecentPage } from "./lib/recentPages";
@@ -36,6 +44,21 @@ const SYNC_BADGE_LABELS: Partial<Record<SyncState, string>> = {
   conflict: "Conflitto: sync automatica ferma, serve intervento manuale",
   offline: "Rete non raggiungibile, riprovo al prossimo giro",
 };
+
+/** Da chiamare prima di aprire/riaprire "oggi" (avvio, o rollover di
+ * mezzanotte): sposta i task non fatti rimasti indietro, se l'utente ha
+ * l'opzione attiva (Config.task_rollover_enabled — il command stesso è un
+ * no-op se disattivata). Un fallimento qui non deve mai impedire
+ * l'apertura del journal ("zero attrito all'avvio", SPEC.md) — errore
+ * inghiottito in silenzio, non un banner per una comodità automatica di
+ * sfondo che l'utente non ha richiesto esplicitamente in quel momento. */
+async function tryRollOverUnfinishedTasks(): Promise<void> {
+  try {
+    await rollOverUnfinishedTasks();
+  } catch {
+    // Vedi commento sopra: si prosegue comunque ad aprire oggi.
+  }
+}
 
 type View = { kind: "journal" } | { kind: "page"; page: Page };
 
@@ -143,6 +166,7 @@ function App() {
    * diverso, non è una copia). */
   const resetAndLoadJournal = useCallback(async () => {
     try {
+      await tryRollOverUnfinishedTasks();
       const today = await openToday();
       pagesRef.current = [today];
       setPages([today]);
@@ -187,6 +211,7 @@ function App() {
     if (!needsNewDay()) {
       return;
     }
+    await tryRollOverUnfinishedTasks();
     const today = await openToday();
     const next = [today, ...pagesRef.current];
     pagesRef.current = next;
@@ -502,6 +527,10 @@ function App() {
     setConfig(nextConfig);
   }, []);
 
+  const handleTaskRolloverChanged = useCallback((nextConfig: Config) => {
+    setConfig(nextConfig);
+  }, []);
+
   /** Apre (creando se manca) la pagina cliccata e ci passa la vista. Flush
    * di tutti gli editor montati prima di navigare, stesso Promise.all già
    * usato alla chiusura finestra. */
@@ -680,6 +709,7 @@ function App() {
           onThemeChanged={handleThemeChanged}
           onShortcutChanged={handleShortcutChanged}
           onGitSyncIntervalChanged={handleGitSyncIntervalChanged}
+          onTaskRolloverChanged={handleTaskRolloverChanged}
           onShowAbout={() => setActivePanel("about")}
         />
       )}
