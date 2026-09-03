@@ -1,7 +1,7 @@
 # Server MCP — strumenti di sola lettura
 
 Stato: implementata. Primo pezzo di M5. Il secondo pezzo
-(`specs/M5/2026-09-02-mcp-server-scrittura.TODO.md`, strumenti che
+(`specs/M5/2026-09-02-mcp-server-scrittura.DONE.md`, strumenti che
 modificano il vault) presuppone questo già collaudato.
 
 Le due "Domande aperte" sono state confermate/estese durante la

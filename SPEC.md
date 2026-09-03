@@ -264,18 +264,21 @@ il marchio contro il bordo.
   cambio di giorno — vedi
   `specs/M4/2026-09-02-task-todo-done.DONE.md`.
 
-**M5 — AI**
+**M5 — AI** (completa)
 - Non un'AI integrata nell'app: un server MCP (`ramus-mcp`, nuovo
   crate binario, indipendente dalla GUI) che espone il vault a un
   agente/tool AI già scelto e configurato dall'utente (Claude Code,
   Claude Desktop, o qualunque client MCP) — vincolo "nessun invio
   automatico" soddisfatto perché Ramus non contatta mai un'AI, è
   l'agente a interrogare Ramus. Strumenti di sola lettura (ricerca,
-  lettura pagine/journal, backlink, tag) implementati — vedi
+  lettura pagine/journal, backlink, tag) — vedi
   `specs/M5/2026-09-02-mcp-server-lettura.DONE.md`, che include anche
   `ramus-mcp --print-config` per generare lo snippet di configurazione
-  del client MCP. Strumenti di scrittura non ancora implementati —
-  vedi `specs/M5/2026-09-02-mcp-server-scrittura.TODO.md`.
+  del client MCP.
+- Strumenti di scrittura (`write_page`, `open_today`, `open_page`),
+  stesso crate — flag `--read-only` per escluderli del tutto
+  dall'elenco esposto (scrittura abilitata di default) — vedi
+  `specs/M5/2026-09-02-mcp-server-scrittura.DONE.md`.
 
 **M6 — Mobile (Android/iOS)**
 - Supporto mobile nativo di Tauri v2 (stesso frontend, stesso

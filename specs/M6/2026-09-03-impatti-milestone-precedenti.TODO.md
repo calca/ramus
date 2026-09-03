@@ -130,12 +130,12 @@ sostanzialmente un secondo pezzo da progettare.
   esiste già un'alternativa touch naturale (il tap sul marker copre
   già il caso più comune, fatto/da fare).
 
-## M5 — AI → server MCP (lettura implementata, scrittura TODO)
+## M5 — AI → server MCP (completa)
 
 - **Non si applica al mobile**, non per una lacuna da colmare ma per
   natura dell'architettura: `ramus-mcp`
   (`specs/M5/2026-09-02-mcp-server-lettura.DONE.md`,
-  `specs/M5/2026-09-02-mcp-server-scrittura.TODO.md`) è un binario a
+  `specs/M5/2026-09-02-mcp-server-scrittura.DONE.md`) è un binario a
   sé, avviato via stdio da un client MCP desktop (Claude Desktop,
   Claude Code) — un modello a processi che il sandboxing mobile non
   permette, e i client MCP stessi girano su desktop. **M5 resta

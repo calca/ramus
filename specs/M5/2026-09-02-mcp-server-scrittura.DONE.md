@@ -1,9 +1,12 @@
 # Server MCP — strumenti di scrittura
 
-Stato: proposta, in attesa di conferma. Presuppone
+Stato: implementata. Presuppone
 `specs/M5/2026-09-02-mcp-server-lettura.DONE.md` già implementata e
 collaudata — stesso crate `ramus-mcp`, si aggiungono strumenti, non
-se ne crea un secondo.
+se ne crea un secondo. Entrambe le "Domande aperte" confermate come
+proposto: scrittura abilitata di default (`--read-only` per
+escluderla), stesso rischio già accettato per la creazione di pagine
+al volo (nessun limite aggiuntivo).
 
 ## Motivazione
 
@@ -94,6 +97,17 @@ una scrittura, senza doversi fidare del client MCP per non chiamarli.
 }
 ```
 
+**Meccanica implementativa**: due `#[tool_router]` distinti sullo
+stesso `impl Server` (uno per la lettura, `read_tool_router`, uno per
+la scrittura, `write_tool_router` — invece di uno solo come nel primo
+pezzo), uniti in `Server::new` con `ToolRouter::merge`/`+=` solo se
+`!read_only`. Gli strumenti esclusi non esistono proprio nel router
+finale, non solo "disabilitati" — coerente con "assenti dall'elenco",
+non "rifiutati a runtime".
+
+`ramus-mcp --print-config` (dal primo pezzo) ricorda anche questa
+opzione nel testo che stampa, non solo nell'esempio statico qui sopra.
+
 ## Fuori scope per questa spec
 
 - Conferma/anteprima prima di ogni scrittura (un "vuoi davvero
@@ -114,34 +128,45 @@ una scrittura, senza doversi fidare del client MCP per non chiamarli.
 
 ## Domande aperte
 
-1. Default di `--read-only`: scrittura **abilitata** di default
-   (proposto, coerente con lo scopo del pezzo) — o preferisci il
-   contrario, scrittura disabilitata finché non si passa
-   esplicitamente `--write` o simile? Cambia solo quale sia il flag
-   "opt-in" vs "opt-out", non le funzionalità.
-2. `open_today`/`open_page` creano file se mancanti — un agente
-   potrebbe crearne per errore (es. un titolo con un typo diventa una
-   pagina orfana). Accettabile (stesso rischio già presente quando
-   l'utente stesso clicca "Crea «query»" nell'autocomplete link, M2),
-   o vuoi un qualche limite in più qui?
+Nessuna: entrambe confermate come proposto (vedi cima del documento).
 
 ## Test da scrivere (core)
 
-Nessuno nuovo in `ramus-core` (zero modifiche, `write_page`/
-`open_today`/`open_page` sono già testati). In `ramus-mcp`:
+Nessuno nuovo in `ramus-core` (zero modifiche, confermato —
+`write_page`/`open_today`/`open_page` sono già testati lì). In
+`ramus-mcp`, 6 test aggiuntivi (totale 14 con quelli del primo
+pezzo):
 
 - `write_page` tramite lo strumento MCP produce lo stesso file sul
   disco di una chiamata diretta a `Vault::write_page`.
 - Dopo `write_page`, una `search` successiva nella stessa sessione
   trova il nuovo contenuto (verifica che `refresh_page` sull'indice
   locale di `ramus-mcp` funzioni).
+- `open_today` crea il file del journal di oggi se manca.
+- `open_page` crea una pagina col titolo indicato.
 - `--read-only` non registra gli strumenti di scrittura nell'elenco
-  esposto (verificabile chiamando l'introspezione degli strumenti del
-  server, non tentando la chiamata e aspettandosi un rifiuto).
+  esposto (`ToolRouter::has_route`, introspezione diretta — non un
+  tentativo di chiamata che ci si aspetta venga rifiutato).
+- Scrittura abilitata di default: senza `--read-only`, tutti e tre
+  gli strumenti di scrittura sono nel router.
 
 ## Verifica
 
-`cargo test -p ramus-mcp` per quanto sopra. Il collaudo con un client
-MCP reale (un agente che scrive nel vault, la GUI aperta in parallelo
-che riceve l'aggiornamento) non è verificabile in questo sandbox:
-previsto per domani insieme al collaudo del primo pezzo.
+**Aggiornamento rispetto al testo originale**: verificato prima del
+previsto, non rimandato a domani. `cargo test -p ramus-mcp` (14
+test), `cargo test` sull'intero workspace (114 core + 14 mcp),
+`cargo clippy --all-targets -D warnings` e `cargo fmt --check` puliti.
+Collaudo end-to-end reale con richieste JSON-RPC grezze su stdio,
+contro un vault isolato e usa-e-getta (mai il vault reale
+dell'utente — `HOME` sovrascritto solo per il sottoprocesso, così
+`Config::load_or_init()` risolve un `config.json` completamente
+separato): `open_today` (crea il file), `write_page` (scrive e
+rilegge correttamente), `search` subito dopo (trova il contenuto
+appena scritto — conferma che `refresh_page` sull'indice del
+processo `ramus-mcp` funziona anche attraverso il transport reale, non
+solo nella chiamata diretta ai metodi), `open_page` (crea con
+front-matter corretto). Non verificato: un client MCP completo (Claude
+Desktop/Code) e lo scenario "GUI aperta in parallelo riceve
+l'aggiornamento via watcher" — quest'ultimo si appoggia a un
+meccanismo (`spawn_watcher`) già testato per altri casi (M3), non
+ri-testato qui.
