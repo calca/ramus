@@ -36,7 +36,7 @@ fn config_file_path() -> PathBuf {
 /// `ramus-mcp --print-config`: stampa lo snippet JSON da incollare nella
 /// configurazione di un client MCP, con il percorso reale di *questo*
 /// binario compilato — l'utente non deve scoprirlo/scriverlo a mano.
-fn print_config() {
+fn print_config() -> Result<(), serde_json::Error> {
     let exe = std::env::current_exe().unwrap_or_else(|_| PathBuf::from("ramus-mcp"));
     println!(
         "Aggiungi questa voce alla sezione \"mcpServers\" del file di configurazione del tuo client MCP (es. .mcp.json per Claude Code, claude_desktop_config.json per Claude Desktop):\n"
@@ -48,13 +48,11 @@ fn print_config() {
             }
         }
     });
-    println!(
-        "{}",
-        serde_json::to_string_pretty(&snippet).expect("serializzazione JSON statica")
-    );
+    println!("{}", serde_json::to_string_pretty(&snippet)?);
     println!(
         "\nPer escludere gli strumenti di scrittura (write_page, open_today, open_page), aggiungi \"args\": [\"--read-only\"] alla voce sopra."
     );
+    Ok(())
 }
 
 fn core_error_to_rmcp(err: CoreError) -> ErrorData {
@@ -323,7 +321,7 @@ impl ServerHandler for Server {}
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let args: Vec<String> = std::env::args().collect();
     if args.iter().any(|arg| arg == "--print-config") {
-        print_config();
+        print_config()?;
         return Ok(());
     }
     let read_only = args.iter().any(|arg| arg == "--read-only");

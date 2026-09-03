@@ -1,7 +1,7 @@
 # Rimuovere l'ultimo `.expect()` in codice di produzione
 
-Stato: proposta, da implementare. La più piccola delle spec di
-"production readiness" — un solo punto, nessuna domanda aperta.
+Stato: implementata. La più piccola delle spec di "production
+readiness" — un solo punto, nessuna domanda aperta.
 
 ## Motivazione
 
@@ -33,10 +33,16 @@ in scope per questa spec.)
 
 `print_config()` cambia firma da `fn print_config()` a `fn
 print_config() -> Result<(), serde_json::Error>`, propaga l'errore con
-`?` invece di `.expect(...)`. Il chiamante (`main()`, dove
-`--print-config` viene gestito) stampa l'errore su stderr ed esce con
-`std::process::exit(1)` in caso di fallimento — stesso pattern già in
-uso in `main()` per `mcp_disabled_message` (M5).
+`?` invece di `.expect(...)`. Il chiamante (`main()`) fa `print_config()?`
+— stesso identico pattern già in uso lì per ogni altra chiamata
+fallibile (`Config::load_or_init(...)?`, `vault.ensure_exists()?`,
+ecc.): `main()` ritorna già `Result<(), Box<dyn std::error::Error>>`,
+un errore di serializzazione stampa il suo `Debug` e termina con
+codice 1 tramite il comportamento standard di Rust per un `main`
+fallibile, senza bisogno di `eprintln!`/`std::process::exit` scritti a
+mano (quel pattern resta riservato al caso speciale di
+`mcp_disabled_message`, un messaggio pensato per l'utente finale, non
+un errore tecnico di serializzazione che non dovrebbe mai verificarsi).
 
 ## Fuori scope
 
@@ -45,7 +51,9 @@ gestione dell'errore cambia, nessun altro comportamento.
 
 ## Verifica
 
-`cargo test -p ramus-mcp`, `cargo clippy --all-targets -- -D
-warnings`, `cargo fmt --check` — tutti puliti. `grep` di conferma:
-zero `.unwrap()`/`.expect()` fuori da `#[cfg(test)]` in tutto il
-workspace dopo la modifica.
+`cargo check -p ramus-mcp`, `cargo test -p ramus-mcp` (15 test,
+verdi), `cargo clippy --all-targets -- -D warnings`, `cargo fmt
+--check` — tutti puliti. `grep` di conferma: zero
+`.unwrap()`/`.expect()` fuori dai test in tutto il workspace dopo la
+modifica, a parte il boilerplate Tauri già accettato
+(`src-tauri/src/lib.rs:144`).
