@@ -1,5 +1,9 @@
 :root {
-  --ramus-ink: #1C1A17;
+  /* "Morbido": ink più caldo del quasi-nero originale (contrasto 15.4:1
+     -> 10.5:1 su --ramus-paper). Ancora ben sopra AAA (7:1), meno
+     "vibrante" nelle sessioni di lettura lunghe — vedi
+     specs/refinement/2026-09-03-palette-lettura.DONE.md. */
+  --ramus-ink: #3D372D;
   --ramus-sap: #2F6B4F;
   --ramus-amber: #C98A2E;
   --ramus-stone: #8A857C;
@@ -13,21 +17,26 @@
 /* Tema "sistema" (nessun data-theme esplicito): segue il sistema operativo. */
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
-    --ramus-ink: #F5F1E8;
+    /* "Morbido": ink smorzato invece di un bianco quasi puro, paper
+       alzato da quasi-nero a un carbone scuro (contrasto ink/paper
+       16.2:1 -> 10.1:1) — bianco puro su nero puro produce un alone
+       (halation) percepito più affaticante a parità di rapporto di
+       contrasto, non solo un numero più alto. */
+    --ramus-ink: #D2CBB8;
     --ramus-sap: #4E9B77;
     --ramus-amber: #E0A745;
     --ramus-stone: #9C978D;
-    --ramus-paper: #16150F;
+    --ramus-paper: #241F17;
     color-scheme: dark;
   }
 }
 
 /* Tema esplicito dalle Impostazioni: vince sempre sul sistema. */
 :root[data-theme="dark"] {
-  --ramus-ink: #F5F1E8;
+  --ramus-ink: #D2CBB8;
   --ramus-sap: #4E9B77;
   --ramus-amber: #E0A745;
   --ramus-stone: #9C978D;
-  --ramus-paper: #16150F;
+  --ramus-paper: #241F17;
   color-scheme: dark;
 }
