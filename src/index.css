@@ -569,6 +569,11 @@ body {
 }
 
 .about-mascotte {
+  /* Il file ha viewBox 140x190 (non quadrato): height esplicita a un
+     valore diverso dal rapporto reale stirava/tagliava il disegno
+     (bug segnalato dall'utente) — solo width fissa, height segue il
+     rapporto naturale dell'SVG. */
+  height: auto;
   margin-bottom: 0.5rem;
 }
 

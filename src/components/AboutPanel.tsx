@@ -32,7 +32,7 @@ export function AboutPanel({ onClose }: AboutPanelProps) {
       </header>
 
       <div className="about-content">
-        <img src={mascotteUrl} alt="Stecco, la mascotte di Ramus" className="about-mascotte" width={128} height={128} />
+        <img src={mascotteUrl} alt="Stecco, la mascotte di Ramus" className="about-mascotte" width={128} />
         <h3 className="about-name">Ramus</h3>
         {version && <p className="about-version">v{version}</p>}
         <p className="about-tagline">
