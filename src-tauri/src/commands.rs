@@ -367,19 +367,37 @@ pub struct McpInfo {
 
 /// `ramus-mcp` e il binario dell'app Tauri sono membri dello stesso
 /// workspace Cargo: `cargo build`/`cargo tauri dev` li compila nella
-/// stessa cartella — file fratelli. Smette di funzionare quando Ramus
-/// verrà pacchettizzato per la distribuzione (fuori scope, vedi
-/// specs/M5/2026-09-03-mcp-impostazioni.TODO.md).
+/// stessa cartella — file fratelli, primo tentativo sotto (nome
+/// semplice). In una build pacchettizzata (`tauri build`), `ramus-mcp`
+/// è incluso come sidecar (`bundle.externalBin` in `tauri.conf.json`)
+/// e Tauri lo posiziona comunque accanto al binario principale, ma con
+/// il nome suffissato dal target triple corrente (convenzione Tauri
+/// per gli external bin) — secondo tentativo. `TARGET_TRIPLE` è
+/// iniettato a tempo di compilazione da `build.rs`: Rust non espone
+/// il target triple completo a runtime altrimenti. Vedi
+/// specs/release/2026-09-03-packaging-mcp.DONE.md.
 fn find_mcp_binary() -> Option<PathBuf> {
     let current = std::env::current_exe().ok()?;
     let dir = current.parent()?;
-    let name = if cfg!(windows) {
-        "ramus-mcp.exe"
-    } else {
-        "ramus-mcp"
-    };
-    let candidate = dir.join(name);
-    candidate.exists().then_some(candidate)
+    let suffix = if cfg!(windows) { ".exe" } else { "" };
+    let candidates = [
+        format!("ramus-mcp{suffix}"),
+        format!("ramus-mcp-{}{suffix}", env!("TARGET_TRIPLE")),
+    ];
+    candidates
+        .into_iter()
+        .map(|name| dir.join(name))
+        .find(|candidate| {
+            // Non solo esiste: build.rs crea un segnaposto vuoto allo stesso
+            // nome suffissato per non rompere `cargo check`/`cargo test`
+            // ordinari (vedi build.rs) — un file a lunghezza zero non è mai
+            // il binario vero, anche se dovesse finire per sbaglio in una
+            // build pacchettizzata.
+            candidate
+                .metadata()
+                .map(|meta| meta.len() > 0)
+                .unwrap_or(false)
+        })
 }
 
 #[tauri::command]

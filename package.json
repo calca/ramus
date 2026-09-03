@@ -9,6 +9,7 @@
     "preview": "vite preview",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
+    "prepare:mcp-sidecar": "node scripts/prepare-mcp-sidecar.mjs",
     "tauri": "tauri"
   },
   "dependencies": {
