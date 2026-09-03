@@ -11,7 +11,7 @@ questa spec doveva popolare entrambi — un'incoerenza nel testo
 proposto, risolta a favore della versione scritta per esteso).
 
 Fondamenta per le altre spec
-dell'idea "keyboard focused, less UI": `specs/M4/2026-09-02-riordino-blocchi-tastiera.TODO.md`
+dell'idea "keyboard focused, less UI": `specs/M4/2026-09-02-riordino-blocchi-tastiera.DONE.md`
 e `specs/M4/2026-09-02-focus-mode-navigazione-giorni.TODO.md` aggiungono
 voci a questo registro una volta implementate.
 
@@ -27,7 +27,7 @@ altre idee "keyboard focused" di questa sessione.
 **Solo scorciatoie a livello finestra** (listener globale su
 `window`) entrano nel registro configurabile. Tab, Shift-Tab, Invio,
 Backspace (esistenti) e il nuovo Alt-ArrowUp/Down per il riordino
-blocchi (`specs/M4/2026-09-02-riordino-blocchi-tastiera.TODO.md`)
+blocchi (`specs/M4/2026-09-02-riordino-blocchi-tastiera.DONE.md`)
 **restano fisse**, non configurabili. Due motivi, non solo
 preferenza:
 
@@ -154,9 +154,8 @@ Due sezioni:
 - **Scorciatoie editor** (sola lettura, elenco statico hardcoded, non
   dal registro — vedi "Cosa resta fuori"): Tab (indent), Shift+Tab
   (outdent), Invio (nuovo blocco), Backspace su blocco vuoto (esci di
-  un livello), più le voci che arriveranno da
-  `specs/M4/2026-09-02-riordino-blocchi-tastiera.TODO.md` quando
-  implementata (questa spec lista solo quelle di oggi).
+  un livello). **Aggiornamento**: Alt+Su/Giù (riordino blocchi) si sono
+  aggiunte con `specs/M4/2026-09-02-riordino-blocchi-tastiera.DONE.md`.
 
 ## Fuori scope per questa spec
 

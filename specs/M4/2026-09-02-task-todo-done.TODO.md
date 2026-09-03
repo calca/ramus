@@ -95,7 +95,7 @@ normali).
 Scorciatoia **fissa**, non nel registro configurabile di
 `specs/M4/2026-09-02-scorciatoie-configurabili.DONE.md` — stessa
 motivazione già scritta per il riordino blocchi
-(`specs/M4/2026-09-02-riordino-blocchi-tastiera.TODO.md`): vive nella
+(`specs/M4/2026-09-02-riordino-blocchi-tastiera.DONE.md`): vive nella
 keymap ProseMirror dell'editor, non in un listener a livello finestra.
 Default proposto: `Mod-Enter`.
 
@@ -142,7 +142,7 @@ dentro il journal di oggi (non c'è dove spostarlo).
 
 L'intero sottoalbero (il task e i suoi figli, se ne ha) — stesso
 principio già scritto per il riordino da tastiera
-(`specs/M4/2026-09-02-riordino-blocchi-tastiera.TODO.md`, "il blocco
+(`specs/M4/2026-09-02-riordino-blocchi-tastiera.DONE.md`, "il blocco
 spostato porta con sé i suoi figli"): un sotto-task o una nota
 attaccata al task non deve restare orfana nel giorno vecchio.
 

@@ -19,6 +19,7 @@ import StarterKit from "@tiptap/starter-kit";
 import { CurrentBlockHighlight } from "./currentBlockHighlight";
 import { LinkAutocomplete } from "./linkAutocomplete";
 import { LinkTagHighlight } from "./linkTagHighlight";
+import { moveListItem } from "./moveBlock";
 import { TagAutocomplete } from "./tagAutocomplete";
 
 const OutlinerBackspace = Extension.create({
@@ -43,6 +44,17 @@ const OutlinerBackspace = Extension.create({
   },
 });
 
+const MoveBlock = Extension.create({
+  name: "moveBlock",
+
+  addKeyboardShortcuts() {
+    return {
+      "Alt-ArrowUp": ({ editor }) => moveListItem(editor, "up"),
+      "Alt-ArrowDown": ({ editor }) => moveListItem(editor, "down"),
+    };
+  },
+});
+
 export function createExtensions() {
   return [
     StarterKit.configure({
@@ -58,6 +70,7 @@ export function createExtensions() {
       code: false,
     }),
     OutlinerBackspace,
+    MoveBlock,
     CurrentBlockHighlight,
     LinkTagHighlight,
     LinkAutocomplete,

@@ -1,6 +1,16 @@
 # Riordino blocchi da tastiera (Alt+Su/Giù)
 
-Stato: proposta, in attesa di conferma.
+Stato: implementata. Nessuna domanda bloccante da confermare (il testo
+originale già lo segnalava). Uno scostamento: `moveListItem` vive in
+un file proprio, `src/editor/moveBlock.ts`, non inline in
+`extensions.ts` accanto a `OutlinerBackspace` come nello schema di
+codice proposto — coerente con la convenzione già in uso nel resto di
+`src/editor/` (solo le estensioni davvero minime restano inline,
+quelle con una logica non banale, come `linkAutocomplete.ts`/
+`currentBlockHighlight.ts`, hanno un file a sé). `extensions.ts`
+importa `moveListItem` e definisce `MoveBlock` (l'`Extension.create`
+che lo espone come scorciatoia) esattamente come nello schema
+originale.
 
 ## Motivazione
 
@@ -110,8 +120,13 @@ autocomplete).
 
 ## Verifica
 
-Nessuna parte automatizzabile in questo sandbox (comportamento
-editor). Serve un giro manuale in `npm run tauri dev`: spostare un
-blocco con figli su/giù, verificare che il sottoalbero segua, che il
-cursore resti nel blocco spostato, e che il salvataggio (500ms dopo)
-scriva il nuovo ordine sul file.
+`npm run typecheck` pulito. La matematica di posizione di
+`moveListItem` (la parte più a rischio di un bug fuori-per-uno) è
+stata verificata con uno script Node usa-e-getta, non committato, che
+costruisce uno schema ProseMirror minimale bulletList/listItem/
+paragraph/text equivalente a quello reale e controlla: scambio
+semplice fra due fratelli, cursore che resta nel blocco spostato,
+no-op sul bordo della lista, sottoalbero che segue il genitore
+spostato — tutti passati. Non verificato in questo sandbox: il giro
+completo in `npm run tauri dev` (Tiptap/DOM reali, salvataggio su
+file dopo 500ms) — richiede un giro manuale.

@@ -15,6 +15,8 @@ const EDITOR_SHORTCUTS: { label: string; keys: string }[] = [
   { label: "Indenta", keys: "Tab" },
   { label: "Rimuovi indentazione", keys: "Shift+Tab" },
   { label: "Esci di un livello (blocco vuoto)", keys: "Backspace" },
+  { label: "Sposta blocco su", keys: "Alt+↑" },
+  { label: "Sposta blocco giù", keys: "Alt+↓" },
 ];
 
 export function Cheatsheet({ config, onClose }: CheatsheetProps) {

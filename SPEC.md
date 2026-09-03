@@ -242,6 +242,10 @@ il marchio contro il bordo.
   solo campo `search_shortcut`), più una cheatsheet (`Mod+/`) con le
   scorciatoie app e quelle fisse dell'editor — vedi
   `specs/M4/2026-09-02-scorciatoie-configurabili.DONE.md`.
+- Riordino blocchi fratelli da tastiera (Alt+Su/Giù, sottoalbero
+  incluso) — scorciatoia fissa dell'editor, non nel registro
+  configurabile — vedi
+  `specs/M4/2026-09-02-riordino-blocchi-tastiera.DONE.md`.
 
 **M5 — AI**
 - Non un'AI integrata nell'app: un server MCP (`ramus-mcp`, nuovo
