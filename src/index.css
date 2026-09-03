@@ -45,11 +45,13 @@ body {
 /* Bottoni icona compatti della status bar (⚙ Impostazioni, badge sync):
    più piccoli di .settings-button (header) per "ridurre la dimensione"
    — stessa lingua visiva di .sync-badge, che ora la riusa invece di
-   duplicarne le proprietà di base. */
+   duplicarne le proprietà di base. Senza bordo (decluttering): solo lo
+   sfondo all'hover segnala che sono cliccabili, stesso pattern già in
+   uso per i bottoni della sidebar di Impostazioni. */
 .statusbar-icon-button {
-  border: 1px solid color-mix(in srgb, var(--ramus-stone) 40%, transparent);
   background: transparent;
   color: var(--ramus-stone);
+  border: none;
   border-radius: 6px;
   padding: 0.15rem 0.4rem;
   cursor: pointer;
@@ -57,10 +59,14 @@ body {
   line-height: 1;
 }
 
+.statusbar-icon-button:hover {
+  background: color-mix(in srgb, var(--ramus-stone) 12%, transparent);
+}
+
 .settings-button {
-  border: 1px solid color-mix(in srgb, var(--ramus-stone) 40%, transparent);
   background: transparent;
   color: var(--ramus-ink);
+  border: none;
   border-radius: 6px;
   padding: 0.25rem 0.55rem;
   cursor: pointer;
@@ -68,12 +74,15 @@ body {
   line-height: 1;
 }
 
+.settings-button:hover {
+  background: color-mix(in srgb, var(--ramus-stone) 12%, transparent);
+}
+
 /* Badge di stato sync (M3): visibile solo quando c'è qualcosa da dire
    (mai per "disabled"/"idle") — neutro per noremote/syncing/offline,
    solo "conflict" usa il rosso già riservato agli errori veri
    (.banner-error), mai l'amber (riservato a giorno corrente/focus). */
 .sync-badge.is-conflict {
-  border-color: color-mix(in srgb, #b3261e 50%, transparent);
   color: #b3261e;
 }
 
