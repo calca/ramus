@@ -210,6 +210,15 @@ body {
 .ramus-editor .ProseMirror {
   outline: none;
   line-height: 1.6;
+  /* Solo il corpo che si scrive/legge, non la chrome attorno (bottoni,
+     header, Impostazioni restano nel sans-serif di sistema): serif di
+     sistema per la lettura lunga, zero dipendenze nuove — "Iowan Old
+     Style" è il serif di lettura di Apple (Apple Books), presente solo
+     su macOS/iOS; su Windows/Linux lo stack scivola su Georgia o sul
+     serif generico del sistema. Confrontato in un artifact prima di
+     questa modifica, vedi
+     specs/refinement/2026-09-03-font-lettura.DONE.md. */
+  font-family: "Iowan Old Style", Georgia, "Times New Roman", serif;
 }
 
 .ramus-editor ul {
