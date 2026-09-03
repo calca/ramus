@@ -37,8 +37,8 @@ Ogni punto rimanda alla spec di origine; nessuno viene risolto qui.
   polling (verificato) — non bloccante ma da tenere a mente per
   l'intervallo di polling scelto.
 - **Rollover automatico a mezzanotte**
-  (`specs/M1/2026-09-02-nuovo-giorno-automatico.TODO.md`, non ancora
-  implementata): il meccanismo proposto (focus/visibilitychange +
+  (`specs/M1/2026-09-02-nuovo-giorno-automatico.DONE.md`): il
+  meccanismo implementato (focus/visibilitychange +
   polling 60s) va verificato su mobile — `visibilitychange` esiste
   nelle webview mobile, ma un'app iOS in background viene sospesa
   (il `setInterval` non ticka finché non torna in foreground): non è

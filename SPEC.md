@@ -190,7 +190,9 @@ il marchio contro il bordo.
 
 **M1 — Journal funzionante** (completa)
 - Creazione vault di default al primo avvio, senza chiedere nulla
-- Apertura automatica del journal di oggi
+- Apertura automatica del journal di oggi — resta vero anche a cavallo
+  di mezzanotte se l'app è rimasta aperta, vedi
+  `specs/M1/2026-09-02-nuovo-giorno-automatico.DONE.md`
 - Outliner con indent/outdent e navigazione da tastiera
 - Persistenza su file con debounce
 - File watcher con ricarica sicura

@@ -12,7 +12,7 @@ import { PageView } from "./components/PageView";
 import { SearchPanel } from "./components/SearchPanel";
 import { SettingsPanel } from "./components/SettingsPanel";
 import { getConfig, listJournals, openPage, openToday, readPage } from "./lib/commands";
-import { journalDateFromPath } from "./lib/journal";
+import { formatIsoDate, journalDateFromPath } from "./lib/journal";
 import { matchesShortcut } from "./lib/shortcut";
 import { applyTheme } from "./lib/theme";
 import type { Config, Page, SearchHit } from "./lib/types";
@@ -144,12 +144,34 @@ function App() {
     sectionElements.current.get(path)?.scrollIntoView({ behavior: "smooth", block: "start" });
   }, []);
 
-  const scrollToToday = useCallback(() => {
+  /** `true` se il primo giorno caricato non è più oggi (l'app è rimasta
+   * aperta a cavallo di mezzanotte). */
+  const needsNewDay = useCallback(() => {
+    const first = pagesRef.current[0];
+    return !first || journalDateFromPath(first.path) !== formatIsoDate(new Date());
+  }, []);
+
+  /** Se serve, apre il nuovo giorno (idempotente, crea il file se manca)
+   * e lo antepone alla lista — nessuno scroll, nessun tocco alle sezioni
+   * esistenti: il vecchio "oggi" resta dov'è, perde solo `isToday`
+   * (derivato da `index === 0`, si sposta da solo col nuovo ordine). */
+  const ensureToday = useCallback(async () => {
+    if (!needsNewDay()) {
+      return;
+    }
+    const today = await openToday();
+    const next = [today, ...pagesRef.current];
+    pagesRef.current = next;
+    setPages(next);
+  }, [needsNewDay]);
+
+  const scrollToToday = useCallback(async () => {
+    await ensureToday();
     const today = pagesRef.current[0];
     if (today) {
       scrollToPath(today.path);
     }
-  }, [scrollToPath]);
+  }, [ensureToday, scrollToPath]);
 
   const jumpToDate = useCallback(
     async (target: string) => {
@@ -193,6 +215,26 @@ function App() {
       await resetAndLoadJournal();
     })();
   }, [resetAndLoadJournal]);
+
+  // Rollover a mezzanotte: due trigger. Il ritorno di focus/visibilità
+  // copre il caso comune (si chiude il laptop la sera, si riapre il
+  // giorno dopo); un controllo ogni 60s copre il caso raro in cui la
+  // finestra resti a fuoco ininterrottamente attraverso la mezzanotte
+  // (schermo sempre acceso) — costo trascurabile, solo un confronto di
+  // stringhe quando non serve fare nulla.
+  useEffect(() => {
+    const onFocusOrVisible = () => {
+      void ensureToday();
+    };
+    window.addEventListener("focus", onFocusOrVisible);
+    document.addEventListener("visibilitychange", onFocusOrVisible);
+    const interval = setInterval(() => void ensureToday(), 60_000);
+    return () => {
+      window.removeEventListener("focus", onFocusOrVisible);
+      document.removeEventListener("visibilitychange", onFocusOrVisible);
+      clearInterval(interval);
+    };
+  }, [ensureToday]);
 
   // Scroll infinito: quando la sentinella in fondo alla lista entra in
   // viewport, si carica il blocco successivo.
@@ -395,7 +437,10 @@ function App() {
         <img src={faviconUrl} alt="" className="app-logo" width={20} height={20} />
         <span className="app-title">Ramus</span>
         {view.kind === "journal" && (
-          <JournalControls onToday={scrollToToday} onJumpToDate={(iso) => void jumpToDate(iso)} />
+          <JournalControls
+            onToday={() => void scrollToToday()}
+            onJumpToDate={(iso) => void jumpToDate(iso)}
+          />
         )}
         <button
           type="button"

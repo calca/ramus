@@ -1,8 +1,8 @@
 # Nuovo giorno aggiunto automaticamente a mezzanotte
 
-Stato: proposta, in attesa di conferma. Corregge una lacuna in M1
-(già "completa" — la milestone non riapre, questa spec la tappa senza
-rimettere in discussione il resto).
+Stato: implementata. Corregge una lacuna in M1 (già "completa" — la
+milestone non riapre, questa spec la tappa senza rimettere in
+discussione il resto).
 
 ## Motivazione
 
