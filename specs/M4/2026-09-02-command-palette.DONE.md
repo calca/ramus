@@ -1,6 +1,16 @@
 # Command palette (ricerca + creazione + recenti + azioni)
 
-Stato: proposta, in attesa di conferma.
+Stato: implementata. Le quattro "Domande aperte" sono state confermate
+con alcune scelte diverse dal default proposto — vedi sotto — più un
+dettaglio implementativo non coperto dal testo originale: dove vivono
+i "recenti" persistiti.
+
+**Recenti persistiti**: `src/lib/recentPages.ts`, `localStorage`
+(stato del webview, non tocca il filesystem del vault — CLAUDE.md
+regola 3 riguarda i file del vault, non lo storage del browser),
+chiave `ramus:recent-pages:<vault_path>` — per vault, così cambiare
+vault non mostra titoli di un altro. Nessun nuovo campo `Config`: non
+serve un round-trip Rust per uno stato di comodo puramente frontend.
 
 ## Motivazione
 
@@ -158,19 +168,16 @@ stessa logica già in `handleSearchSelect` (jump al giorno); `create`
 
 ## Domande aperte
 
-1. **Persistenza dei recenti**: sessione soltanto (proposto, coerente
-   con `isCompact`) — o preferisci che sopravvivano al riavvio (in tal
-   caso serve deciderne dove: un nuovo campo `Config`, o uno storage
-   separato lato frontend)?
-2. **Etichetta della sezione in Impostazioni** (oggi "Ricerca"): resta
-   "Ricerca" (la scorciatoia in fondo apre comunque prima di tutto una
-   ricerca), o si rinomina in qualcosa come "Command palette" /
-   "Comandi"?
-3. **Icona/aria-label del bottone nell'header**: resta 🔍 "Cerca"
-   (proposto, minima discontinuità visiva) o si cambia per riflettere
-   lo scope più ampio (es. "Comandi", icona diversa)?
-4. Elenco azioni v1 proposto sopra (5 voci) — mancano voci importanti,
-   o è già completo per iniziare?
+Tutte e quattro confermate, con due scelte diverse dal default
+proposto nel testo originale:
+
+1. **Persistenza dei recenti**: persistiti (non solo sessione) — vedi
+   "Recenti persistiti" sopra per dove.
+2. **Etichetta della sezione in Impostazioni**: rinominata "Comandi"
+   (era "Ricerca").
+3. **Icona del bottone nell'header**: cambiata da 🔍 a ⚡, aria-label
+   "Comandi" (era "Cerca") — riflette lo scope più ampio della palette.
+4. Elenco azioni v1: confermato invariato, le 5 voci proposte.
 
 ## Test da scrivere
 

@@ -248,7 +248,7 @@ export function SettingsPanel({
       </section>
 
       <section className="settings-section">
-        <h3>Ricerca</h3>
+        <h3>Comandi</h3>
         <button
           type="button"
           className="settings-shortcut-button"

@@ -587,7 +587,7 @@ body {
   margin: 0;
 }
 
-.search-input {
+.palette-input {
   width: 100%;
   border: 1px solid color-mix(in srgb, var(--ramus-stone) 40%, transparent);
   background: transparent;
@@ -598,12 +598,12 @@ body {
   font-family: inherit;
 }
 
-.search-input:focus {
+.palette-input:focus {
   outline: none;
   border-color: var(--ramus-sap);
 }
 
-.search-results {
+.palette-results {
   list-style: none;
   margin: 0.75rem 0 0;
   padding: 0;
@@ -611,7 +611,22 @@ body {
   overflow-y: auto;
 }
 
-.search-result {
+/* Etichetta muta sopra ogni gruppo (Recenti/Azioni/Risultati/Crea) —
+   stesso trattamento tipografico di .settings-section h3. */
+.palette-section-label {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: var(--ramus-stone);
+  margin: 0.75rem 0 0.3rem;
+  padding: 0 0.6rem;
+}
+
+.palette-results li:first-child .palette-section-label {
+  margin-top: 0;
+}
+
+.palette-item {
   display: block;
   width: 100%;
   text-align: left;
@@ -623,24 +638,24 @@ body {
   cursor: pointer;
 }
 
-.search-result.is-selected {
+.palette-item.is-selected {
   background: color-mix(in srgb, var(--ramus-sap) 18%, transparent);
 }
 
-.search-result-title {
+.palette-item-title {
   display: block;
   font-size: 0.9rem;
   font-weight: 600;
   margin-bottom: 0.15rem;
 }
 
-.search-result-snippet {
+.palette-item-snippet {
   display: block;
   font-size: 0.85rem;
   color: var(--ramus-stone);
 }
 
-.search-result-snippet b {
+.palette-item-snippet b {
   color: var(--ramus-ink);
   font-weight: 600;
 }

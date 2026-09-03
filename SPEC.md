@@ -230,10 +230,14 @@ il marchio contro il bordo.
 **M4 — UI**
 - Rifinitura dell'interfaccia raccolta durante l'uso reale dell'app, non
   legata a una singola feature. In corso.
-- Header ridotto a logo + titolo + 3 icone (comprimi, cerca,
+- Header ridotto a logo + titolo + 3 icone (comprimi, comandi,
   impostazioni); navigazione del journal e badge di stato sync spostati
   in una status bar sempre presente in fondo alla finestra, nascosta in
   modalità compatta — vedi `specs/M4/2026-09-02-header-status-bar.DONE.md`.
+- Command palette: evoluzione della ricerca full-text (M2) con azioni
+  dell'app, pagine aperte di recente (persistite per vault) e
+  creazione pagine dalla stessa lista — vedi
+  `specs/M4/2026-09-02-command-palette.DONE.md`.
 
 **M5 — AI**
 - Non un'AI integrata nell'app: un server MCP (`ramus-mcp`, nuovo

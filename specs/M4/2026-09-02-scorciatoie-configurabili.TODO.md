@@ -132,7 +132,7 @@ funzione di confronto.
 
 Nuovo pannello, `activePanel` guadagna `"cheatsheet"` — riusa `Modal`.
 Apribile dal proprio shortcut (default `Mod+/`) o da un'azione nella
-Command Palette (`specs/M4/2026-09-02-command-palette.TODO.md`, che
+Command Palette (`specs/M4/2026-09-02-command-palette.DONE.md`, che
 guadagna una sesta azione "Mostra scorciatoie").
 
 Due sezioni:

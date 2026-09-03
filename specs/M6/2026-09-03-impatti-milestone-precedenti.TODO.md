@@ -112,7 +112,7 @@ sostanzialmente un secondo pezzo da progettare.
   palette) — non la stessa UI con un trigger diverso, un'interazione
   diversa da progettare a parte. La sezione "Scorciatoie" in
   Impostazioni (cattura-tasto) non ha senso su mobile, va nascosta.
-- **Command palette** (`specs/M4/2026-09-02-command-palette.TODO.md`):
+- **Command palette** (`specs/M4/2026-09-02-command-palette.DONE.md`):
   la logica (ricerca, crea pagina, recenti, azioni) resta valida —
   serve solo un modo di **aprirla** senza Cmd/Ctrl+K (es. un bottone
   nell'header/status bar, sempre visibile su mobile invece che dietro

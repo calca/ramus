@@ -5,17 +5,20 @@ import { getCurrentWindow } from "@tauri-apps/api/window";
 
 import faviconUrl from "../assets/favicon.svg";
 import { AboutPanel } from "./components/AboutPanel";
+import { CommandPalette } from "./components/CommandPalette";
+import type { PaletteItem } from "./components/CommandPalette";
 import type { EditorHandle } from "./components/Editor";
 import { JournalControls } from "./components/JournalControls";
 import { JournalSection } from "./components/JournalSection";
 import { PageView } from "./components/PageView";
-import { SearchPanel } from "./components/SearchPanel";
 import { SettingsPanel } from "./components/SettingsPanel";
 import { getConfig, getSyncStatus, listJournals, openPage, openToday, readPage } from "./lib/commands";
 import { formatIsoDate, journalDateFromPath } from "./lib/journal";
+import { buildActions } from "./lib/paletteActions";
+import { loadRecentPages, pushRecentPage } from "./lib/recentPages";
 import { matchesShortcut } from "./lib/shortcut";
 import { applyTheme } from "./lib/theme";
-import type { Config, Page, SearchHit, SyncState } from "./lib/types";
+import type { Config, Page, SyncState } from "./lib/types";
 
 const BATCH_SIZE = 14;
 const COMPACT_WIDTH = 420;
@@ -37,12 +40,13 @@ type View = { kind: "journal" } | { kind: "page"; page: Page };
 
 function App() {
   const [config, setConfig] = useState<Config | null>(null);
-  const [activePanel, setActivePanel] = useState<"settings" | "about" | "search" | null>(null);
+  const [activePanel, setActivePanel] = useState<"settings" | "about" | "palette" | null>(null);
   const [syncState, setSyncState] = useState<SyncState | null>(null);
   const [isCompact, setIsCompact] = useState(false);
   const [view, setView] = useState<View>({ kind: "journal" });
   const [vaultVersion, setVaultVersion] = useState(0);
   const [pages, setPages] = useState<Page[]>([]);
+  const [recentPages, setRecentPages] = useState<string[]>([]);
   const [dirtyPaths, setDirtyPaths] = useState<Set<string>>(new Set());
   const [externalWarnings, setExternalWarnings] = useState<Set<string>>(new Set());
   const [hasMore, setHasMore] = useState(true);
@@ -230,6 +234,15 @@ function App() {
     })();
   }, [resetAndLoadJournal]);
 
+  // Pagine aperte di recente (Command Palette): persistite in
+  // localStorage per vault, ricaricate quando il vault attivo cambia.
+  useEffect(() => {
+    if (!config) {
+      return;
+    }
+    setRecentPages(loadRecentPages(config.vault_path));
+  }, [config?.vault_path]);
+
   // Rollover a mezzanotte: due trigger. Il ritorno di focus/visibilità
   // copre il caso comune (si chiude il laptop la sera, si riapre il
   // giorno dopo); un controllo ogni 60s copre il caso raro in cui la
@@ -318,7 +331,7 @@ function App() {
     const onKeyDown = (event: KeyboardEvent) => {
       if (matchesShortcut(event, config.search_shortcut)) {
         event.preventDefault();
-        setActivePanel("search");
+        setActivePanel("palette");
       }
     };
     window.addEventListener("keydown", onKeyDown);
@@ -398,37 +411,50 @@ function App() {
   /** Apre (creando se manca) la pagina cliccata e ci passa la vista. Flush
    * di tutti gli editor montati prima di navigare, stesso Promise.all già
    * usato alla chiusura finestra. */
-  const navigateToPage = useCallback(async (title: string) => {
-    await Promise.all(Array.from(editorHandles.current.values(), (handle) => handle.flush()));
-    try {
-      const page = await openPage(title);
-      setView({ kind: "page", page });
-    } catch (error) {
-      setLoadError(String(error));
-    }
-  }, []);
+  const navigateToPage = useCallback(
+    async (title: string) => {
+      await Promise.all(Array.from(editorHandles.current.values(), (handle) => handle.flush()));
+      try {
+        const page = await openPage(title);
+        setView({ kind: "page", page });
+        if (config) {
+          setRecentPages(pushRecentPage(config.vault_path, page.title ?? title));
+        }
+      } catch (error) {
+        setLoadError(String(error));
+      }
+    },
+    [config],
+  );
 
   const returnToJournal = useCallback(async () => {
     await Promise.all(Array.from(editorHandles.current.values(), (handle) => handle.flush()));
     setView({ kind: "journal" });
   }, []);
 
-  /** Selezione di un risultato di ricerca: una pagina naviga come un
+  /** Selezione di una voce della Command Palette: un'azione si esegue e
+   * basta; una pagina (recente, risultato o "crea") naviga come un
    * [[link]] cliccato (stessa navigateToPage); un giorno di journal usa
    * la stessa jumpToDate già usata da "salta a data" — il giorno esiste
-   * per certo (viene dall'indice), il match è sempre esatto. */
-  const handleSearchSelect = useCallback(
-    async (hit: SearchHit) => {
+   * per certo (viene dall'indice o è già aperto), il match è sempre
+   * esatto. */
+  const handlePaletteSelect = useCallback(
+    async (item: PaletteItem) => {
       setActivePanel(null);
-      if (hit.kind === "page") {
-        const fallback = hit.path.replace(/^pages\//, "").replace(/\.md$/, "");
-        await navigateToPage(hit.title ?? fallback);
-      } else {
+      if (item.kind === "action") {
+        item.action.run();
+        return;
+      }
+      if (item.kind === "hit" && item.hit.kind === "journal") {
         if (viewRef.current.kind === "page") {
           await returnToJournal();
         }
-        await jumpToDate(journalDateFromPath(hit.path));
+        await jumpToDate(journalDateFromPath(item.hit.path));
+        return;
       }
+      const title =
+        item.kind === "hit" ? (item.hit.title ?? item.hit.path.replace(/^pages\//, "").replace(/\.md$/, "")) : item.title;
+      await navigateToPage(title);
     },
     [navigateToPage, returnToJournal, jumpToDate],
   );
@@ -484,10 +510,10 @@ function App() {
           <button
             type="button"
             className="settings-button"
-            aria-label="Cerca"
-            onClick={() => setActivePanel("search")}
+            aria-label="Comandi"
+            onClick={() => setActivePanel("palette")}
           >
-            🔍
+            ⚡
           </button>
         )}
         {config && (
@@ -564,10 +590,20 @@ function App() {
         />
       )}
       {activePanel === "about" && <AboutPanel onClose={() => setActivePanel(null)} />}
-      {activePanel === "search" && (
-        <SearchPanel
+      {activePanel === "palette" && (
+        <CommandPalette
+          actions={buildActions({
+            viewKind: view.kind,
+            isCompact,
+            onToday: () => void scrollToToday(),
+            onReturnToJournal: () => void returnToJournal(),
+            onToggleCompact: () => void toggleCompact(),
+            onOpenSettings: () => setActivePanel("settings"),
+            onShowAbout: () => setActivePanel("about"),
+          })}
+          recentPages={recentPages}
           onClose={() => setActivePanel(null)}
-          onSelect={(hit) => void handleSearchSelect(hit)}
+          onSelect={(item) => void handlePaletteSelect(item)}
         />
       )}
     </div>
