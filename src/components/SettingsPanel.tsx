@@ -54,6 +54,16 @@ function syncStatusLabel(status: SyncStatus): string {
   }
 }
 
+/** Un solo bottone per l'intero flusso (attiva/collega/aggiorna remote)
+ * invece di due azioni distinte da scoprire — vedi discussione utente su
+ * "non è chiaro come collegare git". */
+function syncActionLabel(status: SyncStatus | null): string {
+  if (!status?.enabled) {
+    return "Attiva sync";
+  }
+  return status.state === "noremote" ? "Collega remote" : "Aggiorna remote";
+}
+
 export function SettingsPanel({
   config,
   onClose,
@@ -70,7 +80,6 @@ export function SettingsPanel({
   const [syncStatus, setSyncStatus] = useState<SyncStatus | null>(null);
   const [syncBusy, setSyncBusy] = useState(false);
   const [remoteUrl, setRemoteUrl] = useState("");
-  const [remoteBusy, setRemoteBusy] = useState(false);
 
   useEffect(() => {
     void vaultStats()
@@ -129,19 +138,6 @@ export function SettingsPanel({
     }
   };
 
-  const handleInitGitSync = async () => {
-    setError(null);
-    setSyncBusy(true);
-    try {
-      const status = await initGitSync();
-      setSyncStatus(status);
-    } catch (err) {
-      setError(String(err));
-    } finally {
-      setSyncBusy(false);
-    }
-  };
-
   const handleSyncIntervalChange = async (minutes: number) => {
     setError(null);
     try {
@@ -152,21 +148,27 @@ export function SettingsPanel({
     }
   };
 
-  const handleSetRemote = async () => {
-    const url = remoteUrl.trim();
-    if (!url) {
-      return;
-    }
+  /** Un solo bottone per l'intero flusso: attiva la sync se non lo è
+   * ancora (con o senza URL nel campo — locale-soltanto è una scelta
+   * valida), poi collega/aggiorna il remote se l'URL è compilato. */
+  const handleSyncAction = async () => {
     setError(null);
-    setRemoteBusy(true);
+    setSyncBusy(true);
     try {
-      const status = await setGitRemote(url);
+      let status = syncStatus;
+      if (!status?.enabled) {
+        status = await initGitSync();
+      }
+      const url = remoteUrl.trim();
+      if (url) {
+        status = await setGitRemote(url);
+        setRemoteUrl("");
+      }
       setSyncStatus(status);
-      setRemoteUrl("");
     } catch (err) {
       setError(String(err));
     } finally {
-      setRemoteBusy(false);
+      setSyncBusy(false);
     }
   };
 
@@ -258,58 +260,64 @@ export function SettingsPanel({
 
       <section className="settings-section">
         <h3>Sync</h3>
-        {syncStatus?.enabled ? (
-          <>
-            {syncStatus.state === "conflict" && (
-              <div className="banner banner-error">
-                Il vault locale e quello remoto sono divergenti, serve
-                intervento manuale: apri un terminale nel vault e risolvi
-                con git.
-              </div>
+        <p className="settings-sync-intro">
+          Versiona il vault con Git. Lascia il campo vuoto per una
+          cronologia solo locale, oppure incolla l'URL di un repository
+          per sincronizzarlo fra dispositivi.
+        </p>
+
+        {syncStatus?.enabled && syncStatus.state === "conflict" && (
+          <div className="banner banner-error">
+            Il vault locale e quello remoto sono divergenti, serve
+            intervento manuale: apri un terminale nel vault e risolvi con
+            git.
+          </div>
+        )}
+
+        {syncStatus?.enabled && (
+          <p className="settings-sync-status">
+            {syncStatusLabel(syncStatus)}
+            {syncStatus.last_commit_at !== null && (
+              <> — ultimo commit {new Date(syncStatus.last_commit_at * 1000).toLocaleString()}</>
             )}
-            <p className="settings-sync-status">
-              {syncStatusLabel(syncStatus)}
-              {syncStatus.last_commit_at !== null && (
-                <> — ultimo commit {new Date(syncStatus.last_commit_at * 1000).toLocaleString()}</>
-              )}
-            </p>
-            <label className="settings-sync-interval">
-              Intervallo di sync
-              <select
-                value={config.git_sync_interval_minutes}
-                onChange={(event) => void handleSyncIntervalChange(Number(event.target.value))}
-              >
-                {SYNC_INTERVAL_OPTIONS.map((minutes) => (
-                  <option key={minutes} value={minutes}>
-                    {minutes} minuti
-                  </option>
-                ))}
-              </select>
-            </label>
-            <div className="settings-sync-remote">
-              <input
-                type="text"
-                placeholder={
-                  syncStatus.state === "noremote"
-                    ? "git@github.com:utente/vault.git"
-                    : "Cambia URL del remote…"
-                }
-                value={remoteUrl}
-                onChange={(event) => setRemoteUrl(event.target.value)}
-              />
-              <button
-                type="button"
-                disabled={remoteBusy || !remoteUrl.trim()}
-                onClick={() => void handleSetRemote()}
-              >
-                {syncStatus.state === "noremote" ? "Collega" : "Aggiorna"}
-              </button>
-            </div>
-          </>
-        ) : (
-          <button type="button" disabled={syncBusy} onClick={() => void handleInitGitSync()}>
-            Inizializza repository Git
+          </p>
+        )}
+
+        <div className="settings-sync-remote">
+          <input
+            type="text"
+            placeholder="git@github.com:utente/vault.git (opzionale)"
+            value={remoteUrl}
+            onChange={(event) => setRemoteUrl(event.target.value)}
+          />
+          <button
+            type="button"
+            disabled={syncBusy || (syncStatus?.enabled === true && !remoteUrl.trim())}
+            onClick={() => void handleSyncAction()}
+          >
+            {syncActionLabel(syncStatus)}
           </button>
+        </div>
+        <p className="settings-sync-help">
+          Su GitHub, GitLab o Bitbucket: apri il repository, premi "Code"
+          (o "Clone"), copia l'URL SSH (consigliato, richiede una chiave
+          già aggiunta al tuo account) o HTTPS, e incollalo qui sopra.
+        </p>
+
+        {syncStatus?.enabled && (
+          <label className="settings-sync-interval">
+            Intervallo di sync
+            <select
+              value={config.git_sync_interval_minutes}
+              onChange={(event) => void handleSyncIntervalChange(Number(event.target.value))}
+            >
+              {SYNC_INTERVAL_OPTIONS.map((minutes) => (
+                <option key={minutes} value={minutes}>
+                  {minutes} minuti
+                </option>
+              ))}
+            </select>
+          </label>
         )}
       </section>
 

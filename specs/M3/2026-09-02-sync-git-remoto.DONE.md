@@ -19,14 +19,11 @@ conflitto, stop e avviso esplicito, mai merge automatico silenzioso".
 
 ## Configurazione del remote
 
-Stessa sezione "Sync" di `SettingsPanel` (dal pezzo locale), visibile
-quando il repo è attivo: un campo per impostare l'URL del remote
-`origin` (`git2::Repository::remote("origin", url)`, o
-`remote_set_url` se già esiste). Nessun account o OAuth gestito da
-Ramus (SPEC.md Fuori scope: "Sync proprietaria o account utente")
-— l'utente fornisce un URL già pronto (es.
-`git@github.com:utente/journal.git`), autenticazione delegata
-interamente al sistema:
+`git2::Repository::remote("origin", url)`, o `remote_set_url` se già
+esiste. Nessun account o OAuth gestito da Ramus (SPEC.md Fuori scope:
+"Sync proprietaria o account utente") — l'utente fornisce un URL già
+pronto (es. `git@github.com:utente/journal.git`), autenticazione
+delegata interamente al sistema:
 
 - URL SSH → `Cred::ssh_key_from_agent(username)`: usa l'agente SSH già
   configurato sul sistema, nessuna chiave gestita da Ramus.
@@ -37,6 +34,38 @@ interamente al sistema:
 Se l'autenticazione fallisce, l'errore risultante viene mostrato nello
 stato di sync (vedi sotto) — nessun form per inserire password/token
 dentro Ramus.
+
+### UI: un solo flusso, non due bottoni separati
+
+**Aggiornamento post-implementazione**, in risposta a un test
+dell'utente ("non è chiaro come collegare il git, c'è un bottone ma
+non è chiaro"): il testo originale prevedeva "Inizializza repository
+Git" (pezzo locale) come bottone a sé, con il campo URL del remote che
+compariva solo *dopo*, in una sezione visibile solo a repo già attivo
+— il collegamento fra i due passi non era ovvio.
+
+Sostituito con un flusso unico nella sezione "Sync" di
+`SettingsPanel`:
+
+- Un campo URL **sempre visibile** (anche prima che il repo Git
+  esista), con placeholder `git@github.com:utente/vault.git
+  (opzionale)` — "opzionale" perché una cronologia solo locale, senza
+  remote, resta una scelta valida (pezzo locale).
+- **Un solo bottone**, testo dipendente dallo stato:
+  "Attiva sync" (repo non ancora inizializzato — attiva comunque, con
+  o senza URL nel campo), "Collega remote" (repo attivo, nessun
+  remote), "Aggiorna remote" (remote già impostato, per cambiarlo).
+- Un click fa tutto il necessario in un solo giro: `init_git_sync` se
+  il repo non è ancora attivo, poi `set_git_remote(url)` se il campo
+  non è vuoto — non due azioni da scoprire in sequenza.
+- Un breve testo di aiuto sotto il campo, solo testuale (nessun link
+  esterno cliccabile, per non rischiare di suggerire un URL non
+  verificato): dove trovare l'URL su GitHub/GitLab/Bitbucket ("apri il
+  repository, premi «Code»/«Clone», copia l'URL SSH o HTTPS").
+
+Nessun comando Tauri nuovo per questo: `init_git_sync`/
+`set_git_remote` restano esattamente come descritti sotto, solo
+orchestrati insieme lato frontend invece che dietro due bottoni.
 
 ## Pull all'avvio, non bloccante
 

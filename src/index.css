@@ -341,10 +341,22 @@ body {
   font-family: ui-monospace, monospace;
 }
 
+.settings-sync-intro {
+  color: var(--ramus-stone);
+  font-size: 0.85rem;
+  margin: 0 0 0.7rem;
+}
+
 .settings-sync-status {
   color: var(--ramus-stone);
   font-size: 0.85rem;
   margin: 0 0 0.6rem;
+}
+
+.settings-sync-help {
+  color: var(--ramus-stone);
+  font-size: 0.78rem;
+  margin: 0.4rem 0 0.8rem;
 }
 
 .settings-sync-interval {

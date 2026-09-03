@@ -56,10 +56,16 @@ Nessun `git init` automatico e silenzioso: un vault non è
 necessariamente destinato a finire sotto Git solo perché l'app lo
 supporta — imporlo violerebbe l'aspettativa "l'app fa solo quello che
 le è stato chiesto". L'attivazione è un'azione esplicita:
-`SettingsPanel` guadagna una sezione "Sync", visibile sempre; quando
-`.git` non esiste ancora mostra un solo bottone "Inizializza
-repository Git" (chiama `git2::Repository::init(vault_root)` — nessuna
-domanda, nessun remote in questo momento, quello è il secondo pezzo).
+`SettingsPanel` guadagna una sezione "Sync", visibile sempre.
+
+**Aggiornamento post-implementazione**: il testo originale prevedeva
+un bottone "Inizializza repository Git" separato dal campo URL del
+remote (che sarebbe comparso solo dopo, nel secondo pezzo) — in prova
+non era chiaro che collegare un remote fosse un passo successivo
+raggiungibile da lì. Sostituito con un flusso unico, descritto per
+intero in `specs/M3/2026-09-02-sync-git-remoto.DONE.md` (che tocca
+comunque solo la UI, non `git2::Repository::init` né il resto di
+questa spec).
 
 ## `.gitignore` per `.ramus/`
 
