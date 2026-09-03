@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
-import { revealItemInDir } from "@tauri-apps/plugin-opener";
+import { getVersion } from "@tauri-apps/api/app";
+import { openUrl, revealItemInDir } from "@tauri-apps/plugin-opener";
 
+import mascotteUrl from "../../assets/mascotte.svg";
 import {
   getMcpInfo,
   getSyncStatus,
@@ -20,6 +22,8 @@ import { applyTheme } from "../lib/theme";
 import type { Config, McpInfo, SyncStatus, Theme, VaultStats } from "../lib/types";
 import { Modal } from "./Modal";
 
+const REPO_URL = "https://github.com/calca/ramus";
+
 interface SettingsPanelProps {
   config: Config;
   onClose: () => void;
@@ -29,7 +33,9 @@ interface SettingsPanelProps {
   onGitSyncIntervalChanged: (config: Config) => void;
   onTaskRolloverChanged: (config: Config) => void;
   onMcpEnabledChanged: (config: Config) => void;
-  onShowAbout: () => void;
+  /** Tab iniziale, es. "about" quando si apre da "Informazioni su Ramus"
+   * nella command palette invece che dal bottone Impostazioni. */
+  initialSection?: SettingsSectionId;
 }
 
 const THEME_LABELS: Record<Theme, string> = {
@@ -41,7 +47,7 @@ const THEME_LABELS: Record<Theme, string> = {
 const SYNC_INTERVAL_OPTIONS = [5, 10, 30, 60];
 const TASK_ROLLOVER_DAY_OPTIONS = [3, 7, 14, 30];
 
-type SettingsSectionId = "vault" | "theme" | "shortcuts" | "task" | "mcp" | "sync";
+type SettingsSectionId = "vault" | "theme" | "shortcuts" | "task" | "mcp" | "sync" | "about";
 
 const SETTINGS_SECTIONS: { id: SettingsSectionId; label: string }[] = [
   { id: "vault", label: "Vault" },
@@ -50,6 +56,7 @@ const SETTINGS_SECTIONS: { id: SettingsSectionId; label: string }[] = [
   { id: "task", label: "Task" },
   { id: "mcp", label: "MCP" },
   { id: "sync", label: "Sync" },
+  { id: "about", label: "Informazioni" },
 ];
 
 /** Polling leggero mentre il pannello Sync è aperto: si ferma alla
@@ -90,7 +97,7 @@ export function SettingsPanel({
   onGitSyncIntervalChanged,
   onTaskRolloverChanged,
   onMcpEnabledChanged,
-  onShowAbout,
+  initialSection,
 }: SettingsPanelProps) {
   const [stats, setStats] = useState<VaultStats | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -100,7 +107,16 @@ export function SettingsPanel({
   const [syncBusy, setSyncBusy] = useState(false);
   const [remoteUrl, setRemoteUrl] = useState("");
   const [mcpInfo, setMcpInfo] = useState<McpInfo | null>(null);
-  const [activeSection, setActiveSection] = useState<SettingsSectionId>("vault");
+  const [version, setVersion] = useState<string | null>(null);
+  const [activeSection, setActiveSection] = useState<SettingsSectionId>(initialSection ?? "vault");
+
+  useEffect(() => {
+    void getVersion()
+      .then(setVersion)
+      .catch(() => {
+        // Non blocca la pagina: la versione resta semplicemente assente.
+      });
+  }, []);
 
   useEffect(() => {
     void vaultStats()
@@ -274,10 +290,6 @@ export function SettingsPanel({
               {section.label}
             </button>
           ))}
-          <hr className="settings-sidebar-divider" />
-          <button type="button" className="settings-about-link" onClick={onShowAbout}>
-            Informazioni su Ramus
-          </button>
         </nav>
 
         <div className="settings-content">
@@ -477,6 +489,31 @@ export function SettingsPanel({
               </select>
             </label>
           )}
+        </section>
+        )}
+
+        {activeSection === "about" && (
+        <section className="settings-section">
+          <div className="about-content">
+            <img
+              src={mascotteUrl}
+              alt="Stecco, la mascotte di Ramus"
+              className="about-mascotte"
+              width={128}
+            />
+            <h3 className="about-name">Ramus</h3>
+            {version && <p className="about-version">v{version}</p>}
+            <p className="about-tagline">
+              App desktop di journaling, outliner a blocchi su file markdown locali.
+            </p>
+            <button
+              type="button"
+              className="settings-about-link"
+              onClick={() => void openUrl(REPO_URL)}
+            >
+              Codice sorgente
+            </button>
+          </div>
         </section>
         )}
         </div>

@@ -8,7 +8,8 @@ interface ModalProps {
 }
 
 /** Backdrop + pannello centrato, chiusura con Escape o click fuori.
- * Condiviso da SettingsPanel e AboutPanel: stessa meccanica identica. */
+ * Condiviso da SettingsPanel, CommandPalette e Cheatsheet: stessa
+ * meccanica identica. */
 export function Modal({ onClose, ariaLabel, children }: ModalProps) {
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {

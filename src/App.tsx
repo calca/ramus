@@ -4,7 +4,6 @@ import { listen } from "@tauri-apps/api/event";
 import { getCurrentWindow } from "@tauri-apps/api/window";
 
 import faviconUrl from "../assets/favicon.svg";
-import { AboutPanel } from "./components/AboutPanel";
 import { Cheatsheet } from "./components/Cheatsheet";
 import { CommandPalette } from "./components/CommandPalette";
 import type { PaletteItem } from "./components/CommandPalette";
@@ -705,9 +704,10 @@ function App() {
         )}
       </div>
 
-      {activePanel === "settings" && config && (
+      {(activePanel === "settings" || activePanel === "about") && config && (
         <SettingsPanel
           config={config}
+          initialSection={activePanel === "about" ? "about" : "vault"}
           onClose={() => setActivePanel(null)}
           onVaultChanged={handleVaultChanged}
           onThemeChanged={handleThemeChanged}
@@ -715,10 +715,8 @@ function App() {
           onGitSyncIntervalChanged={handleGitSyncIntervalChanged}
           onTaskRolloverChanged={handleTaskRolloverChanged}
           onMcpEnabledChanged={handleMcpEnabledChanged}
-          onShowAbout={() => setActivePanel("about")}
         />
       )}
-      {activePanel === "about" && <AboutPanel onClose={() => setActivePanel(null)} />}
       {activePanel === "palette" && (
         <CommandPalette
           actions={buildActions({

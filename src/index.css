@@ -352,12 +352,6 @@ body {
   font-weight: 600;
 }
 
-.settings-sidebar-divider {
-  border: none;
-  border-top: 1px solid color-mix(in srgb, var(--ramus-stone) 20%, transparent);
-  margin: 0.5rem 0.25rem;
-}
-
 .settings-content {
   flex: 1;
   min-width: 0;
@@ -610,17 +604,6 @@ body {
   cursor: pointer;
   font-size: 0.85rem;
   padding: 0;
-}
-
-/* Solo nel pannello Impostazioni (non nel link "Codice sorgente" di
-   AboutPanel, che riusa la stessa classe ma è già centrato nel suo
-   .about-content): nella sidebar, stesso stile a tutta larghezza dei
-   bottoni di categoria sopra di lui (separati da .settings-sidebar-divider,
-   non serve altro qui). */
-.settings-sidebar > .settings-about-link {
-  width: 100%;
-  text-align: left;
-  padding: 0.4rem 0.6rem;
 }
 
 .about-content {
