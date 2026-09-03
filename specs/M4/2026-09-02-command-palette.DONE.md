@@ -123,17 +123,19 @@ Azioni proposte per la v1 (tutte già esistenti come funzioni in
   nell'header.
 - **Impostazioni** (`setActivePanel("settings")`)
 - **Informazioni su Ramus** (`setActivePanel("about")`)
-- **Mostra scorciatoie** — aggiunta da
-  `specs/M4/2026-09-02-scorciatoie-configurabili.TODO.md` quando
-  implementata (apre la cheatsheet), non fa parte del taglio iniziale
-  di questa spec.
+
+**Aggiornamento**: una sesta azione, **Mostra scorciatoie** (apre la
+cheatsheet), si è aggiunta con
+`specs/M4/2026-09-02-scorciatoie-configurabili.DONE.md` — non faceva
+parte del taglio iniziale di questa spec, era esplicitamente prevista
+per dopo.
 
 Costruite dinamicamente (non un array statico puro, alcune sono
 condizionali sullo stato corrente) da una funzione
 `buildActions(ctx): PaletteAction[]` chiamata a ogni apertura della
-palette. Cinque azioni, deliberatamente poche: si aggiungono solo
-quelle a cui serve davvero un accesso rapido da tastiera, non un
-elenco esaustivo di tutto ciò che l'app sa fare.
+palette. Deliberatamente poche: si aggiungono solo quelle a cui serve
+davvero un accesso rapido da tastiera, non un elenco esaustivo di
+tutto ciò che l'app sa fare.
 
 ## Modello dati della lista
 

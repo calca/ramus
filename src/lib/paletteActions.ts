@@ -16,6 +16,7 @@ export interface PaletteActionContext {
   onToggleCompact: () => void;
   onOpenSettings: () => void;
   onShowAbout: () => void;
+  onShowCheatsheet: () => void;
 }
 
 export function buildActions(ctx: PaletteActionContext): PaletteAction[] {
@@ -32,5 +33,6 @@ export function buildActions(ctx: PaletteActionContext): PaletteAction[] {
   });
   actions.push({ id: "settings", label: "Impostazioni", run: ctx.onOpenSettings });
   actions.push({ id: "about", label: "Informazioni su Ramus", run: ctx.onShowAbout });
+  actions.push({ id: "cheatsheet", label: "Mostra scorciatoie", run: ctx.onShowCheatsheet });
   return actions;
 }

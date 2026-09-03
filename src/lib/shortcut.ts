@@ -1,9 +1,32 @@
-// Scorciatoia configurabile per aprire il pannello di ricerca (SettingsPanel
-// la cattura, App.tsx la confronta a ogni keydown globale). Formato
-// canonico salvato in Config.search_shortcut: "Mod+K", "Mod+Shift+F" —
-// "Mod" è il modificatore primario della piattaforma (Cmd su macOS, Ctrl
-// altrove), sempre obbligatorio: senza, qualunque lettera digitata
-// normalmente nell'editor aprirebbe il pannello, rompendo la scrittura.
+// Scorciatoie app-level configurabili (SettingsPanel le cattura, App.tsx le
+// confronta a ogni keydown globale). Formato canonico salvato in
+// Config.shortcuts[id]: "Mod+K", "Mod+Shift+F" — "Mod" è il modificatore
+// primario della piattaforma (Cmd su macOS, Ctrl altrove), sempre
+// obbligatorio: senza, qualunque lettera digitata normalmente nell'editor
+// scatenerebbe l'azione, rompendo la scrittura.
+//
+// Solo scorciatoie a livello finestra entrano in questo registro — Tab,
+// Shift-Tab, Invio, Backspace e il riordino blocchi restano fisse, vivono
+// nella keymap ProseMirror dell'editor, non qui (vedi
+// specs/M4/2026-09-02-scorciatoie-configurabili.TODO.md, "Cosa resta fuori").
+
+export interface ShortcutAction {
+  id: string;
+  label: string;
+  default: string;
+}
+
+export const SHORTCUT_ACTIONS: ShortcutAction[] = [
+  { id: "command_palette", label: "Apri command palette", default: "Mod+K" },
+  { id: "cheatsheet", label: "Mostra scorciatoie", default: "Mod+/" },
+];
+
+/** Legge Config.shortcuts[actionId], ricade sul default del registro se la
+ * chiave manca (config scritto prima che l'azione esistesse). */
+export function getShortcut(shortcuts: Record<string, string>, actionId: string): string {
+  const action = SHORTCUT_ACTIONS.find((a) => a.id === actionId);
+  return shortcuts[actionId] ?? action?.default ?? "";
+}
 
 const IS_MAC =
   typeof navigator !== "undefined" && /Mac|iPhone|iPad/.test(navigator.platform ?? navigator.userAgent);

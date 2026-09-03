@@ -1,6 +1,16 @@
 # Scorciatoie app configurabili + cheatsheet
 
-Stato: proposta, in attesa di conferma. Fondamenta per le altre spec
+Stato: implementata. Le due "Domande aperte" sono state confermate
+come proposto — `Mod+/` per la cheatsheet, sezione Impostazioni
+rinominata "Scorciatoie" (era "Comandi", nome scelto per la sola
+command palette prima di questa spec). Uno scostamento dal testo
+originale: `default_shortcuts()` popola sia `command_palette` che
+`cheatsheet` fin da subito (il blocco di codice originale mostrava
+solo `command_palette`, ma il testo sopra di esso già diceva che
+questa spec doveva popolare entrambi — un'incoerenza nel testo
+proposto, risolta a favore della versione scritta per esteso).
+
+Fondamenta per le altre spec
 dell'idea "keyboard focused, less UI": `specs/M4/2026-09-02-riordino-blocchi-tastiera.TODO.md`
 e `specs/M4/2026-09-02-focus-mode-navigazione-giorni.TODO.md` aggiungono
 voci a questo registro una volta implementate.
@@ -114,8 +124,9 @@ rete di sicurezza, economica).
 
 ### `SettingsPanel`
 
-La sezione "Ricerca" (M2, un solo bottone) diventa "Scorciatoie": un
-elenco, una riga con etichetta + bottone di cattura per ogni voce di
+La sezione "Comandi" (rinominata da "Ricerca" nella spec della
+command palette, un solo bottone) diventa "Scorciatoie": un elenco,
+una riga con etichetta + bottone di cattura per ogni voce di
 `SHORTCUT_ACTIONS` — stesso meccanismo di cattura già scritto per
 `search_shortcut` (fase `capture` + `stopPropagation`, invariato),
 solo ripetuto per riga invece che una singola istanza.
@@ -156,10 +167,8 @@ Due sezioni:
 
 ## Domande aperte
 
-1. Shortcut di default per la cheatsheet: proposto `Mod+/` (convenzione
-   diffusa, es. Slack/Linear). Va bene?
-2. Nome della sezione in Impostazioni: "Scorciatoie" (proposto) — o
-   preferisci un altro nome?
+Nessuna: entrambe confermate come proposto — `Mod+/` per la
+cheatsheet, sezione Impostazioni rinominata "Scorciatoie".
 
 ## Test da scrivere (core)
 
@@ -175,8 +184,8 @@ Due sezioni:
 
 ## Verifica
 
-`cargo test` copre la migrazione. `npm run typecheck` per il
-frontend. L'interazione (cattura di più scorciatoie in sequenza,
-apertura della cheatsheet, nessuna collisione fra le scorciatoie
-configurate) non è verificabile in questo sandbox: serve un giro
-manuale in `npm run tauri dev`.
+`cargo test` copre la migrazione (106 test totali). `cargo clippy`,
+`cargo fmt --check` e `npm run typecheck` puliti. L'interazione
+(cattura di più scorciatoie in sequenza, apertura della cheatsheet,
+nessuna collisione fra le scorciatoie configurate) non è verificabile
+in questo sandbox: serve un giro manuale in `npm run tauri dev`.

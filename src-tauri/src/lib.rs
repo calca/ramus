@@ -85,7 +85,7 @@ pub fn run() {
             commands::find_backlinks,
             commands::list_tags,
             commands::search,
-            commands::set_search_shortcut,
+            commands::set_shortcut,
             commands::init_git_sync,
             commands::get_sync_status,
             commands::set_git_sync_interval,

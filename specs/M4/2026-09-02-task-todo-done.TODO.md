@@ -93,7 +93,7 @@ normali).
 ### Scorciatoia da tastiera: ciclo su tre stati
 
 Scorciatoia **fissa**, non nel registro configurabile di
-`specs/M4/2026-09-02-scorciatoie-configurabili.TODO.md` — stessa
+`specs/M4/2026-09-02-scorciatoie-configurabili.DONE.md` — stessa
 motivazione già scritta per il riordino blocchi
 (`specs/M4/2026-09-02-riordino-blocchi-tastiera.TODO.md`): vive nella
 keymap ProseMirror dell'editor, non in un listener a livello finestra.

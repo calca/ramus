@@ -5,6 +5,7 @@ import { getCurrentWindow } from "@tauri-apps/api/window";
 
 import faviconUrl from "../assets/favicon.svg";
 import { AboutPanel } from "./components/AboutPanel";
+import { Cheatsheet } from "./components/Cheatsheet";
 import { CommandPalette } from "./components/CommandPalette";
 import type { PaletteItem } from "./components/CommandPalette";
 import type { EditorHandle } from "./components/Editor";
@@ -16,7 +17,7 @@ import { getConfig, getSyncStatus, listJournals, openPage, openToday, readPage }
 import { formatIsoDate, journalDateFromPath } from "./lib/journal";
 import { buildActions } from "./lib/paletteActions";
 import { loadRecentPages, pushRecentPage } from "./lib/recentPages";
-import { matchesShortcut } from "./lib/shortcut";
+import { getShortcut, matchesShortcut } from "./lib/shortcut";
 import { applyTheme } from "./lib/theme";
 import type { Config, Page, SyncState } from "./lib/types";
 
@@ -40,7 +41,9 @@ type View = { kind: "journal" } | { kind: "page"; page: Page };
 
 function App() {
   const [config, setConfig] = useState<Config | null>(null);
-  const [activePanel, setActivePanel] = useState<"settings" | "about" | "palette" | null>(null);
+  const [activePanel, setActivePanel] = useState<
+    "settings" | "about" | "palette" | "cheatsheet" | null
+  >(null);
   const [syncState, setSyncState] = useState<SyncState | null>(null);
   const [isCompact, setIsCompact] = useState(false);
   const [view, setView] = useState<View>({ kind: "journal" });
@@ -321,17 +324,20 @@ function App() {
     };
   }, []);
 
-  // Scorciatoia per aprire il pannello di ricerca (configurabile in
-  // Impostazioni, vedi src/lib/shortcut.ts): un listener globale, non
-  // legato al focus di un elemento specifico.
+  // Scorciatoie app-level configurabili (Impostazioni, vedi
+  // src/lib/shortcut.ts): un listener globale, non legato al focus di un
+  // elemento specifico. Ogni azione del registro apre il proprio pannello.
   useEffect(() => {
     if (!config) {
       return;
     }
     const onKeyDown = (event: KeyboardEvent) => {
-      if (matchesShortcut(event, config.search_shortcut)) {
+      if (matchesShortcut(event, getShortcut(config.shortcuts, "command_palette"))) {
         event.preventDefault();
         setActivePanel("palette");
+      } else if (matchesShortcut(event, getShortcut(config.shortcuts, "cheatsheet"))) {
+        event.preventDefault();
+        setActivePanel("cheatsheet");
       }
     };
     window.addEventListener("keydown", onKeyDown);
@@ -400,7 +406,7 @@ function App() {
     setConfig(nextConfig);
   }, []);
 
-  const handleSearchShortcutChanged = useCallback((nextConfig: Config) => {
+  const handleShortcutChanged = useCallback((nextConfig: Config) => {
     setConfig(nextConfig);
   }, []);
 
@@ -584,7 +590,7 @@ function App() {
           onClose={() => setActivePanel(null)}
           onVaultChanged={handleVaultChanged}
           onThemeChanged={handleThemeChanged}
-          onSearchShortcutChanged={handleSearchShortcutChanged}
+          onShortcutChanged={handleShortcutChanged}
           onGitSyncIntervalChanged={handleGitSyncIntervalChanged}
           onShowAbout={() => setActivePanel("about")}
         />
@@ -600,11 +606,15 @@ function App() {
             onToggleCompact: () => void toggleCompact(),
             onOpenSettings: () => setActivePanel("settings"),
             onShowAbout: () => setActivePanel("about"),
+            onShowCheatsheet: () => setActivePanel("cheatsheet"),
           })}
           recentPages={recentPages}
           onClose={() => setActivePanel(null)}
           onSelect={(item) => void handlePaletteSelect(item)}
         />
+      )}
+      {activePanel === "cheatsheet" && config && (
+        <Cheatsheet config={config} onClose={() => setActivePanel(null)} />
       )}
     </div>
   );

@@ -1,7 +1,9 @@
+use std::collections::HashMap;
 use std::fs;
 use std::path::{Path, PathBuf};
 
 use serde::{Deserialize, Serialize};
+use serde_json::Value;
 
 use crate::error::CoreError;
 
@@ -24,12 +26,14 @@ pub struct Config {
     /// deserializzazione fallirebbe al primo avvio dopo l'aggiornamento.
     #[serde(default)]
     pub theme: Theme,
-    /// Scorciatoia per aprire il pannello di ricerca, es. "Mod+K" ("Mod" =
-    /// Cmd su macOS, Ctrl altrove — normalizzato lato frontend). Stesso
-    /// trattamento di `theme`: `default` per compatibilità con i
-    /// `config.json` scritti prima di questo campo.
-    #[serde(default = "default_search_shortcut")]
-    pub search_shortcut: String,
+    /// Scorciatoie app-level configurabili, chiave = id azione stabile
+    /// (es. "command_palette", "cheatsheet"), valore = stringa canonica
+    /// ("Mod+K", "Mod" = Cmd su macOS, Ctrl altrove — normalizzato lato
+    /// frontend). Rimpiazza il precedente `search_shortcut: String`
+    /// (singola azione) — vedi `Config::load` per la migrazione dei
+    /// `config.json` scritti dalla versione precedente.
+    #[serde(default = "default_shortcuts")]
+    pub shortcuts: HashMap<String, String>,
     /// Ogni quanti minuti il task di sync automatico (M3) controlla se
     /// committare. Stesso trattamento di `theme`/`search_shortcut` per
     /// compatibilità con `config.json` scritti prima di questo campo.
@@ -37,12 +41,35 @@ pub struct Config {
     pub git_sync_interval_minutes: u32,
 }
 
-fn default_search_shortcut() -> String {
-    "Mod+K".to_string()
+fn default_shortcuts() -> HashMap<String, String> {
+    HashMap::from([
+        ("command_palette".to_string(), "Mod+K".to_string()),
+        ("cheatsheet".to_string(), "Mod+/".to_string()),
+    ])
 }
 
 fn default_git_sync_interval_minutes() -> u32 {
     10
+}
+
+/// Sposta `search_shortcut` (schema pre-M4) sotto `shortcuts.command_palette`
+/// se il JSON ha ancora il campo vecchio e non ha già il nuovo. Ritorna
+/// `true` se ha modificato qualcosa — il chiamante deve allora riscrivere
+/// il file nel nuovo formato, per non ripetere la migrazione ad ogni avvio.
+fn migrate_search_shortcut(value: &mut Value) -> bool {
+    let Some(obj) = value.as_object_mut() else {
+        return false;
+    };
+    if obj.contains_key("shortcuts") {
+        return false;
+    }
+    let Some(old_shortcut) = obj.remove("search_shortcut") else {
+        return false;
+    };
+    let mut shortcuts = serde_json::Map::new();
+    shortcuts.insert("command_palette".to_string(), old_shortcut);
+    obj.insert("shortcuts".to_string(), Value::Object(shortcuts));
+    true
 }
 
 impl Config {
@@ -61,12 +88,29 @@ impl Config {
             .join("config.json")
     }
 
+    /// Carica `config.json`, migrando sul posto lo schema precedente
+    /// (`search_shortcut: String`, singola azione) verso `shortcuts:
+    /// HashMap<String, String>` se serve — vedi `migrate_search_shortcut`.
+    /// Un `config.json` già nel nuovo formato, o uno privo di entrambi i
+    /// campi (pre-M2), non viene mai riscritto qui: solo la migrazione
+    /// esplicita lo fa, la stessa robustezza `#[serde(default = ...)]`
+    /// già in uso per `theme`/`git_sync_interval_minutes` basta per gli
+    /// altri casi.
     fn load(path: &Path) -> Result<Config, CoreError> {
         let text = fs::read_to_string(path).map_err(|source| CoreError::Io {
             path: path.to_path_buf(),
             source,
         })?;
-        serde_json::from_str(&text).map_err(|e| CoreError::Config(e.to_string()))
+        let mut value: Value =
+            serde_json::from_str(&text).map_err(|e| CoreError::Config(e.to_string()))?;
+        let migrated = migrate_search_shortcut(&mut value);
+
+        let config: Config =
+            serde_json::from_value(value).map_err(|e| CoreError::Config(e.to_string()))?;
+        if migrated {
+            config.save(path)?;
+        }
+        Ok(config)
     }
 
     fn save(&self, path: &Path) -> Result<(), CoreError> {
@@ -94,7 +138,7 @@ impl Config {
             let config = Config {
                 vault_path: Self::default_vault_path(),
                 theme: Theme::default(),
-                search_shortcut: default_search_shortcut(),
+                shortcuts: default_shortcuts(),
                 git_sync_interval_minutes: default_git_sync_interval_minutes(),
             };
             config.save(&path)?;
@@ -114,9 +158,10 @@ impl Config {
         self.save(&Self::config_file_path())
     }
 
-    /// Aggiorna e persiste la scorciatoia di ricerca.
-    pub fn set_search_shortcut(&mut self, shortcut: String) -> Result<(), CoreError> {
-        self.search_shortcut = shortcut;
+    /// Aggiorna e persiste la scorciatoia di una singola azione (chiave
+    /// stabile, es. "command_palette"), lasciando le altre invariate.
+    pub fn set_shortcut(&mut self, action_id: String, shortcut: String) -> Result<(), CoreError> {
+        self.shortcuts.insert(action_id, shortcut);
         self.save(&Self::config_file_path())
     }
 
@@ -150,10 +195,17 @@ mod tests {
     }
 
     #[test]
-    fn config_without_search_shortcut_field_defaults_to_mod_k() {
+    fn config_without_shortcuts_field_defaults_to_command_palette_and_cheatsheet() {
         let json = r#"{"vault_path":"/home/x/Journal"}"#;
         let config: Config = serde_json::from_str(json).unwrap();
-        assert_eq!(config.search_shortcut, "Mod+K");
+        assert_eq!(
+            config.shortcuts.get("command_palette"),
+            Some(&"Mod+K".to_string())
+        );
+        assert_eq!(
+            config.shortcuts.get("cheatsheet"),
+            Some(&"Mod+/".to_string())
+        );
     }
 
     #[test]
@@ -161,5 +213,124 @@ mod tests {
         let json = r#"{"vault_path":"/home/x/Journal"}"#;
         let config: Config = serde_json::from_str(json).unwrap();
         assert_eq!(config.git_sync_interval_minutes, 10);
+    }
+
+    struct TempDir(PathBuf);
+
+    impl TempDir {
+        fn new(label: &str) -> Self {
+            let mut path = std::env::temp_dir();
+            let unique = format!(
+                "ramus-core-config-test-{label}-{}-{:?}",
+                std::process::id(),
+                std::time::SystemTime::now()
+                    .duration_since(std::time::UNIX_EPOCH)
+                    .unwrap()
+                    .as_nanos()
+            );
+            path.push(unique);
+            std::fs::create_dir_all(&path).unwrap();
+            Self(path)
+        }
+
+        fn config_path(&self) -> PathBuf {
+            self.0.join("config.json")
+        }
+    }
+
+    impl Drop for TempDir {
+        fn drop(&mut self) {
+            let _ = std::fs::remove_dir_all(&self.0);
+        }
+    }
+
+    #[test]
+    fn load_migrates_search_shortcut_into_shortcuts_and_rewrites_file() {
+        let dir = TempDir::new("migrate-search-shortcut");
+        let path = dir.config_path();
+        fs::write(
+            &path,
+            r#"{"vault_path":"/home/x/Journal","search_shortcut":"Mod+P"}"#,
+        )
+        .unwrap();
+
+        let config = Config::load(&path).unwrap();
+        assert_eq!(
+            config.shortcuts.get("command_palette"),
+            Some(&"Mod+P".to_string())
+        );
+
+        // Il file su disco è stato riscritto nel nuovo formato: un secondo
+        // load non deve ripetere la migrazione né perdere il valore.
+        let raw = fs::read_to_string(&path).unwrap();
+        assert!(!raw.contains("search_shortcut"));
+        let reloaded = Config::load(&path).unwrap();
+        assert_eq!(
+            reloaded.shortcuts.get("command_palette"),
+            Some(&"Mod+P".to_string())
+        );
+    }
+
+    #[test]
+    fn load_without_search_shortcut_or_shortcuts_uses_defaults_without_rewriting() {
+        let dir = TempDir::new("no-migration-needed");
+        let path = dir.config_path();
+        fs::write(&path, r#"{"vault_path":"/home/x/Journal"}"#).unwrap();
+
+        let config = Config::load(&path).unwrap();
+        assert_eq!(
+            config.shortcuts.get("command_palette"),
+            Some(&"Mod+K".to_string())
+        );
+
+        // Nessuna migrazione necessaria: il file resta esattamente com'era.
+        let raw = fs::read_to_string(&path).unwrap();
+        assert_eq!(raw, r#"{"vault_path":"/home/x/Journal"}"#);
+    }
+
+    #[test]
+    fn load_already_in_new_format_is_left_untouched() {
+        let dir = TempDir::new("already-new-format");
+        let path = dir.config_path();
+        let original =
+            r#"{"vault_path":"/home/x/Journal","shortcuts":{"command_palette":"Mod+J"}}"#;
+        fs::write(&path, original).unwrap();
+
+        let config = Config::load(&path).unwrap();
+        assert_eq!(
+            config.shortcuts.get("command_palette"),
+            Some(&"Mod+J".to_string())
+        );
+
+        let raw = fs::read_to_string(&path).unwrap();
+        assert_eq!(raw, original);
+    }
+
+    #[test]
+    fn updating_one_shortcut_key_leaves_others_untouched_on_disk() {
+        let dir = TempDir::new("set-shortcut");
+        let path = dir.config_path();
+        let mut config = Config {
+            vault_path: dir.0.clone(),
+            theme: Theme::default(),
+            shortcuts: default_shortcuts(),
+            git_sync_interval_minutes: default_git_sync_interval_minutes(),
+        };
+        config.save(&path).unwrap();
+
+        config
+            .shortcuts
+            .insert("command_palette".to_string(), "Mod+J".to_string());
+        config.save(&path).unwrap();
+
+        let reloaded = Config::load(&path).unwrap();
+        assert_eq!(
+            reloaded.shortcuts.get("command_palette"),
+            Some(&"Mod+J".to_string())
+        );
+        assert_eq!(
+            reloaded.shortcuts.get("cheatsheet"),
+            Some(&"Mod+/".to_string())
+        );
     }
 }

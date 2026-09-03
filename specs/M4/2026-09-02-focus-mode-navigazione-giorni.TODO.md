@@ -1,7 +1,7 @@
 # Focus mode + navigazione fra giorni da tastiera
 
 Stato: proposta, in attesa di conferma. Presuppone
-`specs/M4/2026-09-02-scorciatoie-configurabili.TODO.md` (le due
+`specs/M4/2026-09-02-scorciatoie-configurabili.DONE.md` (le due
 scorciatoie qui descritte entrano in quel registro).
 
 ## Motivazione

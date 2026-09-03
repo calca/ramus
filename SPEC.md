@@ -238,6 +238,10 @@ il marchio contro il bordo.
   dell'app, pagine aperte di recente (persistite per vault) e
   creazione pagine dalla stessa lista — vedi
   `specs/M4/2026-09-02-command-palette.DONE.md`.
+- Scorciatoie app-level configurabili in un registro unico (non più un
+  solo campo `search_shortcut`), più una cheatsheet (`Mod+/`) con le
+  scorciatoie app e quelle fisse dell'editor — vedi
+  `specs/M4/2026-09-02-scorciatoie-configurabili.DONE.md`.
 
 **M5 — AI**
 - Non un'AI integrata nell'app: un server MCP (`ramus-mcp`, nuovo

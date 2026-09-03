@@ -78,8 +78,8 @@ export function search(query: string): Promise<SearchHit[]> {
   return invoke<SearchHit[]>("search", { query });
 }
 
-export function setSearchShortcut(shortcut: string): Promise<Config> {
-  return invoke<Config>("set_search_shortcut", { shortcut });
+export function setShortcut(actionId: string, shortcut: string): Promise<Config> {
+  return invoke<Config>("set_shortcut", { actionId, shortcut });
 }
 
 /** Crea il repository Git (idempotente) e committa subito lo stato

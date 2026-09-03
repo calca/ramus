@@ -359,6 +359,25 @@ body {
   cursor: pointer;
 }
 
+.settings-shortcut-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.settings-shortcut-list li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.3rem 0;
+  font-size: 0.9rem;
+}
+
+.settings-shortcut-list li + li {
+  border-top: 1px solid color-mix(in srgb, var(--ramus-stone) 15%, transparent);
+}
+
 .settings-shortcut-button {
   border: 1px solid color-mix(in srgb, var(--ramus-stone) 40%, transparent);
   background: transparent;
@@ -368,6 +387,37 @@ body {
   cursor: pointer;
   font-size: 0.85rem;
   font-family: ui-monospace, monospace;
+  white-space: nowrap;
+}
+
+/* Cheatsheet (M4): stessa struttura a righe di .settings-shortcut-list,
+   ma sola lettura (kbd invece di un bottone). */
+.cheatsheet-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.cheatsheet-list li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.3rem 0;
+  font-size: 0.9rem;
+}
+
+.cheatsheet-list li + li {
+  border-top: 1px solid color-mix(in srgb, var(--ramus-stone) 15%, transparent);
+}
+
+.cheatsheet-list kbd {
+  border: 1px solid color-mix(in srgb, var(--ramus-stone) 40%, transparent);
+  border-radius: 6px;
+  padding: 0.3rem 0.7rem;
+  font-size: 0.85rem;
+  font-family: ui-monospace, monospace;
+  white-space: nowrap;
 }
 
 .settings-sync-intro {

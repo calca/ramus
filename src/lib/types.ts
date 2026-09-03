@@ -23,7 +23,8 @@ export type Theme = "light" | "dark" | "system";
 export interface Config {
   vault_path: string;
   theme: Theme;
-  search_shortcut: string;
+  /** Chiave = id azione stabile ("command_palette", "cheatsheet", ...). */
+  shortcuts: Record<string, string>;
   git_sync_interval_minutes: number;
 }
 

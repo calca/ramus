@@ -15,7 +15,7 @@ senza tagliare/incollare a mano — un'operazione comune in un outliner
 Come le altre scorciatoie dell'editor (Tab, Shift-Tab, Invio,
 Backspace): vive nella keymap ProseMirror configurata alla creazione
 dell'editor, non nel registro configurabile di
-`specs/M4/2026-09-02-scorciatoie-configurabili.TODO.md` — stessa
+`specs/M4/2026-09-02-scorciatoie-configurabili.DONE.md` — stessa
 motivazione già scritta lì, non ripetuta. `Alt-ArrowUp` /
 `Alt-ArrowDown` (sintassi keymap Tiptap/ProseMirror, verificata contro
 `prosemirror-keymap`: i modificatori si scrivono `Mod-`/`Alt-`/

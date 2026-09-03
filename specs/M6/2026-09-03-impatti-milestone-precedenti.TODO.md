@@ -101,7 +101,7 @@ sostanzialmente un secondo pezzo da progettare.
 
 ## M4 — UI (nessun pezzo implementato, tutte le spec TODO)
 
-- **Scorciatoie da tastiera** (`specs/M4/2026-09-02-scorciatoie-configurabili.TODO.md`,
+- **Scorciatoie da tastiera** (`specs/M4/2026-09-02-scorciatoie-configurabili.DONE.md`,
   `specs/M4/2026-09-02-riordino-blocchi-tastiera.TODO.md`,
   `specs/M4/2026-09-02-focus-mode-navigazione-giorni.TODO.md`):
   l'intera idea "keyboard focused" presuppone una tastiera fisica.

@@ -284,9 +284,13 @@ pub fn search(query: String, state: State<AppState>) -> Result<Vec<SearchHit>, C
 }
 
 #[tauri::command]
-pub fn set_search_shortcut(shortcut: String, state: State<AppState>) -> Result<Config, CoreError> {
+pub fn set_shortcut(
+    action_id: String,
+    shortcut: String,
+    state: State<AppState>,
+) -> Result<Config, CoreError> {
     let mut config = lock_config(&state)?;
-    config.set_search_shortcut(shortcut)?;
+    config.set_shortcut(action_id, shortcut)?;
     Ok(config.clone())
 }
 

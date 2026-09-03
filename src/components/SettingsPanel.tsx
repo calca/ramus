@@ -7,12 +7,12 @@ import {
   pickVaultFolder,
   setGitRemote,
   setGitSyncInterval,
-  setSearchShortcut as setSearchShortcutCommand,
+  setShortcut as setShortcutCommand,
   setTheme as setThemeCommand,
   setVaultPath,
   vaultStats,
 } from "../lib/commands";
-import { formatShortcut, normalizeShortcut } from "../lib/shortcut";
+import { SHORTCUT_ACTIONS, formatShortcut, getShortcut, normalizeShortcut } from "../lib/shortcut";
 import { applyTheme } from "../lib/theme";
 import type { Config, SyncStatus, Theme, VaultStats } from "../lib/types";
 import { Modal } from "./Modal";
@@ -22,7 +22,7 @@ interface SettingsPanelProps {
   onClose: () => void;
   onVaultChanged: (config: Config) => void;
   onThemeChanged: (config: Config) => void;
-  onSearchShortcutChanged: (config: Config) => void;
+  onShortcutChanged: (config: Config) => void;
   onGitSyncIntervalChanged: (config: Config) => void;
   onShowAbout: () => void;
 }
@@ -69,14 +69,14 @@ export function SettingsPanel({
   onClose,
   onVaultChanged,
   onThemeChanged,
-  onSearchShortcutChanged,
+  onShortcutChanged,
   onGitSyncIntervalChanged,
   onShowAbout,
 }: SettingsPanelProps) {
   const [stats, setStats] = useState<VaultStats | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
-  const [recordingShortcut, setRecordingShortcut] = useState(false);
+  const [recordingActionId, setRecordingActionId] = useState<string | null>(null);
   const [syncStatus, setSyncStatus] = useState<SyncStatus | null>(null);
   const [syncBusy, setSyncBusy] = useState(false);
   const [remoteUrl, setRemoteUrl] = useState("");
@@ -177,28 +177,29 @@ export function SettingsPanel({
   // anche l'intero pannello (il listener Escape di Modal è in bubble,
   // su window, e altrimenti la vedrebbe comunque).
   useEffect(() => {
-    if (!recordingShortcut) {
+    if (!recordingActionId) {
       return;
     }
+    const actionId = recordingActionId;
     const onKeyDown = (event: KeyboardEvent) => {
       event.preventDefault();
       event.stopPropagation();
       if (event.key === "Escape") {
-        setRecordingShortcut(false);
+        setRecordingActionId(null);
         return;
       }
       const shortcut = normalizeShortcut(event);
       if (shortcut) {
-        setRecordingShortcut(false);
+        setRecordingActionId(null);
         setError(null);
-        void setSearchShortcutCommand(shortcut)
-          .then(onSearchShortcutChanged)
+        void setShortcutCommand(actionId, shortcut)
+          .then(onShortcutChanged)
           .catch((err: unknown) => setError(String(err)));
       }
     };
     window.addEventListener("keydown", onKeyDown, { capture: true });
     return () => window.removeEventListener("keydown", onKeyDown, { capture: true });
-  }, [recordingShortcut, onSearchShortcutChanged]);
+  }, [recordingActionId, onShortcutChanged]);
 
   return (
     <Modal onClose={onClose} ariaLabel="Impostazioni">
@@ -248,14 +249,23 @@ export function SettingsPanel({
       </section>
 
       <section className="settings-section">
-        <h3>Comandi</h3>
-        <button
-          type="button"
-          className="settings-shortcut-button"
-          onClick={() => setRecordingShortcut(true)}
-        >
-          {recordingShortcut ? "Premi una combinazione…" : formatShortcut(config.search_shortcut)}
-        </button>
+        <h3>Scorciatoie</h3>
+        <ul className="settings-shortcut-list">
+          {SHORTCUT_ACTIONS.map((action) => (
+            <li key={action.id}>
+              <span>{action.label}</span>
+              <button
+                type="button"
+                className="settings-shortcut-button"
+                onClick={() => setRecordingActionId(action.id)}
+              >
+                {recordingActionId === action.id
+                  ? "Premi una combinazione…"
+                  : formatShortcut(getShortcut(config.shortcuts, action.id))}
+              </button>
+            </li>
+          ))}
+        </ul>
       </section>
 
       <section className="settings-section">
