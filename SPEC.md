@@ -202,6 +202,12 @@ il marchio contro il bordo.
 
 ## Milestone
 
+**Fase 1 completa**: M1-M5 chiuse per intero, M6 solo nelle fondamenta
+architetturali (il resto — build Android/iOS reali — richiede
+Android Studio/Xcode, non ancora fatto). Da qui in poi: fase di
+refinement guidata dall'uso reale dell'app (test, correzioni,
+rifiniture), non più costruzione pianificata per milestone.
+
 **M1 — Journal funzionante** (completa)
 - Creazione vault di default al primo avvio, senza chiedere nulla
 - Apertura automatica del journal di oggi — resta vero anche a cavallo
@@ -290,7 +296,7 @@ il marchio contro il bordo.
   snippet di configurazione già pronto da incollare nel client — vedi
   `specs/M5/2026-09-03-mcp-impostazioni.DONE.md`.
 
-**M6 — Mobile (Android/iOS)**
+**M6 — Mobile (Android/iOS)** (solo fondamenta)
 - Supporto mobile nativo di Tauri v2 (stesso frontend, stesso
   `ramus-core`), non un client FFI separato. Percorsi vault/config
   spostati da `dirs` al resolver di Tauri (Android non è coperto in
