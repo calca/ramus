@@ -99,7 +99,7 @@ pena valutare se il mobile lo ottiene più avanti, dopo il desktop, con
 una spec propria — non è un "lo stesso codice gira anche lì", è
 sostanzialmente un secondo pezzo da progettare.
 
-## M4 — UI (nessun pezzo implementato, tutte le spec TODO)
+## M4 — UI (completa su desktop)
 
 - **Scorciatoie da tastiera** (`specs/M4/2026-09-02-scorciatoie-configurabili.DONE.md`,
   `specs/M4/2026-09-02-riordino-blocchi-tastiera.DONE.md`,
@@ -130,11 +130,11 @@ sostanzialmente un secondo pezzo da progettare.
   esiste già un'alternativa touch naturale (il tap sul marker copre
   già il caso più comune, fatto/da fare).
 
-## M5 — AI → server MCP (nessun pezzo implementato, entrambe le spec TODO)
+## M5 — AI → server MCP (lettura implementata, scrittura TODO)
 
 - **Non si applica al mobile**, non per una lacuna da colmare ma per
   natura dell'architettura: `ramus-mcp`
-  (`specs/M5/2026-09-02-mcp-server-lettura.TODO.md`,
+  (`specs/M5/2026-09-02-mcp-server-lettura.DONE.md`,
   `specs/M5/2026-09-02-mcp-server-scrittura.TODO.md`) è un binario a
   sé, avviato via stdio da un client MCP desktop (Claude Desktop,
   Claude Code) — un modello a processi che il sandboxing mobile non

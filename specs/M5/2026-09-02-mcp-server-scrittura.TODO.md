@@ -1,7 +1,7 @@
 # Server MCP — strumenti di scrittura
 
 Stato: proposta, in attesa di conferma. Presuppone
-`specs/M5/2026-09-02-mcp-server-lettura.TODO.md` già implementata e
+`specs/M5/2026-09-02-mcp-server-lettura.DONE.md` già implementata e
 collaudata — stesso crate `ramus-mcp`, si aggiungono strumenti, non
 se ne crea un secondo.
 

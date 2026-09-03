@@ -24,11 +24,16 @@ plugin system, niente sync proprietaria.
 - **SQLite** via `rusqlite` — indice derivato (dalla milestone 2)
 - **tantivy** — ricerca full-text (dalla milestone 2)
 - **git2** — sync Git (dalla milestone 3)
+- **rmcp** — server MCP, solo in `crates/ramus-mcp` (dalla milestone 5)
 
 Dipendenze Rust iniziali: `serde`, `serde_json`, `notify`, `pulldown-cmark`,
 `thiserror`, `dirs`. Aggiunte in M2: `rusqlite`, `tantivy`. Aggiunta in M3:
 `git2` (scelta su `gitoxide` — verificato, `gix` non espone ancora un push
-funzionante nel crate principale).
+funzionante nel crate principale). Aggiunta in M5, solo nel nuovo crate
+`ramus-mcp` (mai in `ramus-core`, vedi CLAUDE.md regola 1): `rmcp`, SDK
+Rust ufficiale del Model Context Protocol, più `schemars` (versione
+allineata a quella usata internamente da `rmcp`, necessaria perché la
+derive `#[derive(JsonSchema)]` richiede lo stesso crate in scope).
 
 ## Struttura del repository
 
@@ -40,12 +45,15 @@ ramus/
 │   ├── lib/                # wrapper tipizzati sui command Tauri
 │   └── App.tsx
 ├── crates/
-│   └── ramus-core/       # crate puro Rust, nessuna dipendenza da Tauri
-│       ├── src/
-│       │   ├── vault.rs    # gestione cartella, path, creazione file
-│       │   ├── block.rs    # modello a blocchi
-│       │   ├── parser.rs   # markdown <-> albero di blocchi
-│       │   └── config.rs
+│   ├── ramus-core/       # crate puro Rust, nessuna dipendenza da Tauri
+│   │   ├── src/
+│   │   │   ├── vault.rs    # gestione cartella, path, creazione file
+│   │   │   ├── block.rs    # modello a blocchi
+│   │   │   ├── parser.rs   # markdown <-> albero di blocchi
+│   │   │   └── config.rs
+│   │   └── Cargo.toml
+│   └── ramus-mcp/        # binario server MCP (M5), usa ramus-core
+│       ├── src/main.rs
 │       └── Cargo.toml
 └── src-tauri/              # guscio: solo command che chiamano ramus-core
     ├── src/
@@ -263,9 +271,11 @@ il marchio contro il bordo.
   Claude Desktop, o qualunque client MCP) — vincolo "nessun invio
   automatico" soddisfatto perché Ramus non contatta mai un'AI, è
   l'agente a interrogare Ramus. Strumenti di sola lettura (ricerca,
-  lettura pagine/journal, backlink, tag) prima, di scrittura poi —
-  vedi `specs/M5/2026-09-02-mcp-server-lettura.TODO.md` e
-  `specs/M5/2026-09-02-mcp-server-scrittura.TODO.md`.
+  lettura pagine/journal, backlink, tag) implementati — vedi
+  `specs/M5/2026-09-02-mcp-server-lettura.DONE.md`, che include anche
+  `ramus-mcp --print-config` per generare lo snippet di configurazione
+  del client MCP. Strumenti di scrittura non ancora implementati —
+  vedi `specs/M5/2026-09-02-mcp-server-scrittura.TODO.md`.
 
 **M6 — Mobile (Android/iOS)**
 - Supporto mobile nativo di Tauri v2 (stesso frontend, stesso

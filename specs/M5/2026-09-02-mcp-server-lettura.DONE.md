@@ -1,8 +1,14 @@
 # Server MCP — strumenti di sola lettura
 
-Stato: proposta, in attesa di conferma. Primo pezzo di M5. Il secondo
-pezzo (`specs/M5/2026-09-02-mcp-server-scrittura.TODO.md`, strumenti
-che modificano il vault) presuppone questo già collaudato.
+Stato: implementata. Primo pezzo di M5. Il secondo pezzo
+(`specs/M5/2026-09-02-mcp-server-scrittura.TODO.md`, strumenti che
+modificano il vault) presuppone questo già collaudato.
+
+Le due "Domande aperte" sono state confermate/estese durante la
+conferma: 1) nome del crate `ramus-mcp` confermato come proposto; 2)
+generare la configurazione per i client MCP è stato **portato dentro
+lo scope** (era proposto fuori scope) — vedi sezione nuova
+"`--print-config`" sotto, aggiunta rispetto al testo originale.
 
 ## Motivazione
 
@@ -44,15 +50,26 @@ chiusa, letto/scritto direttamente sul filesystem del vault via
 # solo in crates/ramus-mcp/Cargo.toml, MAI in ramus-core (vedi sopra)
 rmcp = { version = "3", features = ["server", "transport-io", "macros", "schemars"] }
 tokio = { version = "1", features = ["rt-multi-thread", "macros", "io-std"] }
-schemars = "0.8"
+schemars = "1"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
 ```
+
+**Aggiornamento**: `schemars = "1"` (non `"0.8"` come nel testo
+originale) — `rmcp` 3.2.0 usa internamente `schemars` 1.x
+(ri-esportato come `rmcp::schemars`); la derive `#[derive(JsonSchema)]`
+genera codice che si aspetta il crate `schemars` in scope col suo nome
+proprio, quindi serve una dipendenza diretta sulla stessa major version
+(altrimenti sono due trait `JsonSchema` diversi e non combaciano —
+scoperto in fase di implementazione, non nel testo proposto).
 
 Verificato: `rmcp` è l'SDK Rust ufficiale del progetto Model Context
 Protocol (`github.com/modelcontextprotocol/rust-sdk`, la stessa
-organizzazione dello standard). `transport-io` è il transport stdio
-lato server — lo standard per un binario invocato da un client MCP
-(Claude Desktop, Claude Code: entrambi lanciano il comando configurato
-e parlano MCP sul suo stdin/stdout). `macros` dà le attribute macro
+organizzazione dello standard), risolto a v3.2.0. `transport-io` è il
+transport stdio lato server — lo standard per un binario invocato da
+un client MCP (Claude Desktop, Claude Code: entrambi lanciano il
+comando configurato e parlano MCP sul suo stdin/stdout), esposto come
+`rmcp::transport::stdio()`. `macros` dà le attribute macro
 `#[tool]`/`#[tool_router]`/`#[tool_handler]` per dichiarare gli
 strumenti senza scrivere a mano il routing/schema JSON.
 
@@ -123,6 +140,43 @@ crate (`Server { tool_router: ToolRouter<Self> }`,
 `#[tool_router(router = tool_router)]`,
 `#[tool_handler(router = self.tool_router)]`).
 
+Ogni strumento restituisce una stringa JSON come `Result<String,
+ErrorData>` (non un semplice `String` come nello schema sopra):
+`rmcp` implementa `IntoCallToolResult` anche per `Result<T, E>` con
+`T`/`E: IntoCallToolResult`, quindi un errore `ramus-core`
+(`CoreError`, via `to_string()`) diventa un errore MCP vero
+(`ErrorData::internal_error`) invece di dover essere incorporato a
+mano nel testo della risposta di successo.
+
+## `--print-config`: generare la configurazione del client MCP
+
+**Aggiornamento**: aggiunta rispetto al testo originale — vedi
+"Domande aperte" sotto, portata dentro lo scope durante la conferma.
+
+`ramus-mcp --print-config` stampa lo snippet JSON da incollare nella
+sezione `mcpServers` del file di configurazione del client (es.
+`.mcp.json` per Claude Code, `claude_desktop_config.json` per Claude
+Desktop), col percorso reale *di questo binario compilato*
+(`std::env::current_exe()`) già dentro — l'utente non deve
+scoprirlo/scriverlo a mano, solo copiare e incollare:
+
+```json
+{
+  "mcpServers": {
+    "ramus": {
+      "command": "/percorso/reale/del/binario/ramus-mcp"
+    }
+  }
+}
+```
+
+Un flag CLI sul binario stesso, non un bottone nella GUI Tauri:
+`ramus-mcp` è pensato per girare indipendentemente dalla GUI (vedi
+sopra), un flag ci sta comodamente senza aggiungere un command Tauri
+né uno stato UI. Controllato prima di qualunque altra cosa in `main`
+(prima di `Config::load_or_init()`): non serve un vault configurato
+per stampare il proprio percorso.
+
 ## Cosa resta fuori da questa spec
 
 - **Nessuno strumento che crea o modifica file**: `open_today` e
@@ -145,27 +199,38 @@ crate (`Server { tool_router: ToolRouter<Self> }`,
 
 ## Domande aperte
 
-1. Nome del crate/binario: `ramus-mcp` (proposto) — va bene?
-2. Il file di configurazione per i client MCP (es. `.mcp.json` per
-   Claude Code, `claude_desktop_config.json` per Claude Desktop) non
-   è generato da Ramus: l'utente lo scrive a mano puntando al
-   percorso del binario compilato. Va bene per ora (nessuna UI di
-   "genera configurazione" dentro Ramus), o vuoi che una spec futura
-   copra anche quello?
+Nessuna: entrambe risolte — 1) nome `ramus-mcp` confermato; 2) la
+generazione della configurazione è stata portata dentro lo scope,
+come flag CLI (`--print-config`) sul binario stesso, non come UI
+dentro Ramus — vedi sezione dedicata sopra.
 
 ## Test da scrivere (core)
 
-Nessuno nuovo in `ramus-core` (zero modifiche). In `ramus-mcp`: test
-di integrazione che aprono un vault di prova (stesso pattern
-`TempDir` già usato in `ramus-core`), avviano gli strumenti
-direttamente (senza il transport MCP, chiamando le funzioni Rust
-sottostanti) e verificano che restituiscano gli stessi dati dei
-command Tauri equivalenti già testati.
+Nessuno nuovo in `ramus-core` (zero modifiche, confermato). In
+`ramus-mcp`, 8 test di integrazione (`crates/ramus-mcp/src/main.rs`,
+`#[cfg(test)] mod tests`): stesso pattern `TempDir` già usato in
+`ramus-core`/`git_sync.rs`/`config.rs`, gli strumenti chiamati
+direttamente come metodi `async` su `Server` (senza il transport MCP)
+— `list_pages`, `list_journals` (rispetto del `limit`, data `before`
+non valida → errore), `read_page` (contenuto corretto, path
+inesistente → errore non panic), `search` (trova un termine indicizzato
+all'avvio), `find_backlinks`, `list_tags`.
 
 ## Verifica
 
-`cargo test` per `ramus-mcp` (quanto sopra) e `cargo build -p
-ramus-mcp`. Il collaudo reale end-to-end (un client MCP che si
-connette, elenca gli strumenti, li invoca) non è verificabile in
-questo sandbox: previsto per domani, un giro con un client MCP reale
-(es. Claude Code puntato al binario compilato).
+**Aggiornamento rispetto al testo originale**: il collaudo end-to-end
+reale è risultato verificabile in questo sandbox, non rimandato a
+domani. `cargo test -p ramus-mcp` (8 test), `cargo test` sull'intero
+workspace (114 core + 8 mcp), `cargo clippy --all-targets -D
+warnings` e `cargo fmt --check` puliti su tutto il workspace
+(`ramus-core`+`ramus-mcp`+`ramus`, compreso `src-tauri` — nessuna
+regressione introdotta nel guscio Tauri esistente). Collaudo reale:
+`ramus-mcp --print-config` verificato manualmente (stampa il path
+assoluto del binario compilato); il server avviato e pilotato con
+richieste JSON-RPC grezze su stdin/stdout **contro il vault reale
+dell'utente** — handshake `initialize`, `tools/list` (schema di tutti
+e sei gli strumenti corretto), `tools/call` su `list_pages` e
+`list_journals` (dati reali restituiti correttamente) — senza un
+client MCP completo, ma sufficiente a validare l'intera pipeline
+(indice sincronizzato all'avvio, routing degli strumenti, schema
+JSON, serializzazione del risultato).
