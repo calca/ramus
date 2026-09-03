@@ -234,6 +234,19 @@ il marchio contro il bordo.
   vedi `specs/M5/2026-09-02-mcp-server-lettura.TODO.md` e
   `specs/M5/2026-09-02-mcp-server-scrittura.TODO.md`.
 
+**M6 — Mobile (Android/iOS)**
+- Supporto mobile nativo di Tauri v2 (stesso frontend, stesso
+  `ramus-core`), non un client FFI separato. Percorsi vault/config
+  spostati da `dirs` al resolver di Tauri (Android non è coperto in
+  modo affidabile da `dirs`, verificato) — vedi
+  `specs/M6/2026-09-03-supporto-mobile-fondamenta.TODO.md`. Nessun
+  selettore di cartella su mobile (non esiste nell'API), il vault vive
+  in un percorso fisso. Impatti su M1-M5 catalogati in
+  `specs/M6/2026-09-03-impatti-milestone-precedenti.TODO.md` — M3
+  (credenziali, sync in background) e M4 (scorciatoie da tastiera)
+  richiedono adattamenti sostanziali quando ci si arriva, M5 resta
+  desktop-only per natura.
+
 ## Fuori scope (non implementare, nemmeno "in preparazione")
 
 - Multi-vault e switcher fra vault
