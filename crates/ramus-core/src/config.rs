@@ -45,6 +45,9 @@ fn default_shortcuts() -> HashMap<String, String> {
     HashMap::from([
         ("command_palette".to_string(), "Mod+K".to_string()),
         ("cheatsheet".to_string(), "Mod+/".to_string()),
+        ("focus_mode".to_string(), "Mod+.".to_string()),
+        ("journal_prev_day".to_string(), "Mod+ArrowUp".to_string()),
+        ("journal_next_day".to_string(), "Mod+ArrowDown".to_string()),
     ])
 }
 
@@ -195,7 +198,7 @@ mod tests {
     }
 
     #[test]
-    fn config_without_shortcuts_field_defaults_to_command_palette_and_cheatsheet() {
+    fn config_without_shortcuts_field_defaults_to_all_registered_actions() {
         let json = r#"{"vault_path":"/home/x/Journal"}"#;
         let config: Config = serde_json::from_str(json).unwrap();
         assert_eq!(
@@ -205,6 +208,18 @@ mod tests {
         assert_eq!(
             config.shortcuts.get("cheatsheet"),
             Some(&"Mod+/".to_string())
+        );
+        assert_eq!(
+            config.shortcuts.get("focus_mode"),
+            Some(&"Mod+.".to_string())
+        );
+        assert_eq!(
+            config.shortcuts.get("journal_prev_day"),
+            Some(&"Mod+ArrowUp".to_string())
+        );
+        assert_eq!(
+            config.shortcuts.get("journal_next_day"),
+            Some(&"Mod+ArrowDown".to_string())
         );
     }
 

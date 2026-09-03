@@ -103,7 +103,7 @@ sostanzialmente un secondo pezzo da progettare.
 
 - **Scorciatoie da tastiera** (`specs/M4/2026-09-02-scorciatoie-configurabili.DONE.md`,
   `specs/M4/2026-09-02-riordino-blocchi-tastiera.DONE.md`,
-  `specs/M4/2026-09-02-focus-mode-navigazione-giorni.TODO.md`):
+  `specs/M4/2026-09-02-focus-mode-navigazione-giorni.DONE.md`):
   l'intera idea "keyboard focused" presuppone una tastiera fisica.
   Senza una collegata via Bluetooth (possibile ma non il caso comune
   su telefono), Cmd/Ctrl+K, Alt+Su/Giù, Mod+. eccetera semplicemente

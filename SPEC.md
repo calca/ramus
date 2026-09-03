@@ -246,6 +246,9 @@ il marchio contro il bordo.
   incluso) — scorciatoia fissa dell'editor, non nel registro
   configurabile — vedi
   `specs/M4/2026-09-02-riordino-blocchi-tastiera.DONE.md`.
+- Focus mode (`Mod+.`, nasconde header e status bar) e navigazione fra
+  giorni del journal da tastiera (`Mod+↑`/`Mod+↓`) — vedi
+  `specs/M4/2026-09-02-focus-mode-navigazione-giorni.DONE.md`.
 
 **M5 — AI**
 - Non un'AI integrata nell'app: un server MCP (`ramus-mcp`, nuovo

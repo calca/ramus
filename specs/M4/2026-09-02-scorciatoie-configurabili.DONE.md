@@ -12,7 +12,7 @@ proposto, risolta a favore della versione scritta per esteso).
 
 Fondamenta per le altre spec
 dell'idea "keyboard focused, less UI": `specs/M4/2026-09-02-riordino-blocchi-tastiera.DONE.md`
-e `specs/M4/2026-09-02-focus-mode-navigazione-giorni.TODO.md` aggiungono
+e `specs/M4/2026-09-02-focus-mode-navigazione-giorni.DONE.md` aggiungono
 voci a questo registro una volta implementate.
 
 ## Motivazione

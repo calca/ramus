@@ -153,6 +153,15 @@ body {
   padding: 0.15rem 0.5rem;
 }
 
+/* Focus mode (M4): nasconde tutta la chrome, editor e contenuto restano
+   dove sono e occupano lo spazio liberato (.app-body { flex: 1 } già
+   basta, nessun CSS aggiuntivo lì). Indipendente dalla modalità compatta
+   — le due si possono combinare senza conflitti. */
+.app.is-focus .app-header,
+.app.is-focus .app-statusbar {
+  display: none;
+}
+
 .banner {
   padding: 0.5rem 1.25rem;
   font-size: 0.9rem;

@@ -1,8 +1,24 @@
 # Focus mode + navigazione fra giorni da tastiera
 
-Stato: proposta, in attesa di conferma. Presuppone
-`specs/M4/2026-09-02-scorciatoie-configurabili.DONE.md` (le due
-scorciatoie qui descritte entrano in quel registro).
+Stato: implementata. Presuppone
+`specs/M4/2026-09-02-scorciatoie-configurabili.DONE.md` (le tre
+scorciatoie qui descritte entrano in quel registro — anche
+`Config::default_shortcuts()` lato Rust è stato esteso con
+`focus_mode`/`journal_prev_day`/`journal_next_day`, come già
+preannunciato in quella spec). Entrambe le "Domande aperte" confermate
+come proposto. Due scostamenti minori dal testo originale:
+
+- Solo `focusin` è agganciato (non anche `focusout`): il testo
+  proponeva la coppia perché è quella che bubbla (a differenza di
+  `focus`/`blur`), ma per questa logica basta reagire a "il fuoco è
+  entrato in un giorno" — non c'è un comportamento utile da agganciare
+  a "il fuoco è uscito" (l'ultimo giorno con fuoco resta il
+  riferimento migliore anche quando il fuoco è altrove, es. un
+  pannello aperto).
+- `formatShortcut` (usata da cheatsheet e Impostazioni) ora traduce
+  `ArrowUp`/`ArrowDown`/`ArrowLeft`/`ArrowRight` in ↑/↓/←/→ — non
+  esisteva ancora una scorciatoia con un tasto non alfanumerico prima
+  di questa spec, senza la traduzione si sarebbe letto "⌘ArrowUp".
 
 ## Motivazione
 
@@ -99,23 +115,25 @@ non letto da JS). Serve un piccolo stato gemello lato JS:
 
 ## Domande aperte
 
-1. Default proposti: `focus_mode` → `Mod+.`, `journal_prev_day` →
-   `Mod+ArrowUp`, `journal_next_day` → `Mod+ArrowDown`. Vanno bene, o
-   preferisci combinazioni diverse?
-2. Focus mode disponibile anche mentre `PageView` è aperta (nasconde
-   comunque header/status bar, la pagina resta): proposto sì, nessun
-   motivo di limitarlo alla sola vista journal. Confermi?
+Nessuna: entrambe confermate come proposto — default `Mod+.`/
+`Mod+ArrowUp`/`Mod+ArrowDown`, focus mode disponibile anche su
+`PageView` (automatico: la classe `is-focus` vive su `.app`, a monte
+sia di `PageView` che della vista journal, nessuna logica separata
+richiesta).
 
 ## Test da scrivere
 
 Nessuno lato core: tutta la logica è frontend (stato React, CSS,
 un piccolo metodo aggiunto a `EditorHandle`). Nessun test frontend
 nuovo, coerente con l'assenza di un runner JS per componenti nel
-progetto.
+progetto. Aggiornato un test Rust esistente
+(`config_without_shortcuts_field_defaults_to_all_registered_actions`)
+per coprire i tre nuovi default.
 
 ## Verifica
 
-`npm run typecheck` per la parte automatizzabile. Il resto
-(toggle del focus mode, navigazione fra giorni con caricamento di
-nuovi batch quando serve, il fuoco che segue correttamente) richiede
-un giro manuale in `npm run tauri dev`.
+`npm run typecheck`, `cargo test` (106 test), `cargo clippy` e
+`cargo fmt --check` puliti. Non verificabile in questo sandbox: il
+giro completo in `npm run tauri dev` (toggle del focus mode,
+navigazione fra giorni con caricamento di nuovi batch quando serve, il
+fuoco che segue correttamente) — richiede un giro manuale.

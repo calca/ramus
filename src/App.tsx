@@ -46,6 +46,7 @@ function App() {
   >(null);
   const [syncState, setSyncState] = useState<SyncState | null>(null);
   const [isCompact, setIsCompact] = useState(false);
+  const [isFocusMode, setIsFocusMode] = useState(false);
   const [view, setView] = useState<View>({ kind: "journal" });
   const [vaultVersion, setVaultVersion] = useState(0);
   const [pages, setPages] = useState<Page[]>([]);
@@ -64,6 +65,12 @@ function App() {
   const sentinelRef = useRef<HTMLDivElement | null>(null);
   const preCompactSizeRef = useRef<{ width: number; height: number } | null>(null);
   const viewRef = useRef<View>({ kind: "journal" });
+  /** Path del giorno di journal col fuoco, per le scorciatoie di
+   * navigazione fra giorni — un ref (non solo lo state) perché il
+   * listener keydown globale ha bisogno del valore corrente senza dover
+   * ricreare l'effetto ad ogni cambio di fuoco (stesso pattern già usato
+   * per pagesRef/dirtyRef/hasMoreRef). */
+  const focusedPathRef = useRef<string | null>(null);
 
   useEffect(() => {
     viewRef.current = view;
@@ -222,6 +229,52 @@ function App() {
     [fetchNextBatch, scrollToPath],
   );
 
+  /** Scorciatoie journal_prev_day/journal_next_day: sposta scroll e fuoco
+   * al giorno adiacente al giorno col fuoco attuale (o al primo giorno
+   * caricato se nessun editor ce l'ha). "prev"/"next" nel senso della
+   * lista — verso l'alto è il giorno più recente, coerente con "oggi in
+   * cima" (M1). */
+  const navigateJournalDay = useCallback(
+    async (direction: "prev" | "next") => {
+      const current = pagesRef.current;
+      const first = current[0];
+      if (!first) {
+        return;
+      }
+      const activePath = focusedPathRef.current ?? first.path;
+      let index = current.findIndex((p) => p.path === activePath);
+      if (index === -1) {
+        index = 0;
+      }
+      if (direction === "prev") {
+        if (index === 0) {
+          return;
+        }
+        index -= 1;
+      } else {
+        index += 1;
+        if (index >= pagesRef.current.length) {
+          if (!hasMoreRef.current) {
+            return;
+          }
+          const batch = await fetchNextBatch();
+          if (batch.length === 0) {
+            return;
+          }
+        }
+      }
+      const target = pagesRef.current[index];
+      if (!target) {
+        return;
+      }
+      requestAnimationFrame(() => {
+        scrollToPath(target.path);
+        editorHandles.current.get(target.path)?.focus();
+      });
+    },
+    [fetchNextBatch, scrollToPath],
+  );
+
   // Config (tema incluso) e apertura automatica del journal di oggi,
   // senza schermate intermedie.
   useEffect(() => {
@@ -324,9 +377,29 @@ function App() {
     };
   }, []);
 
+  // Traccia quale giorno di journal ha il fuoco (per journal_prev_day/
+  // journal_next_day sotto) — focusin/focusout bubbling, delegato su
+  // window invece di un listener per sezione: ogni JournalSection porta
+  // già data-path sul proprio <section>, nessuna mappa element->path da
+  // mantenere a parte. Solo focusin serve: focusout non aggiunge nulla,
+  // l'ultimo giorno con fuoco resta il riferimento più utile anche se il
+  // fuoco è temporaneamente altrove (es. un pannello aperto).
+  useEffect(() => {
+    const onFocusIn = (event: FocusEvent) => {
+      const target = event.target as HTMLElement | null;
+      const path = target?.closest<HTMLElement>(".journal-section")?.dataset.path;
+      if (path) {
+        focusedPathRef.current = path;
+      }
+    };
+    window.addEventListener("focusin", onFocusIn);
+    return () => window.removeEventListener("focusin", onFocusIn);
+  }, []);
+
   // Scorciatoie app-level configurabili (Impostazioni, vedi
   // src/lib/shortcut.ts): un listener globale, non legato al focus di un
-  // elemento specifico. Ogni azione del registro apre il proprio pannello.
+  // elemento specifico. Ogni azione del registro apre il proprio pannello
+  // o esegue la propria azione.
   useEffect(() => {
     if (!config) {
       return;
@@ -338,11 +411,26 @@ function App() {
       } else if (matchesShortcut(event, getShortcut(config.shortcuts, "cheatsheet"))) {
         event.preventDefault();
         setActivePanel("cheatsheet");
+      } else if (matchesShortcut(event, getShortcut(config.shortcuts, "focus_mode"))) {
+        event.preventDefault();
+        setIsFocusMode((prev) => !prev);
+      } else if (
+        viewRef.current.kind === "journal" &&
+        matchesShortcut(event, getShortcut(config.shortcuts, "journal_prev_day"))
+      ) {
+        event.preventDefault();
+        void navigateJournalDay("prev");
+      } else if (
+        viewRef.current.kind === "journal" &&
+        matchesShortcut(event, getShortcut(config.shortcuts, "journal_next_day"))
+      ) {
+        event.preventDefault();
+        void navigateJournalDay("next");
       }
     };
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
-  }, [config]);
+  }, [config, navigateJournalDay]);
 
   // Badge di stato sync (M3): visibile solo quando c'è qualcosa da dire
   // (mai per "disabled"/"idle", vedi render sotto) — un polling leggero,
@@ -496,7 +584,7 @@ function App() {
   }, [isCompact]);
 
   return (
-    <div className="app">
+    <div className={isFocusMode ? "app is-focus" : "app"}>
       <header
         className={isCompact ? "app-header is-compact" : "app-header"}
         data-tauri-drag-region="true"

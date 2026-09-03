@@ -19,6 +19,9 @@ export interface ShortcutAction {
 export const SHORTCUT_ACTIONS: ShortcutAction[] = [
   { id: "command_palette", label: "Apri command palette", default: "Mod+K" },
   { id: "cheatsheet", label: "Mostra scorciatoie", default: "Mod+/" },
+  { id: "focus_mode", label: "Focus mode (nascondi tutto tranne l'editor)", default: "Mod+." },
+  { id: "journal_prev_day", label: "Giorno precedente del journal", default: "Mod+ArrowUp" },
+  { id: "journal_next_day", label: "Giorno successivo del journal", default: "Mod+ArrowDown" },
 ];
 
 /** Legge Config.shortcuts[actionId], ricade sul default del registro se la
@@ -66,11 +69,17 @@ export function matchesShortcut(event: KeyboardEvent, shortcut: string): boolean
 
 const MAC_SYMBOLS: Record<string, string> = { Mod: "⌘", Shift: "⇧", Alt: "⌥" };
 const OTHER_LABELS: Record<string, string> = { Mod: "Ctrl", Shift: "Shift", Alt: "Alt" };
+const KEY_SYMBOLS: Record<string, string> = {
+  ArrowUp: "↑",
+  ArrowDown: "↓",
+  ArrowLeft: "←",
+  ArrowRight: "→",
+};
 
 /** Rappresentazione leggibile per la UI: "⌘K" su macOS, "Ctrl+K" altrove. */
 export function formatShortcut(shortcut: string): string {
   const parts = shortcut.split("+");
-  const key = parts[parts.length - 1];
+  const key = KEY_SYMBOLS[parts[parts.length - 1]] ?? parts[parts.length - 1];
   const mods = parts.slice(0, -1);
   if (IS_MAC) {
     return mods.map((m) => MAC_SYMBOLS[m] ?? m).join("") + key;

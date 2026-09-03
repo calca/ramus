@@ -38,7 +38,7 @@ export function JournalSection({
   );
 
   return (
-    <section className="journal-section" ref={setElement}>
+    <section className="journal-section" ref={setElement} data-path={page.path}>
       <h2 className={isToday ? "journal-section-date journal-section-date-today" : "journal-section-date"}>
         {formatJournalHeader(journalDateFromPath(page.path))}
       </h2>

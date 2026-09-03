@@ -14,6 +14,9 @@ const SAVE_DEBOUNCE_MS = 500;
 export interface EditorHandle {
   /** Salva subito eventuali modifiche non ancora scritte su disco. */
   flush: () => Promise<void>;
+  /** Sposta il cursore dentro questo editor (navigazione fra giorni da
+   * tastiera, M4). */
+  focus: () => void;
 }
 
 interface EditorProps {
@@ -63,7 +66,11 @@ export const Editor = forwardRef<EditorHandle, EditorProps>(function Editor(
     [page.path],
   );
 
-  useImperativeHandle(ref, () => ({ flush: save }), [page.path]);
+  useImperativeHandle(
+    ref,
+    () => ({ flush: save, focus: () => editor?.commands.focus() }),
+    [page.path, editor],
+  );
 
   useEffect(() => {
     const onBlur = () => {
