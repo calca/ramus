@@ -89,11 +89,6 @@ body {
     flex-wrap: wrap;
     row-gap: 0.4rem;
   }
-
-  .app-statusbar {
-    flex-wrap: wrap;
-    row-gap: 0.3rem;
-  }
 }
 
 /* Modalità compatta: solo logo e bottone per uscirne, spinto a destra. */
@@ -105,16 +100,17 @@ body {
   margin-left: auto;
 }
 
-/* Status bar in basso (M4): navigazione journal + aggancio badge sync,
-   spostati qui dall'header — peso visivo ridotto, sempre presente tranne
-   in modalità compatta (stesso principio dell'header: meno chrome
-   possibile mentre la finestra è affiancata a un'altra app). */
+/* Status bar in basso (M4): solo ⚙ Impostazioni e badge sync ormai
+   (navigazione journal spostata nella command palette) — non più una
+   striscia a tutta larghezza: si restringe al contenuto e si allinea a
+   destra, niente più bordo divisore (i bottoni hanno già il proprio). */
 .app-statusbar {
   display: flex;
   align-items: center;
   gap: 0.5rem;
+  align-self: flex-end;
+  width: fit-content;
   padding: 0.3rem 1.25rem;
-  border-top: 1px solid color-mix(in srgb, var(--ramus-stone) 20%, transparent);
   font-size: 0.8rem;
   color: var(--ramus-stone);
 }
@@ -122,7 +118,6 @@ body {
 .app-statusbar.is-compact {
   display: none;
 }
-
 
 /* Focus mode (M4): nasconde tutta la chrome, editor e contenuto restano
    dove sono e occupano lo spazio liberato (.app-body { flex: 1 } già
