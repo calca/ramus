@@ -144,12 +144,12 @@ cambiare firma esterna (solo il campo in più).
 
 ## Badge di stato
 
-**Aggiornamento**: `specs/M4/2026-09-02-header-status-bar.TODO.md`
-(M4) sposta la navigazione del journal dall'header a una nuova status
-bar in basso, riservando lì lo spazio per questo badge — se M4 è già
-implementata quando si costruisce questo pezzo, il badge va nella
-status bar, non nell'header. Il resto di questa sezione descrive il
-comportamento del badge, indipendente da dove vive fisicamente.
+**Aggiornamento**: implementato inizialmente nell'header (M4 non
+ancora costruita a quel punto); con
+`specs/M4/2026-09-02-header-status-bar.DONE.md` il badge si è spostato
+nella status bar in basso insieme a `JournalControls`. Il resto di
+questa sezione descrive il comportamento del badge, indipendente da
+dove vive fisicamente.
 
 Icona/testo visibile solo quando `state` non è `Disabled`/`Idle`
 (nessun rumore visivo quando tutto va bene, coerente con la sobrietà

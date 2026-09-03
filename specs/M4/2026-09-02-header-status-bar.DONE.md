@@ -1,6 +1,13 @@
 # Header compatto + status bar in basso
 
-Stato: proposta, in attesa di conferma.
+Stato: implementata. Le tre "Domande aperte" sono state confermate
+come proposto — titolo "Ramus" mantenuto nell'header, status bar
+~2rem/0.8rem/`--ramus-stone` come da proposta, nascosta interamente in
+modalità compatta. Un solo scostamento: il badge di sync (M3, già
+implementato quando si è arrivati a questa spec, non solo "riservato"
+come previsto qui) è stato spostato nella status bar insieme a
+`JournalControls`, non lasciato nell'header — coerente col resto della
+spec ("tutto il resto si sposta in basso").
 
 ## Motivazione
 
@@ -106,18 +113,10 @@ bottoni invariati.
 
 ## Domande aperte
 
-1. Il titolo "Ramus" nell'header resta (proposta sopra), o si toglie
-   anche quello per un header ancora più minimale (solo logo + 3
-   icone)?
-2. Altezza/stile della status bar: proposto ~2rem, testo 0.8rem,
-   `--ramus-stone`. Va bene, o la vuoi più/meno prominente?
-3. Modalità compatta nasconde l'intera status bar (proposto) — o
-   preferisci tenerla visibile anche lì (la finestra stretta a
-   420px potrebbe comunque contenere data-picker + "Oggi")?
+Nessuna: tutte e tre confermate come proposto.
 
 ## Verifica
 
-Solo frontend/CSS, nessuna logica di core coinvolta: `npm run
-typecheck` per la parte automatizzabile, il resto (aspetto visivo,
-comportamento in modalità compatta) richiede un giro manuale in
-`npm run tauri dev`.
+`npm run typecheck` pulito. Comportamento visivo (aspetto della status
+bar, sparizione in modalità compatta, wrap a finestra stretta) da
+verificare con un giro manuale in `npm run tauri dev`.

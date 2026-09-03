@@ -118,7 +118,7 @@ sostanzialmente un secondo pezzo da progettare.
   nell'header/status bar, sempre visibile su mobile invece che dietro
   una scorciatoia).
 - **Header compatto + status bar**
-  (`specs/M4/2026-09-02-header-status-bar.TODO.md`): il layout
+  (`specs/M4/2026-09-02-header-status-bar.DONE.md`): il layout
   proposto (3 icone in alto, nav in basso) è già abbastanza vicino a
   un pattern mobile-friendly — l'adattamento principale è il rispetto
   delle safe area (notch, home indicator) via CSS

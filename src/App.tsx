@@ -471,12 +471,6 @@ function App() {
       >
         <img src={faviconUrl} alt="" className="app-logo" width={20} height={20} />
         <span className="app-title">Ramus</span>
-        {view.kind === "journal" && (
-          <JournalControls
-            onToday={() => void scrollToToday()}
-            onJumpToDate={(iso) => void jumpToDate(iso)}
-          />
-        )}
         <button
           type="button"
           className="settings-button compact-toggle"
@@ -494,19 +488,6 @@ function App() {
             onClick={() => setActivePanel("search")}
           >
             🔍
-          </button>
-        )}
-        {syncState && !["disabled", "idle"].includes(syncState) && (
-          <button
-            type="button"
-            className={
-              syncState === "conflict" ? "sync-badge is-conflict" : "sync-badge"
-            }
-            aria-label={SYNC_BADGE_LABELS[syncState]}
-            title={SYNC_BADGE_LABELS[syncState]}
-            onClick={() => setActivePanel("settings")}
-          >
-            {syncState === "conflict" ? "⚠" : "⇄"}
           </button>
         )}
         {config && (
@@ -548,6 +529,28 @@ function App() {
           registerEditorHandle={(handle) => registerEditorHandle(view.page.path, handle)}
         />
       )}
+
+      <div className={isCompact ? "app-statusbar is-compact" : "app-statusbar"}>
+        {view.kind === "journal" && (
+          <JournalControls
+            onToday={() => void scrollToToday()}
+            onJumpToDate={(iso) => void jumpToDate(iso)}
+          />
+        )}
+        {syncState && !["disabled", "idle"].includes(syncState) && (
+          <button
+            type="button"
+            className={
+              syncState === "conflict" ? "sync-badge is-conflict" : "sync-badge"
+            }
+            aria-label={SYNC_BADGE_LABELS[syncState]}
+            title={SYNC_BADGE_LABELS[syncState]}
+            onClick={() => setActivePanel("settings")}
+          >
+            {syncState === "conflict" ? "⚠" : "⇄"}
+          </button>
+        )}
+      </div>
 
       {activePanel === "settings" && config && (
         <SettingsPanel

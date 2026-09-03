@@ -33,7 +33,7 @@ l'etichetta visibile in `SettingsPanel` (sezione "Ricerca" → sezione
 con nome più ampio, vedi "Domande aperte").
 
 Il bottone nell'header resta uno dei 3 previsti da
-`specs/M4/2026-09-02-header-status-bar.TODO.md` — cambia solo cosa fa
+`specs/M4/2026-09-02-header-status-bar.DONE.md` — cambia solo cosa fa
 al click (stessa icona 🔍, o una diversa, vedi "Domande aperte").
 
 ## Contenuto della palette, per stato della query

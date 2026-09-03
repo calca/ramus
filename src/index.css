@@ -111,17 +111,46 @@ body {
     flex-wrap: wrap;
     row-gap: 0.4rem;
   }
+
+  .app-statusbar {
+    flex-wrap: wrap;
+    row-gap: 0.3rem;
+  }
 }
 
 /* Modalità compatta: solo logo e bottone per uscirne, spinto a destra. */
-.app-header.is-compact .journal-controls,
-.app-header.is-compact .settings-button:not(.compact-toggle),
-.app-header.is-compact .sync-badge {
+.app-header.is-compact .settings-button:not(.compact-toggle) {
   display: none;
 }
 
 .app-header.is-compact .compact-toggle {
   margin-left: auto;
+}
+
+/* Status bar in basso (M4): navigazione journal + aggancio badge sync,
+   spostati qui dall'header — peso visivo ridotto, sempre presente tranne
+   in modalità compatta (stesso principio dell'header: meno chrome
+   possibile mentre la finestra è affiancata a un'altra app). */
+.app-statusbar {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.3rem 1.25rem;
+  border-top: 1px solid color-mix(in srgb, var(--ramus-stone) 20%, transparent);
+  font-size: 0.8rem;
+  color: var(--ramus-stone);
+}
+
+.app-statusbar.is-compact {
+  display: none;
+}
+
+.app-statusbar .journal-controls button,
+.app-statusbar .journal-date-picker {
+  border-color: color-mix(in srgb, var(--ramus-stone) 30%, transparent);
+  color: var(--ramus-stone);
+  font-size: 0.8rem;
+  padding: 0.15rem 0.5rem;
 }
 
 .banner {

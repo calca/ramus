@@ -24,10 +24,8 @@ la stessa combinazione entra ed esce dalla modalità.
 
 Effetto: si aggiunge la classe `is-focus` a `.app` (stesso pattern già
 in uso per `is-compact` sull'header). CSS nasconde `.app-header` e
-`.app-statusbar` (quest'ultima da
-`specs/M4/2026-09-02-header-status-bar.TODO.md` — se non ancora
-implementata quando si costruisce questo pezzo, si nasconde solo
-l'header):
+`.app-statusbar` (quest'ultima introdotta da
+`specs/M4/2026-09-02-header-status-bar.DONE.md`, già implementata):
 
 ```css
 .app.is-focus .app-header,

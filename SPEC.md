@@ -228,9 +228,12 @@ il marchio contro il bordo.
   esplicito, mai merge automatico silenzioso
 
 **M4 — UI**
-- Da specificare più avanti. Rifinitura dell'interfaccia raccolta durante
-  l'uso reale dell'app, non legata a una singola feature — header più
-  compatto, status bar in basso, idee simili che emergono nel tempo.
+- Rifinitura dell'interfaccia raccolta durante l'uso reale dell'app, non
+  legata a una singola feature. In corso.
+- Header ridotto a logo + titolo + 3 icone (comprimi, cerca,
+  impostazioni); navigazione del journal e badge di stato sync spostati
+  in una status bar sempre presente in fondo alla finestra, nascosta in
+  modalità compatta — vedi `specs/M4/2026-09-02-header-status-bar.DONE.md`.
 
 **M5 — AI**
 - Non un'AI integrata nell'app: un server MCP (`ramus-mcp`, nuovo
