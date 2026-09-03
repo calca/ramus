@@ -1,12 +1,55 @@
 mod commands;
 
 use std::collections::HashMap;
+use std::path::PathBuf;
 use std::sync::Mutex;
 use std::time::Duration;
 
 use commands::AppState;
-use ramus_core::{Config, Index, SearchIndex, SyncState, Vault};
-use tauri::Manager;
+use ramus_core::{Config, CoreError, Index, SearchIndex, SyncState, Vault};
+use tauri::{AppHandle, Manager};
+
+/// Vault di default: `~/Journal` su desktop (comportamento invariato per
+/// chi già usa l'app), la cartella dati privata dell'app su mobile — M6.
+/// Nessun selettore di cartella su mobile (non esiste nell'API,
+/// verificato in `tauri-plugin-dialog`), il vault vive in un percorso
+/// fisso lì.
+#[cfg(desktop)]
+fn resolve_default_vault_path(_app: &AppHandle) -> Result<PathBuf, CoreError> {
+    Ok(dirs::home_dir()
+        .unwrap_or_else(|| PathBuf::from("."))
+        .join("Journal"))
+}
+
+#[cfg(mobile)]
+fn resolve_default_vault_path(app: &AppHandle) -> Result<PathBuf, CoreError> {
+    app.path()
+        .app_data_dir()
+        .map_err(|e| CoreError::Config(e.to_string()))
+}
+
+/// Percorso di `config.json`, fuori dal vault: la configurazione non è
+/// una nota. Su desktop via `dirs` (comportamento invariato, stesso
+/// percorso usato da tutte le installazioni esistenti). Su mobile via il
+/// resolver di Tauri (`dirs` non copre Android in modo affidabile —
+/// verificato nel sorgente, ricade sul ramo Linux generico — mentre
+/// `tauri::path` ha un modulo `android.rs` dedicato).
+#[cfg(desktop)]
+fn resolve_config_path(_app: &AppHandle) -> Result<PathBuf, CoreError> {
+    Ok(dirs::config_dir()
+        .unwrap_or_else(|| PathBuf::from("."))
+        .join("ramus")
+        .join("config.json"))
+}
+
+#[cfg(mobile)]
+fn resolve_config_path(app: &AppHandle) -> Result<PathBuf, CoreError> {
+    let dir = app
+        .path()
+        .app_config_dir()
+        .map_err(|e| CoreError::Config(e.to_string()))?;
+    Ok(dir.join("config.json"))
+}
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
@@ -14,7 +57,9 @@ pub fn run() {
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_dialog::init())
         .setup(|app| {
-            let config = Config::load_or_init()?;
+            let config_path = resolve_config_path(app.handle())?;
+            let default_vault_path = resolve_default_vault_path(app.handle())?;
+            let config = Config::load_or_init(&config_path, default_vault_path)?;
             let vault_root = config.vault_path.clone();
             let vault = Vault::new(vault_root.clone());
             vault.ensure_exists()?;

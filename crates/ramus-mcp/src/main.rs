@@ -16,6 +16,23 @@ use rmcp::{tool, tool_handler, tool_router, ServerHandler, ServiceExt};
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
+/// Stesso calcolo di percorso già usato dal guscio Tauri prima di M6, ora
+/// duplicato qui (non condiviso): `ramus-mcp` è desktop-only per
+/// costruzione (M5, "un modello a processi che il sandboxing mobile non
+/// permette"), non ha bisogno del ramo mobile via `app.path()`.
+fn default_vault_path() -> PathBuf {
+    dirs::home_dir()
+        .unwrap_or_else(|| PathBuf::from("."))
+        .join("Journal")
+}
+
+fn config_file_path() -> PathBuf {
+    dirs::config_dir()
+        .unwrap_or_else(|| PathBuf::from("."))
+        .join("ramus")
+        .join("config.json")
+}
+
 /// `ramus-mcp --print-config`: stampa lo snippet JSON da incollare nella
 /// configurazione di un client MCP, con il percorso reale di *questo*
 /// binario compilato — l'utente non deve scoprirlo/scriverlo a mano.
@@ -311,7 +328,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     }
     let read_only = args.iter().any(|arg| arg == "--read-only");
 
-    let config = Config::load_or_init()?;
+    let config = Config::load_or_init(&config_file_path(), default_vault_path())?;
     if let Some(message) = mcp_disabled_message(config.mcp_enabled) {
         eprintln!("{message}");
         std::process::exit(1);

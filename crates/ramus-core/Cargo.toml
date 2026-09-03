@@ -9,7 +9,6 @@ serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 notify = "6"
 thiserror = "1"
-dirs = "5"
 # chrono (clock): la data "oggi" del journal deve essere quella del calendario
 # locale dell'utente, non UTC. La stdlib non espone il fuso orario locale su
 # nessuna delle piattaforme target: senza una libreria l'app aprirebbe il

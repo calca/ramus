@@ -25,6 +25,11 @@ serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 notify = "6"
 ramus-core = { path = "../crates/ramus-core" }
+# Calcolo dei path di default (vault, config.json) su desktop — spostato qui
+# da ramus-core (M6): il crate core non deve sapere nulla di piattaforme
+# (CLAUDE.md regola 1), il guscio Tauri sì (via `dirs` su desktop, via
+# `app.path()` su mobile).
+dirs = "5"
 # tokio::time::interval per il task di sync Git automatico (M3): Tauri gira
 # già su un runtime Tokio (tauri::async_runtime), serve solo il tipo per
 # usarne l'API di timing direttamente — nessun runtime nuovo da avviare.

@@ -10,13 +10,16 @@ Ogni punto rimanda alla spec di origine; nessuno viene risolto qui.
 
 - **Selettore cartella vault** (`specs/M1/2026-09-02-settings.DONE.md`,
   bottone "Cambia"): non disponibile su mobile (verificato,
-  `specs/M6/2026-09-03-supporto-mobile-fondamenta.TODO.md`). Il
+  `specs/M6/2026-09-03-supporto-mobile-fondamenta.DONE.md`). Il
   bottone va nascosto su build mobile, non semplicemente lasciato lì
   a fallire.
-- **`Config::default_vault_path`/`config_file_path`**: dipendono da
-  `dirs`, Android non è affidabile (verificato). Fix architetturale
-  già descritto nella spec delle fondamenta — impatto diretto sul
-  codice scritto in M1, non solo sulla UI.
+- **`Config::default_vault_path`/`config_file_path`**: risolto —
+  vedi `specs/M6/2026-09-03-supporto-mobile-fondamenta.DONE.md`. I
+  due percorsi non sono più calcolati da `ramus-core` (che perde la
+  dipendenza da `dirs`): `Config::load_or_init` li riceve iniettati
+  dal chiamante, che li calcola per la piattaforma corrente (`dirs`
+  su desktop, invariato; `app.path()` su mobile, non ancora
+  compilato/verificato su un device o emulatore reale).
 - **Dimensioni finestra e modalità compatta**
   (`specs/M1/2026-09-02-dimensioni-finestra.DONE.md`): `setSize`/
   `setPosition`/dimensione minima/toggle compatto sono concetti di
@@ -158,7 +161,7 @@ verifica:
 Deciso: M6 resta dov'è nell'ordine (dopo M5), **tranne** il refactor
 di `Config::default_vault_path`/`config_file_path` (path iniettato dal
 chiamante invece di calcolato con `dirs` — descritto in
-`specs/M6/2026-09-03-supporto-mobile-fondamenta.TODO.md`, sezione 1),
+`specs/M6/2026-09-03-supporto-mobile-fondamenta.DONE.md`, sezione 1),
 che si fa **prima di iniziare M3**. Motivo: è piccolo, migliora
 l'architettura anche per il solo desktop, e più codice si scrive
 contro la firma attuale di quelle funzioni più costa cambiarle dopo —
@@ -166,6 +169,16 @@ tutto il resto del lavoro mobile (init Tauri, credenziali via
 keychain, varianti touch, background task) resta a valle di M3/M4/M5
 com'era, non ha senso costruirlo prima di aver fissato l'UX desktop di
 quelle feature.
+
+**Aggiornamento**: il refactor non è stato fatto prima di M3 come
+deciso qui — M3/M4/M5 sono stati costruiti sulla vecchia firma
+(`Config::default_vault_path()`/`config_file_path()` senza
+parametri). Il refactor è comunque avvenuto, ma più tardi, insieme al
+resto di M6 invece che a monte — nessun costo aggiuntivo osservato in
+pratica (solo due call site esterni a `config.rs` toccati:
+`src-tauri/src/lib.rs` e `crates/ramus-mcp/src/main.rs`), la
+preoccupazione che aveva motivato "prima di M3" non si è
+materializzata.
 
 Le due domande originarie (ordine di lavoro completo, se aspettare
 M3/M4 finché il mobile non è più chiaro) sono risolte da questa

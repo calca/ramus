@@ -34,6 +34,9 @@ funzionante nel crate principale). Aggiunta in M5, solo nel nuovo crate
 Rust ufficiale del Model Context Protocol, più `schemars` (versione
 allineata a quella usata internamente da `rmcp`, necessaria perché la
 derive `#[derive(JsonSchema)]` richiede lo stesso crate in scope).
+`dirs` spostata fuori da `ramus-core` in M6 (Android non è coperto in
+modo affidabile, verificato): resta solo in `src-tauri` e `ramus-mcp`,
+per il calcolo dei path lato desktop.
 
 ## Struttura del repository
 
@@ -290,8 +293,14 @@ il marchio contro il bordo.
 - Supporto mobile nativo di Tauri v2 (stesso frontend, stesso
   `ramus-core`), non un client FFI separato. Percorsi vault/config
   spostati da `dirs` al resolver di Tauri (Android non è coperto in
-  modo affidabile da `dirs`, verificato) — vedi
-  `specs/M6/2026-09-03-supporto-mobile-fondamenta.TODO.md`. Nessun
+  modo affidabile da `dirs`, verificato): `Config::load_or_init` non
+  li calcola più da sé, li riceve iniettati dal chiamante — `dirs` su
+  desktop (invariato), `app.path()` su mobile (`app_data_dir()` per il
+  vault, `app_config_dir()` per `config.json`) — vedi
+  `specs/M6/2026-09-03-supporto-mobile-fondamenta.DONE.md`. Il ramo
+  mobile è scritto ma non compilato/verificato in questo sandbox
+  (nessun target Android/iOS installato); il resto della spec
+  (`tauri android/ios init`, build reale) resta da fare. Nessun
   selettore di cartella su mobile (non esiste nell'API), il vault vive
   in un percorso fisso. Impatti su M1-M5 catalogati in
   `specs/M6/2026-09-03-impatti-milestone-precedenti.TODO.md` — M3

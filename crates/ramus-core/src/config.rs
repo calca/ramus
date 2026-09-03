@@ -53,6 +53,14 @@ pub struct Config {
     /// interruttore, non solo uno stato mostrato nella GUI.
     #[serde(default = "default_mcp_enabled")]
     pub mcp_enabled: bool,
+    /// Percorso di `config.json` su disco, iniettato da chi lo calcola
+    /// per la piattaforma corrente (il guscio Tauri: via `dirs` su
+    /// desktop, via `app.path()` su mobile — M6, vedi
+    /// `Config::load_or_init`). Mai serializzato: un percorso scritto
+    /// dentro se stesso diventerebbe stale nell'istante in cui il file
+    /// venisse spostato o copiato.
+    #[serde(skip)]
+    config_path: PathBuf,
 }
 
 fn default_shortcuts() -> HashMap<String, String> {
@@ -102,21 +110,6 @@ fn migrate_search_shortcut(value: &mut Value) -> bool {
 }
 
 impl Config {
-    pub fn default_vault_path() -> PathBuf {
-        dirs::home_dir()
-            .unwrap_or_else(|| PathBuf::from("."))
-            .join("Journal")
-    }
-
-    /// Percorso del file di configurazione dell'app (fuori dal vault: la
-    /// configurazione non è una nota).
-    pub fn config_file_path() -> PathBuf {
-        dirs::config_dir()
-            .unwrap_or_else(|| PathBuf::from("."))
-            .join("ramus")
-            .join("config.json")
-    }
-
     /// Carica `config.json`, migrando sul posto lo schema precedente
     /// (`search_shortcut: String`, singola azione) verso `shortcuts:
     /// HashMap<String, String>` se serve — vedi `migrate_search_shortcut`.
@@ -134,8 +127,9 @@ impl Config {
             serde_json::from_str(&text).map_err(|e| CoreError::Config(e.to_string()))?;
         let migrated = migrate_search_shortcut(&mut value);
 
-        let config: Config =
+        let mut config: Config =
             serde_json::from_value(value).map_err(|e| CoreError::Config(e.to_string()))?;
+        config.config_path = path.to_path_buf();
         if migrated {
             config.save(path)?;
         }
@@ -157,23 +151,30 @@ impl Config {
         })
     }
 
-    /// Carica la configurazione da disco, oppure la inizializza con il
-    /// vault di default (zero attrito al primo avvio: nessun prompt).
-    pub fn load_or_init() -> Result<Config, CoreError> {
-        let path = Self::config_file_path();
-        if path.exists() {
-            Self::load(&path)
+    /// Carica la configurazione da `config_path`, oppure la inizializza
+    /// con `default_vault_path` (zero attrito al primo avvio: nessun
+    /// prompt). Entrambi i percorsi sono calcolati dal chiamante per la
+    /// piattaforma corrente — `ramus-core` non dipende da `dirs` né sa
+    /// nulla di piattaforme (CLAUDE.md regola 1); il guscio Tauri usa
+    /// `dirs` su desktop, `app.path()` su mobile (M6).
+    pub fn load_or_init(
+        config_path: &Path,
+        default_vault_path: PathBuf,
+    ) -> Result<Config, CoreError> {
+        if config_path.exists() {
+            Self::load(config_path)
         } else {
             let config = Config {
-                vault_path: Self::default_vault_path(),
+                vault_path: default_vault_path,
                 theme: Theme::default(),
                 shortcuts: default_shortcuts(),
                 git_sync_interval_minutes: default_git_sync_interval_minutes(),
                 task_rollover_enabled: default_task_rollover_enabled(),
                 task_rollover_days: default_task_rollover_days(),
                 mcp_enabled: default_mcp_enabled(),
+                config_path: config_path.to_path_buf(),
             };
-            config.save(&path)?;
+            config.save(config_path)?;
             Ok(config)
         }
     }
@@ -181,26 +182,26 @@ impl Config {
     /// Aggiorna e persiste il vault path.
     pub fn set_vault_path(&mut self, vault_path: PathBuf) -> Result<(), CoreError> {
         self.vault_path = vault_path;
-        self.save(&Self::config_file_path())
+        self.save(&self.config_path)
     }
 
     /// Aggiorna e persiste il tema.
     pub fn set_theme(&mut self, theme: Theme) -> Result<(), CoreError> {
         self.theme = theme;
-        self.save(&Self::config_file_path())
+        self.save(&self.config_path)
     }
 
     /// Aggiorna e persiste la scorciatoia di una singola azione (chiave
     /// stabile, es. "command_palette"), lasciando le altre invariate.
     pub fn set_shortcut(&mut self, action_id: String, shortcut: String) -> Result<(), CoreError> {
         self.shortcuts.insert(action_id, shortcut);
-        self.save(&Self::config_file_path())
+        self.save(&self.config_path)
     }
 
     /// Aggiorna e persiste l'intervallo del sync Git automatico.
     pub fn set_git_sync_interval_minutes(&mut self, minutes: u32) -> Result<(), CoreError> {
         self.git_sync_interval_minutes = minutes;
-        self.save(&Self::config_file_path())
+        self.save(&self.config_path)
     }
 
     /// Aggiorna e persiste sia l'attivazione sia l'ampiezza (giorni) dello
@@ -210,26 +211,20 @@ impl Config {
     pub fn set_task_rollover(&mut self, enabled: bool, days: u32) -> Result<(), CoreError> {
         self.task_rollover_enabled = enabled;
         self.task_rollover_days = days;
-        self.save(&Self::config_file_path())
+        self.save(&self.config_path)
     }
 
     /// Aggiorna e persiste l'attivazione del server MCP (M5) — letta da
     /// `ramus-mcp` all'avvio dallo stesso `config.json`.
     pub fn set_mcp_enabled(&mut self, enabled: bool) -> Result<(), CoreError> {
         self.mcp_enabled = enabled;
-        self.save(&Self::config_file_path())
+        self.save(&self.config_path)
     }
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
-
-    #[test]
-    fn default_vault_path_is_under_home() {
-        let path = Config::default_vault_path();
-        assert!(path.ends_with("Journal"));
-    }
 
     #[test]
     fn config_without_theme_field_defaults_to_system() {
@@ -383,6 +378,39 @@ mod tests {
     }
 
     #[test]
+    fn load_or_init_on_a_missing_file_uses_the_injected_default_vault_path() {
+        let dir = TempDir::new("load-or-init-missing");
+        let path = dir.config_path();
+        let default_vault = dir.0.join("un-vault-qualsiasi");
+
+        let config = Config::load_or_init(&path, default_vault.clone()).unwrap();
+        assert_eq!(config.vault_path, default_vault);
+        assert!(path.exists());
+    }
+
+    #[test]
+    fn load_or_init_on_an_existing_file_ignores_the_injected_default() {
+        let dir = TempDir::new("load-or-init-existing");
+        let path = dir.config_path();
+        fs::write(&path, r#"{"vault_path":"/gia/su/disco"}"#).unwrap();
+
+        let config = Config::load_or_init(&path, dir.0.join("ignorato")).unwrap();
+        assert_eq!(config.vault_path, PathBuf::from("/gia/su/disco"));
+    }
+
+    #[test]
+    fn a_setter_persists_to_the_same_path_the_config_was_loaded_from() {
+        let dir = TempDir::new("setter-uses-loaded-path");
+        let path = dir.config_path();
+        let mut config = Config::load_or_init(&path, dir.0.join("vault")).unwrap();
+
+        config.set_theme(Theme::Dark).unwrap();
+
+        let reloaded = Config::load_or_init(&path, dir.0.join("vault")).unwrap();
+        assert_eq!(reloaded.theme, Theme::Dark);
+    }
+
+    #[test]
     fn updating_one_shortcut_key_leaves_others_untouched_on_disk() {
         let dir = TempDir::new("set-shortcut");
         let path = dir.config_path();
@@ -394,6 +422,7 @@ mod tests {
             task_rollover_enabled: default_task_rollover_enabled(),
             task_rollover_days: default_task_rollover_days(),
             mcp_enabled: default_mcp_enabled(),
+            config_path: path.clone(),
         };
         config.save(&path).unwrap();
 

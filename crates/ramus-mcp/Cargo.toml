@@ -5,6 +5,10 @@ edition.workspace = true
 
 [dependencies]
 ramus-core = { path = "../ramus-core" }
+# Calcolo dei path di default (vault, config.json), spostato qui da
+# ramus-core (M6) — ramus-mcp è desktop-only per costruzione (M5), stesso
+# calcolo via `dirs` già usato dal guscio Tauri prima di questa spec.
+dirs = "5"
 rmcp = { version = "3", features = ["server", "transport-io", "macros", "schemars"] }
 tokio = { version = "1", features = ["rt-multi-thread", "macros", "io-std"] }
 schemars = "1"

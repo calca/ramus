@@ -3255,6 +3255,7 @@ checksum = "f8dcc9c7d52a811697d2151c701e0d08956f92b0e24136cf4cf27b57a6a0d9bf"
 name = "ramus"
 version = "0.1.0"
 dependencies = [
+ "dirs 5.0.1",
  "notify",
  "ramus-core",
  "serde",
@@ -3271,7 +3272,6 @@ name = "ramus-core"
 version = "0.1.0"
 dependencies = [
  "chrono",
- "dirs 5.0.1",
  "git2",
  "notify",
  "rusqlite",
@@ -3285,6 +3285,7 @@ dependencies = [
 name = "ramus-mcp"
 version = "0.1.0"
 dependencies = [
+ "dirs 5.0.1",
  "ramus-core",
  "rmcp",
  "schemars 1.2.2",
