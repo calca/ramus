@@ -1,8 +1,15 @@
 # Sync Git — parte remota (pull, push, conflitti)
 
-Stato: proposta, in attesa di conferma. Presuppone
-`specs/M3/2026-09-02-sync-git-locale.DONE.md` già implementata (repo Git
-attivo, commit automatico) — qui si aggiunge solo la parte di rete.
+Stato: implementata. Presuppone
+`specs/M3/2026-09-02-sync-git-locale.DONE.md` (repo Git attivo, commit
+automatico). Uno scostamento dal testo originale: `SyncState`/
+`SyncStatus::state` non sono ricalcolati da `git_sync::status` a ogni
+chiamata — `Syncing`/`Conflict`/`Offline` non sono ricavabili
+ispezionando solo il repository su disco (se diverge dal remote lo si
+scopre solo provando un fetch), quindi vivono come stato di sessione
+in `AppState` (`sync_network_state`) e vengono passati a `status` come
+parametro `network_hint`. `Disabled`/`NoRemote` restano invece sempre
+ricalcolati dal repository, il hint non li sovrascrive mai.
 
 ## Motivazione
 
@@ -147,20 +154,10 @@ stato).
 
 ## Domande aperte
 
-1. Nome del remote sempre `origin`, nessuna scelta nella UI. Va bene?
-2. Un solo branch, mai uno switch da Ramus (vedi "Fuori scope").
-   Confermi?
-3. Colore del badge per `Conflict`: rosso di `.banner-error` (proposto
-   sopra) — va bene, o preferisci un trattamento visivo diverso per
-   distinguerlo da un errore "banale" (es. banner di caricamento
-   fallito)?
-4. Pull all'avvio silenzioso (nessun banner "sto sincronizzando..." a
-   meno che non ci sia un conflitto): coerente con "zero attrito", ma
-   significa che un pull riuscito con modifiche non è annunciato
-   esplicitamente all'utente (i file semplicemente appaiono aggiornati,
-   stesso comportamento di una modifica esterna via watcher). Va bene,
-   o preferisci un piccolo banner informativo temporaneo tipo "N file
-   aggiornati da remoto"?
+Nessuna: tutte e quattro confermate come proposto — remote sempre
+`origin`, un solo branch mai scambiato da Ramus, badge `Conflict` nel
+rosso di `.banner-error`, pull all'avvio silenzioso senza banner
+informativo.
 
 ## Test da scrivere (core)
 

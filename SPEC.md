@@ -216,13 +216,15 @@ il marchio contro il bordo.
   intero (non per blocco), scorciatoia configurabile in Impostazioni,
   vedi `specs/M2/2026-09-02-ricerca-full-text.DONE.md`
 
-**M3 — Git**
+**M3 — Git** (completa)
 - Commit automatico su intervallo configurabile — nessun `git init`
   forzato, l'utente attiva la sync esplicitamente da Impostazioni;
   vedi `specs/M3/2026-09-02-sync-git-locale.DONE.md`
-- Pull all'avvio, push a intervallo — vedi
-  `specs/M3/2026-09-02-sync-git-remoto.TODO.md`
-- Stato della sync visibile nella UI; in caso di conflitto, stop e avviso
+- Pull all'avvio, push a intervallo — autenticazione delegata
+  interamente al sistema (SSH agent, credential helper), nessun account
+  Ramus; vedi `specs/M3/2026-09-02-sync-git-remoto.DONE.md`
+- Stato della sync visibile nella UI (badge nell'header finché M4 non
+  introduce la status bar); in caso di conflitto, stop e avviso
   esplicito, mai merge automatico silenzioso
 
 **M4 — UI**

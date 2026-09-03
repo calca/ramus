@@ -79,6 +79,26 @@ body {
   line-height: 1;
 }
 
+/* Badge di stato sync (M3): visibile solo quando c'è qualcosa da dire
+   (mai per "disabled"/"idle") — neutro per noremote/syncing/offline,
+   solo "conflict" usa il rosso già riservato agli errori veri
+   (.banner-error), mai l'amber (riservato a giorno corrente/focus). */
+.sync-badge {
+  border: 1px solid color-mix(in srgb, var(--ramus-stone) 40%, transparent);
+  background: transparent;
+  color: var(--ramus-stone);
+  border-radius: 6px;
+  padding: 0.25rem 0.55rem;
+  cursor: pointer;
+  font-size: 0.9rem;
+  line-height: 1;
+}
+
+.sync-badge.is-conflict {
+  border-color: color-mix(in srgb, #b3261e 50%, transparent);
+  color: #b3261e;
+}
+
 /* Finestra stretta (modalità compatta, o solo ridimensionata a mano):
    niente contenuto tagliato o sovrapposto. Il titolo lascia spazio, il
    resto dei controlli va a capo invece di stiparsi su una riga sola. */
@@ -95,7 +115,8 @@ body {
 
 /* Modalità compatta: solo logo e bottone per uscirne, spinto a destra. */
 .app-header.is-compact .journal-controls,
-.app-header.is-compact .settings-button:not(.compact-toggle) {
+.app-header.is-compact .settings-button:not(.compact-toggle),
+.app-header.is-compact .sync-badge {
   display: none;
 }
 
@@ -341,6 +362,24 @@ body {
   padding: 0.25rem 0.5rem;
   font-size: 0.85rem;
   font-family: inherit;
+}
+
+.settings-sync-remote {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 0.6rem;
+}
+
+.settings-sync-remote input {
+  flex: 1;
+  min-width: 0;
+  border: 1px solid color-mix(in srgb, var(--ramus-stone) 40%, transparent);
+  background: var(--ramus-paper);
+  color: var(--ramus-ink);
+  border-radius: 6px;
+  padding: 0.3rem 0.6rem;
+  font-size: 0.85rem;
+  font-family: ui-monospace, monospace;
 }
 
 .settings-about-link {

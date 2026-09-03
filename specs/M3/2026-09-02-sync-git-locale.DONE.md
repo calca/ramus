@@ -16,7 +16,7 @@ configurabile". Funziona interamente offline, senza remote configurato
 — una cronologia locale delle modifiche è già utile di per sé (rete di
 sicurezza contro un errore di modifica/cancellazione), ed è il
 fondamento su cui si appoggia il secondo pezzo (pull/push, spec
-separata `specs/M3/2026-09-02-sync-git-remoto.TODO.md`).
+separata `specs/M3/2026-09-02-sync-git-remoto.DONE.md`).
 
 ## Nuova dipendenza: `git2`
 

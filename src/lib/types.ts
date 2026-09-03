@@ -45,9 +45,12 @@ export interface SearchHit {
   snippet_html: string;
 }
 
+export type SyncState = "disabled" | "noremote" | "idle" | "syncing" | "conflict" | "offline";
+
 export interface SyncStatus {
   enabled: boolean;
   /** Epoch secondi, `null` se nessun commit esiste ancora. */
   last_commit_at: number | null;
   dirty: boolean;
+  state: SyncState;
 }

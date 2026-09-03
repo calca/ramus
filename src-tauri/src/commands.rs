@@ -8,7 +8,7 @@ use std::time::{Duration, Instant};
 
 use ramus_core::{
     git_sync, watcher, Backlink, Block, Config, CoreError, Index, JournalDate, Page, PageSummary,
-    SearchHit, SearchIndex, SyncStatus, Theme, Vault, VaultStats,
+    SearchHit, SearchIndex, SyncState, SyncStatus, Theme, Vault, VaultStats,
 };
 use tauri::{AppHandle, Emitter, Manager, State};
 use tauri_plugin_dialog::DialogExt;
@@ -34,12 +34,30 @@ pub struct AppState {
     /// (altrimenti ogni battitura mostrerebbe il banner "file cambiato",
     /// vedi bug segnalato dall'utente).
     pub recent_writes: Mutex<HashMap<String, Instant>>,
+    /// Esito dell'ultimo pull/push tentato — `Syncing`/`Conflict`/`Offline`
+    /// non sono ricavabili ispezionando solo il repository su disco (vedi
+    /// `ramus_core::git_sync::status`), vivono qui come stato di sessione.
+    pub sync_network_state: Mutex<SyncState>,
 }
 
 fn mark_self_write(state: &State<AppState>, relative_path: &str) {
     if let Ok(mut recent) = state.recent_writes.lock() {
         recent.insert(relative_path.to_string(), Instant::now());
     }
+}
+
+fn set_network_state(state: &State<AppState>, new_state: SyncState) {
+    if let Ok(mut guard) = state.sync_network_state.lock() {
+        *guard = new_state;
+    }
+}
+
+fn current_network_state(state: &State<AppState>) -> SyncState {
+    state
+        .sync_network_state
+        .lock()
+        .map(|guard| *guard)
+        .unwrap_or(SyncState::Idle)
 }
 
 fn lock_config<'a>(state: &'a State<AppState>) -> Result<MutexGuard<'a, Config>, CoreError> {
@@ -280,13 +298,13 @@ pub fn init_git_sync(state: State<AppState>) -> Result<SyncStatus, CoreError> {
     let config = lock_config(&state)?;
     git_sync::init_repo(&config.vault_path)?;
     git_sync::commit_if_dirty(&config.vault_path)?;
-    git_sync::status(&config.vault_path)
+    git_sync::status(&config.vault_path, current_network_state(&state))
 }
 
 #[tauri::command]
 pub fn get_sync_status(state: State<AppState>) -> Result<SyncStatus, CoreError> {
     let config = lock_config(&state)?;
-    git_sync::status(&config.vault_path)
+    git_sync::status(&config.vault_path, current_network_state(&state))
 }
 
 #[tauri::command]
@@ -294,6 +312,88 @@ pub fn set_git_sync_interval(minutes: u32, state: State<AppState>) -> Result<Con
     let mut config = lock_config(&state)?;
     config.set_git_sync_interval_minutes(minutes)?;
     Ok(config.clone())
+}
+
+/// Imposta (o aggiorna) il remote `origin` e prova subito un pull — stessa
+/// logica di `init_git_sync`, l'utente non deve aspettare il prossimo tick
+/// per vedere l'esito del primo collegamento al remote.
+#[tauri::command]
+pub fn set_git_remote(url: String, state: State<AppState>) -> Result<SyncStatus, CoreError> {
+    let vault_path = lock_config(&state)?.vault_path.clone();
+    git_sync::set_remote(&vault_path, &url)?;
+
+    match git_sync::pull(&vault_path) {
+        Ok(outcome) if outcome.conflict => set_network_state(&state, SyncState::Conflict),
+        Ok(_) => set_network_state(&state, SyncState::Idle),
+        // Un pull fallito qui è quasi sempre di rete/autenticazione: si
+        // riflette nello stato invece di far fallire il command — l'utente
+        // ha comunque impostato il remote con successo, riprova al
+        // prossimo tick.
+        Err(_) => set_network_state(&state, SyncState::Offline),
+    }
+
+    git_sync::status(&vault_path, current_network_state(&state))
+}
+
+/// Un ciclo di sync completo: pull (se c'è un remote) — i file che cambia
+/// arrivano al frontend tramite lo stesso file watcher già usato per
+/// qualunque modifica esterna (`checkout_head` scrive su disco come
+/// qualunque altro processo, nessuna notifica separata da costruire qui) —
+/// poi, se non in conflitto, commit locale se dovuto e push se c'è stato un
+/// commit. Chiamato sia una volta all'avvio (pull immediato, non bloccante)
+/// sia a ogni tick del task periodico: stessa logica, nessuna duplicazione.
+pub(crate) fn run_sync_cycle(app_handle: &AppHandle) {
+    let Some(state) = app_handle.try_state::<AppState>() else {
+        return;
+    };
+    let Ok(config) = state.config.lock() else {
+        return;
+    };
+    let vault_path = config.vault_path.clone();
+    let interval_minutes = config.git_sync_interval_minutes;
+    drop(config);
+
+    if !git_sync::is_git_repo(&vault_path) {
+        return;
+    }
+
+    if git_sync::has_remote(&vault_path) {
+        set_network_state(&state, SyncState::Syncing);
+        match git_sync::pull(&vault_path) {
+            Ok(outcome) if outcome.conflict => {
+                set_network_state(&state, SyncState::Conflict);
+                return;
+            }
+            Ok(_) => set_network_state(&state, SyncState::Idle),
+            Err(_) => set_network_state(&state, SyncState::Offline),
+        }
+    }
+
+    if current_network_state(&state) == SyncState::Conflict {
+        return;
+    }
+
+    let Ok(status) = git_sync::status(&vault_path, SyncState::Idle) else {
+        return;
+    };
+    if !git_sync::is_due(&status, interval_minutes, now_epoch_secs()) {
+        return;
+    }
+    if let Ok(true) = git_sync::commit_if_dirty(&vault_path) {
+        if git_sync::has_remote(&vault_path) {
+            match git_sync::push(&vault_path) {
+                Ok(()) => set_network_state(&state, SyncState::Idle),
+                Err(_) => set_network_state(&state, SyncState::Offline),
+            }
+        }
+    }
+}
+
+fn now_epoch_secs() -> i64 {
+    std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .map(|d| d.as_secs() as i64)
+        .unwrap_or(0)
 }
 
 /// Apre la dialog nativa "scegli cartella". `None` se l'utente annulla.

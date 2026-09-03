@@ -2,18 +2,11 @@ mod commands;
 
 use std::collections::HashMap;
 use std::sync::Mutex;
-use std::time::{Duration, SystemTime, UNIX_EPOCH};
+use std::time::Duration;
 
 use commands::AppState;
-use ramus_core::{git_sync, Config, Index, SearchIndex, Vault};
+use ramus_core::{Config, Index, SearchIndex, SyncState, Vault};
 use tauri::Manager;
-
-fn now_epoch_secs() -> i64 {
-    SystemTime::now()
-        .duration_since(UNIX_EPOCH)
-        .map(|d| d.as_secs() as i64)
-        .unwrap_or(0)
-}
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
@@ -49,6 +42,7 @@ pub fn run() {
                 search_index: Mutex::new(search_index),
                 watcher: Mutex::new(Some(watcher)),
                 recent_writes: Mutex::new(HashMap::new()),
+                sync_network_state: Mutex::new(SyncState::Idle),
             });
 
             // Sync Git automatica (M3): primo caso di background task
@@ -56,28 +50,21 @@ pub fn run() {
             // eventi, non su un timer). Tick fisso di 60s indipendente
             // dall'intervallo configurato — quello viene solo confrontato
             // a ogni tick, così un cambio in Impostazioni si applica senza
-            // dover ricreare il task.
+            // dover ricreare il task. Un pull immediato all'avvio (non
+            // bloccante: gira nel suo task, la finestra si apre comunque
+            // subito), poi lo stesso ciclo a ogni tick — `run_sync_cycle`
+            // fa entrambe le cose, nessuna logica duplicata fra le due.
+            let startup_handle = app.handle().clone();
+            tauri::async_runtime::spawn(async move {
+                commands::run_sync_cycle(&startup_handle);
+            });
+
             let app_handle = app.handle().clone();
             tauri::async_runtime::spawn(async move {
                 let mut ticker = tokio::time::interval(Duration::from_secs(60));
                 loop {
                     ticker.tick().await;
-                    let Some(state) = app_handle.try_state::<AppState>() else {
-                        continue;
-                    };
-                    let Ok(config) = state.config.lock() else {
-                        continue;
-                    };
-                    let vault_path = config.vault_path.clone();
-                    let interval_minutes = config.git_sync_interval_minutes;
-                    drop(config);
-
-                    let Ok(status) = git_sync::status(&vault_path) else {
-                        continue;
-                    };
-                    if git_sync::is_due(&status, interval_minutes, now_epoch_secs()) {
-                        let _ = git_sync::commit_if_dirty(&vault_path);
-                    }
+                    commands::run_sync_cycle(&app_handle);
                 }
             });
 
@@ -102,6 +89,7 @@ pub fn run() {
             commands::init_git_sync,
             commands::get_sync_status,
             commands::set_git_sync_interval,
+            commands::set_git_remote,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

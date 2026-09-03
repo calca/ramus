@@ -5,6 +5,7 @@ import {
   getSyncStatus,
   initGitSync,
   pickVaultFolder,
+  setGitRemote,
   setGitSyncInterval,
   setSearchShortcut as setSearchShortcutCommand,
   setTheme as setThemeCommand,
@@ -38,6 +39,21 @@ const SYNC_INTERVAL_OPTIONS = [5, 10, 30, 60];
  * chiusura (l'effetto che lo avvia viene smontato insieme al pannello). */
 const SYNC_STATUS_POLL_MS = 30_000;
 
+function syncStatusLabel(status: SyncStatus): string {
+  switch (status.state) {
+    case "conflict":
+      return "Conflitto: sync automatica ferma";
+    case "offline":
+      return "Rete non raggiungibile, riprovo al prossimo giro";
+    case "syncing":
+      return "Sincronizzazione in corso…";
+    default:
+      return status.dirty
+        ? "Modifiche in attesa del prossimo commit automatico"
+        : "Tutto sincronizzato";
+  }
+}
+
 export function SettingsPanel({
   config,
   onClose,
@@ -53,6 +69,8 @@ export function SettingsPanel({
   const [recordingShortcut, setRecordingShortcut] = useState(false);
   const [syncStatus, setSyncStatus] = useState<SyncStatus | null>(null);
   const [syncBusy, setSyncBusy] = useState(false);
+  const [remoteUrl, setRemoteUrl] = useState("");
+  const [remoteBusy, setRemoteBusy] = useState(false);
 
   useEffect(() => {
     void vaultStats()
@@ -131,6 +149,24 @@ export function SettingsPanel({
       onGitSyncIntervalChanged(nextConfig);
     } catch (err) {
       setError(String(err));
+    }
+  };
+
+  const handleSetRemote = async () => {
+    const url = remoteUrl.trim();
+    if (!url) {
+      return;
+    }
+    setError(null);
+    setRemoteBusy(true);
+    try {
+      const status = await setGitRemote(url);
+      setSyncStatus(status);
+      setRemoteUrl("");
+    } catch (err) {
+      setError(String(err));
+    } finally {
+      setRemoteBusy(false);
     }
   };
 
@@ -224,10 +260,15 @@ export function SettingsPanel({
         <h3>Sync</h3>
         {syncStatus?.enabled ? (
           <>
+            {syncStatus.state === "conflict" && (
+              <div className="banner banner-error">
+                Il vault locale e quello remoto sono divergenti, serve
+                intervento manuale: apri un terminale nel vault e risolvi
+                con git.
+              </div>
+            )}
             <p className="settings-sync-status">
-              {syncStatus.dirty
-                ? "Modifiche in attesa del prossimo commit automatico"
-                : "Tutto sincronizzato"}
+              {syncStatusLabel(syncStatus)}
               {syncStatus.last_commit_at !== null && (
                 <> — ultimo commit {new Date(syncStatus.last_commit_at * 1000).toLocaleString()}</>
               )}
@@ -245,6 +286,25 @@ export function SettingsPanel({
                 ))}
               </select>
             </label>
+            <div className="settings-sync-remote">
+              <input
+                type="text"
+                placeholder={
+                  syncStatus.state === "noremote"
+                    ? "git@github.com:utente/vault.git"
+                    : "Cambia URL del remote…"
+                }
+                value={remoteUrl}
+                onChange={(event) => setRemoteUrl(event.target.value)}
+              />
+              <button
+                type="button"
+                disabled={remoteBusy || !remoteUrl.trim()}
+                onClick={() => void handleSetRemote()}
+              >
+                {syncStatus.state === "noremote" ? "Collega" : "Aggiorna"}
+              </button>
+            </div>
           </>
         ) : (
           <button type="button" disabled={syncBusy} onClick={() => void handleInitGitSync()}>

@@ -96,3 +96,8 @@ export function setGitSyncInterval(minutes: number): Promise<Config> {
   return invoke<Config>("set_git_sync_interval", { minutes });
 }
 
+/** Imposta (o aggiorna) il remote "origin" e prova subito un pull. */
+export function setGitRemote(url: string): Promise<SyncStatus> {
+  return invoke<SyncStatus>("set_git_remote", { url });
+}
+

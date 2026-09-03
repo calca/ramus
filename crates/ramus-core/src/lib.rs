@@ -13,7 +13,7 @@ pub mod watcher;
 pub use block::{Block, Page};
 pub use config::{Config, Theme};
 pub use error::CoreError;
-pub use git_sync::SyncStatus;
+pub use git_sync::{SyncState, SyncStatus};
 pub use index::{Backlink, Index, SyncOutcome};
 pub use journal_date::JournalDate;
 pub use search::{SearchHit, SearchIndex};

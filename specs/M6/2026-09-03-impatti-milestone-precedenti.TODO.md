@@ -67,12 +67,12 @@ Ogni punto rimanda alla spec di origine; nessuno viene risolto qui.
   fisiche) va verificata a mano, non è chiaro se serva un adattamento
   finché non si prova.
 
-## M3 — Git (pezzo locale implementato, pezzo remoto ancora TODO)
+## M3 — Git (completa)
 
 Impatto più grande di tutti gli altri messi insieme — vale la pena
-saperlo **prima** di implementare M3, non dopo:
+saperlo prima di costruire il pezzo mobile, non dopo:
 
-- **Autenticazione remota** (`specs/M3/2026-09-02-sync-git-remoto.TODO.md`):
+- **Autenticazione remota** (`specs/M3/2026-09-02-sync-git-remoto.DONE.md`):
   la spec assume `Cred::ssh_key_from_agent`/`Cred::credential_helper`
   di `git2` — cioè un agente SSH di sistema o un credential helper
   desktop (Keychain macOS, Credential Manager Windows). **Nessuno dei

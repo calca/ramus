@@ -46,7 +46,7 @@ schema flex già in uso). Contenuto:
 
 - `JournalControls` (input data + "Oggi"), **spostato qui di peso**,
   stessa logica di visibilità di oggi (solo `view.kind === "journal"`).
-- Punto di aggancio per lo stato di sync di M3 (`specs/M3/2026-09-02-sync-git-remoto.TODO.md`,
+- Punto di aggancio per lo stato di sync di M3 (`specs/M3/2026-09-02-sync-git-remoto.DONE.md`,
   non ancora implementata): quella spec proponeva un badge
   nell'header — **si sposta qui** quando M3 verrà implementata (questa
   spec aggiorna già il riferimento nel testo di M3, vedi sotto). Non

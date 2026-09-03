@@ -11,20 +11,34 @@ import { JournalSection } from "./components/JournalSection";
 import { PageView } from "./components/PageView";
 import { SearchPanel } from "./components/SearchPanel";
 import { SettingsPanel } from "./components/SettingsPanel";
-import { getConfig, listJournals, openPage, openToday, readPage } from "./lib/commands";
+import { getConfig, getSyncStatus, listJournals, openPage, openToday, readPage } from "./lib/commands";
 import { formatIsoDate, journalDateFromPath } from "./lib/journal";
 import { matchesShortcut } from "./lib/shortcut";
 import { applyTheme } from "./lib/theme";
-import type { Config, Page, SearchHit } from "./lib/types";
+import type { Config, Page, SearchHit, SyncState } from "./lib/types";
 
 const BATCH_SIZE = 14;
 const COMPACT_WIDTH = 420;
+
+/** Stesso intervallo del polling già usato da SettingsPanel quando il
+ * pannello Sync è aperto — qui gira sempre, non solo a pannello aperto,
+ * perché il badge nell'header deve aggiornarsi anche a Impostazioni
+ * chiuse. */
+const SYNC_STATE_POLL_MS = 30_000;
+
+const SYNC_BADGE_LABELS: Partial<Record<SyncState, string>> = {
+  noremote: "Sync locale attiva, nessun remote collegato",
+  syncing: "Sincronizzazione in corso…",
+  conflict: "Conflitto: sync automatica ferma, serve intervento manuale",
+  offline: "Rete non raggiungibile, riprovo al prossimo giro",
+};
 
 type View = { kind: "journal" } | { kind: "page"; page: Page };
 
 function App() {
   const [config, setConfig] = useState<Config | null>(null);
   const [activePanel, setActivePanel] = useState<"settings" | "about" | "search" | null>(null);
+  const [syncState, setSyncState] = useState<SyncState | null>(null);
   const [isCompact, setIsCompact] = useState(false);
   const [view, setView] = useState<View>({ kind: "journal" });
   const [vaultVersion, setVaultVersion] = useState(0);
@@ -311,6 +325,23 @@ function App() {
     return () => window.removeEventListener("keydown", onKeyDown);
   }, [config]);
 
+  // Badge di stato sync (M3): visibile solo quando c'è qualcosa da dire
+  // (mai per "disabled"/"idle", vedi render sotto) — un polling leggero,
+  // stesso intervallo già usato da SettingsPanel per lo stesso comando.
+  useEffect(() => {
+    const refresh = () => {
+      void getSyncStatus()
+        .then((status) => setSyncState(status.state))
+        .catch(() => {
+          // Nessun banner per un polling di sfondo che fallisce: il badge
+          // semplicemente non si aggiorna questo giro, riprova al prossimo.
+        });
+    };
+    refresh();
+    const interval = setInterval(refresh, SYNC_STATE_POLL_MS);
+    return () => clearInterval(interval);
+  }, []);
+
   // Flush su chiusura della finestra: nessuna sezione aperta perde modifiche.
   useEffect(() => {
     let allowClose = false;
@@ -463,6 +494,19 @@ function App() {
             onClick={() => setActivePanel("search")}
           >
             🔍
+          </button>
+        )}
+        {syncState && !["disabled", "idle"].includes(syncState) && (
+          <button
+            type="button"
+            className={
+              syncState === "conflict" ? "sync-badge is-conflict" : "sync-badge"
+            }
+            aria-label={SYNC_BADGE_LABELS[syncState]}
+            title={SYNC_BADGE_LABELS[syncState]}
+            onClick={() => setActivePanel("settings")}
+          >
+            {syncState === "conflict" ? "⚠" : "⇄"}
           </button>
         )}
         {config && (
