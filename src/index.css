@@ -288,17 +288,75 @@ body {
   color: var(--ramus-ink);
   border-radius: 10px;
   border: 1px solid color-mix(in srgb, var(--ramus-stone) 30%, transparent);
-  width: min(28rem, calc(100vw - 2rem));
+  width: min(38rem, calc(100vw - 2rem));
   max-height: calc(100vh - 4rem);
-  overflow-y: auto;
-  padding: 1rem 1.25rem 1.5rem;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
 }
 
 .settings-panel-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 0.5rem;
+  padding: 1rem 1.25rem 0.75rem;
+}
+
+/* Sidebar di categorie (Vault/Tema/Scorciatoie/Task/MCP/Sync) a
+   sinistra, contenuto della categoria selezionata a destra — sostituisce
+   il vecchio scroll unico di tutte le sezioni una sotto l'altra. */
+.settings-body {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+  border-top: 1px solid color-mix(in srgb, var(--ramus-stone) 20%, transparent);
+}
+
+.settings-sidebar {
+  display: flex;
+  flex-direction: column;
+  width: 9.5rem;
+  flex-shrink: 0;
+  padding: 0.75rem 0.5rem;
+  border-right: 1px solid color-mix(in srgb, var(--ramus-stone) 20%, transparent);
+  overflow-y: auto;
+}
+
+.settings-sidebar button {
+  display: block;
+  width: 100%;
+  text-align: left;
+  border: none;
+  background: transparent;
+  color: var(--ramus-ink);
+  border-radius: 6px;
+  padding: 0.4rem 0.6rem;
+  font-size: 0.85rem;
+  font-family: inherit;
+  cursor: pointer;
+}
+
+.settings-sidebar button:hover {
+  background: color-mix(in srgb, var(--ramus-stone) 12%, transparent);
+}
+
+.settings-sidebar button[aria-current="true"] {
+  background: color-mix(in srgb, var(--ramus-sap) 16%, transparent);
+  color: var(--ramus-sap);
+  font-weight: 600;
+}
+
+.settings-sidebar-divider {
+  border: none;
+  border-top: 1px solid color-mix(in srgb, var(--ramus-stone) 20%, transparent);
+  margin: 0.5rem 0.25rem;
+}
+
+.settings-content {
+  flex: 1;
+  min-width: 0;
+  overflow-y: auto;
+  padding: 1rem 1.25rem 1.5rem;
 }
 
 .settings-panel-header h2 {
@@ -315,7 +373,7 @@ body {
 }
 
 .settings-section {
-  margin-top: 1.25rem;
+  margin-top: 0;
 }
 
 .settings-section h3 {
@@ -550,13 +608,13 @@ body {
 
 /* Solo nel pannello Impostazioni (non nel link "Codice sorgente" di
    AboutPanel, che riusa la stessa classe ma è già centrato nel suo
-   .about-content): separatore sopra, link centrato. */
-.settings-panel > .settings-about-link {
+   .about-content): nella sidebar, stesso stile a tutta larghezza dei
+   bottoni di categoria sopra di lui (separati da .settings-sidebar-divider,
+   non serve altro qui). */
+.settings-sidebar > .settings-about-link {
   width: 100%;
-  margin-top: 1.25rem;
-  padding-top: 1rem;
-  text-align: center;
-  border-top: 1px solid color-mix(in srgb, var(--ramus-stone) 20%, transparent);
+  text-align: left;
+  padding: 0.4rem 0.6rem;
 }
 
 .about-content {

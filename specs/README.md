@@ -9,6 +9,11 @@ Organizzate in una sottocartella per milestone (`M1/`, `M2/`, `M3/`,
 ...), la stessa numerazione di `SPEC.md`. Una spec che tocca più
 milestone va in quella a cui appartiene il suo pezzo principale.
 
+Con "Fase 1" chiusa (M1-M6, vedi `SPEC.md`) le nuove spec non legate a
+una milestone specifica — rifiniture, bugfix, refactor della fase di
+refinement — vanno in `refinement/`, stessa convenzione di nome e
+stato delle altre sottocartelle.
+
 Nome file: `YYYY-MM-DD-nome-spec.STATO.md`, con la data di creazione
 della spec (non di modifica: se una spec viene rivista più avanti, il
 nome non cambia) e `STATO` uno tra:

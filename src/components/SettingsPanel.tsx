@@ -41,6 +41,17 @@ const THEME_LABELS: Record<Theme, string> = {
 const SYNC_INTERVAL_OPTIONS = [5, 10, 30, 60];
 const TASK_ROLLOVER_DAY_OPTIONS = [3, 7, 14, 30];
 
+type SettingsSectionId = "vault" | "theme" | "shortcuts" | "task" | "mcp" | "sync";
+
+const SETTINGS_SECTIONS: { id: SettingsSectionId; label: string }[] = [
+  { id: "vault", label: "Vault" },
+  { id: "theme", label: "Tema" },
+  { id: "shortcuts", label: "Scorciatoie" },
+  { id: "task", label: "Task" },
+  { id: "mcp", label: "MCP" },
+  { id: "sync", label: "Sync" },
+];
+
 /** Polling leggero mentre il pannello Sync è aperto: si ferma alla
  * chiusura (l'effetto che lo avvia viene smontato insieme al pannello). */
 const SYNC_STATUS_POLL_MS = 30_000;
@@ -89,6 +100,7 @@ export function SettingsPanel({
   const [syncBusy, setSyncBusy] = useState(false);
   const [remoteUrl, setRemoteUrl] = useState("");
   const [mcpInfo, setMcpInfo] = useState<McpInfo | null>(null);
+  const [activeSection, setActiveSection] = useState<SettingsSectionId>("vault");
 
   useEffect(() => {
     void vaultStats()
@@ -250,196 +262,225 @@ export function SettingsPanel({
 
       {error && <div className="banner banner-error">{error}</div>}
 
-      <section className="settings-section">
-        <h3>Vault</h3>
-        <p className="settings-vault-path">{config.vault_path}</p>
-        <div className="settings-vault-actions">
-          <button type="button" disabled={busy} onClick={() => void handleChangeVault()}>
-            Cambia
-          </button>
-          <button type="button" onClick={() => void handleOpenInFileManager()}>
-            Apri nel file manager
-          </button>
-        </div>
-        {stats && (
-          <p className="settings-vault-stats">
-            {stats.journal_count} journal, {stats.page_count} pagine
-          </p>
-        )}
-      </section>
-
-      <section className="settings-section">
-        <h3>Tema</h3>
-        <div className="settings-theme-options">
-          {(Object.keys(THEME_LABELS) as Theme[]).map((option) => (
-            <label key={option}>
-              <input
-                type="radio"
-                name="theme"
-                value={option}
-                checked={config.theme === option}
-                onChange={() => void handleThemeChange(option)}
-              />
-              {THEME_LABELS[option]}
-            </label>
-          ))}
-        </div>
-      </section>
-
-      <section className="settings-section">
-        <h3>Scorciatoie</h3>
-        <ul className="settings-shortcut-list">
-          {SHORTCUT_ACTIONS.map((action) => (
-            <li key={action.id}>
-              <span>{action.label}</span>
-              <button
-                type="button"
-                className="settings-shortcut-button"
-                onClick={() => setRecordingActionId(action.id)}
-              >
-                {recordingActionId === action.id
-                  ? "Premi una combinazione…"
-                  : formatShortcut(getShortcut(config.shortcuts, action.id))}
-              </button>
-            </li>
-          ))}
-        </ul>
-      </section>
-
-      <section className="settings-section">
-        <h3>Task</h3>
-        <label className="settings-task-rollover-toggle">
-          <input
-            type="checkbox"
-            checked={config.task_rollover_enabled}
-            onChange={(event) =>
-              void handleTaskRolloverChange(event.target.checked, config.task_rollover_days)
-            }
-          />
-          Sposta automaticamente a oggi i task non fatti rimasti indietro
-        </label>
-        {config.task_rollover_enabled && (
-          <label className="settings-task-rollover-days">
-            Considera gli ultimi
-            <select
-              value={config.task_rollover_days}
-              onChange={(event) =>
-                void handleTaskRolloverChange(true, Number(event.target.value))
-              }
+      <div className="settings-body">
+        <nav className="settings-sidebar">
+          {SETTINGS_SECTIONS.map((section) => (
+            <button
+              key={section.id}
+              type="button"
+              aria-current={activeSection === section.id ? "true" : undefined}
+              onClick={() => setActiveSection(section.id)}
             >
-              {TASK_ROLLOVER_DAY_OPTIONS.map((days) => (
-                <option key={days} value={days}>
-                  {days} giorni
-                </option>
-              ))}
-            </select>
-          </label>
-        )}
-      </section>
+              {section.label}
+            </button>
+          ))}
+          <hr className="settings-sidebar-divider" />
+          <button type="button" className="settings-about-link" onClick={onShowAbout}>
+            Informazioni su Ramus
+          </button>
+        </nav>
 
-      <section className="settings-section">
-        <h3>MCP</h3>
-        <label className="settings-mcp-toggle">
-          <input
-            type="checkbox"
-            checked={config.mcp_enabled}
-            onChange={(event) => void handleMcpEnabledChange(event.target.checked)}
-          />
-          Abilita server MCP
-        </label>
-        {config.mcp_enabled ? (
-          mcpInfo && (
-            <>
-              {mcpInfo.binary_found ? (
-                <>
-                  <pre className="settings-mcp-snippet">{mcpInfo.config_snippet}</pre>
-                  <p className="settings-mcp-help">
-                    Incollalo in <code>.mcp.json</code> (Claude Code) o{" "}
-                    <code>claude_desktop_config.json</code> (Claude Desktop). Riavvia il client
-                    dopo una modifica.
-                  </p>
-                </>
-              ) : (
-                <p className="settings-mcp-help">
-                  Binario <code>ramus-mcp</code> non trovato — esegui{" "}
-                  <code>cargo build -p ramus-mcp</code> e riapri questa sezione.
-                </p>
-              )}
-            </>
-          )
-        ) : (
-          <p className="settings-mcp-help">
-            Il server MCP si rifiuta di avviarsi finché non lo riattivi qui.
-          </p>
-        )}
-      </section>
-
-      <section className="settings-section">
-        <h3>Sync</h3>
-        <p className="settings-sync-intro">
-          Versiona il vault con Git. Lascia il campo vuoto per una
-          cronologia solo locale, oppure incolla l'URL di un repository
-          per sincronizzarlo fra dispositivi.
-        </p>
-
-        {syncStatus?.enabled && syncStatus.state === "conflict" && (
-          <div className="banner banner-error">
-            Il vault locale e quello remoto sono divergenti, serve
-            intervento manuale: apri un terminale nel vault e risolvi con
-            git.
+        <div className="settings-content">
+        {activeSection === "vault" && (
+        <section className="settings-section">
+          <h3>Vault</h3>
+          <p className="settings-vault-path">{config.vault_path}</p>
+          <div className="settings-vault-actions">
+            <button type="button" disabled={busy} onClick={() => void handleChangeVault()}>
+              Cambia
+            </button>
+            <button type="button" onClick={() => void handleOpenInFileManager()}>
+              Apri nel file manager
+            </button>
           </div>
+          {stats && (
+            <p className="settings-vault-stats">
+              {stats.journal_count} journal, {stats.page_count} pagine
+            </p>
+          )}
+        </section>
         )}
 
-        {syncStatus?.enabled && (
-          <p className="settings-sync-status">
-            {syncStatusLabel(syncStatus)}
-            {syncStatus.last_commit_at !== null && (
-              <> — ultimo commit {new Date(syncStatus.last_commit_at * 1000).toLocaleString()}</>
-            )}
-          </p>
+        {activeSection === "theme" && (
+        <section className="settings-section">
+          <h3>Tema</h3>
+          <div className="settings-theme-options">
+            {(Object.keys(THEME_LABELS) as Theme[]).map((option) => (
+              <label key={option}>
+                <input
+                  type="radio"
+                  name="theme"
+                  value={option}
+                  checked={config.theme === option}
+                  onChange={() => void handleThemeChange(option)}
+                />
+                {THEME_LABELS[option]}
+              </label>
+            ))}
+          </div>
+        </section>
         )}
 
-        <div className="settings-sync-remote">
-          <input
-            type="text"
-            placeholder="git@github.com:utente/vault.git (opzionale)"
-            value={remoteUrl}
-            onChange={(event) => setRemoteUrl(event.target.value)}
-          />
-          <button
-            type="button"
-            disabled={syncBusy || (syncStatus?.enabled === true && !remoteUrl.trim())}
-            onClick={() => void handleSyncAction()}
-          >
-            {syncActionLabel(syncStatus)}
-          </button>
-        </div>
-        <p className="settings-sync-help">
-          Su GitHub, GitLab o Bitbucket: apri il repository, premi "Code"
-          (o "Clone"), copia l'URL SSH (consigliato, richiede una chiave
-          già aggiunta al tuo account) o HTTPS, e incollalo qui sopra.
-        </p>
+        {activeSection === "shortcuts" && (
+        <section className="settings-section">
+          <h3>Scorciatoie</h3>
+          <ul className="settings-shortcut-list">
+            {SHORTCUT_ACTIONS.map((action) => (
+              <li key={action.id}>
+                <span>{action.label}</span>
+                <button
+                  type="button"
+                  className="settings-shortcut-button"
+                  onClick={() => setRecordingActionId(action.id)}
+                >
+                  {recordingActionId === action.id
+                    ? "Premi una combinazione…"
+                    : formatShortcut(getShortcut(config.shortcuts, action.id))}
+                </button>
+              </li>
+            ))}
+          </ul>
+        </section>
+        )}
 
-        {syncStatus?.enabled && (
-          <label className="settings-sync-interval">
-            Intervallo di sync
-            <select
-              value={config.git_sync_interval_minutes}
-              onChange={(event) => void handleSyncIntervalChange(Number(event.target.value))}
-            >
-              {SYNC_INTERVAL_OPTIONS.map((minutes) => (
-                <option key={minutes} value={minutes}>
-                  {minutes} minuti
-                </option>
-              ))}
-            </select>
+        {activeSection === "task" && (
+        <section className="settings-section">
+          <h3>Task</h3>
+          <label className="settings-task-rollover-toggle">
+            <input
+              type="checkbox"
+              checked={config.task_rollover_enabled}
+              onChange={(event) =>
+                void handleTaskRolloverChange(event.target.checked, config.task_rollover_days)
+              }
+            />
+            Sposta automaticamente a oggi i task non fatti rimasti indietro
           </label>
+          {config.task_rollover_enabled && (
+            <label className="settings-task-rollover-days">
+              Considera gli ultimi
+              <select
+                value={config.task_rollover_days}
+                onChange={(event) =>
+                  void handleTaskRolloverChange(true, Number(event.target.value))
+                }
+              >
+                {TASK_ROLLOVER_DAY_OPTIONS.map((days) => (
+                  <option key={days} value={days}>
+                    {days} giorni
+                  </option>
+                ))}
+              </select>
+            </label>
+          )}
+        </section>
         )}
-      </section>
 
-      <button type="button" className="settings-about-link" onClick={onShowAbout}>
-        Informazioni su Ramus
-      </button>
+        {activeSection === "mcp" && (
+        <section className="settings-section">
+          <h3>MCP</h3>
+          <label className="settings-mcp-toggle">
+            <input
+              type="checkbox"
+              checked={config.mcp_enabled}
+              onChange={(event) => void handleMcpEnabledChange(event.target.checked)}
+            />
+            Abilita server MCP
+          </label>
+          {config.mcp_enabled ? (
+            mcpInfo && (
+              <>
+                {mcpInfo.binary_found ? (
+                  <>
+                    <pre className="settings-mcp-snippet">{mcpInfo.config_snippet}</pre>
+                    <p className="settings-mcp-help">
+                      Incollalo in <code>.mcp.json</code> (Claude Code) o{" "}
+                      <code>claude_desktop_config.json</code> (Claude Desktop). Riavvia il client
+                      dopo una modifica.
+                    </p>
+                  </>
+                ) : (
+                  <p className="settings-mcp-help">
+                    Binario <code>ramus-mcp</code> non trovato — esegui{" "}
+                    <code>cargo build -p ramus-mcp</code> e riapri questa sezione.
+                  </p>
+                )}
+              </>
+            )
+          ) : (
+            <p className="settings-mcp-help">
+              Il server MCP si rifiuta di avviarsi finché non lo riattivi qui.
+            </p>
+          )}
+        </section>
+        )}
+
+        {activeSection === "sync" && (
+        <section className="settings-section">
+          <h3>Sync</h3>
+          <p className="settings-sync-intro">
+            Versiona il vault con Git. Lascia il campo vuoto per una
+            cronologia solo locale, oppure incolla l'URL di un repository
+            per sincronizzarlo fra dispositivi.
+          </p>
+
+          {syncStatus?.enabled && syncStatus.state === "conflict" && (
+            <div className="banner banner-error">
+              Il vault locale e quello remoto sono divergenti, serve
+              intervento manuale: apri un terminale nel vault e risolvi con
+              git.
+            </div>
+          )}
+
+          {syncStatus?.enabled && (
+            <p className="settings-sync-status">
+              {syncStatusLabel(syncStatus)}
+              {syncStatus.last_commit_at !== null && (
+                <> — ultimo commit {new Date(syncStatus.last_commit_at * 1000).toLocaleString()}</>
+              )}
+            </p>
+          )}
+
+          <div className="settings-sync-remote">
+            <input
+              type="text"
+              placeholder="git@github.com:utente/vault.git (opzionale)"
+              value={remoteUrl}
+              onChange={(event) => setRemoteUrl(event.target.value)}
+            />
+            <button
+              type="button"
+              disabled={syncBusy || (syncStatus?.enabled === true && !remoteUrl.trim())}
+              onClick={() => void handleSyncAction()}
+            >
+              {syncActionLabel(syncStatus)}
+            </button>
+          </div>
+          <p className="settings-sync-help">
+            Su GitHub, GitLab o Bitbucket: apri il repository, premi "Code"
+            (o "Clone"), copia l'URL SSH (consigliato, richiede una chiave
+            già aggiunta al tuo account) o HTTPS, e incollalo qui sopra.
+          </p>
+
+          {syncStatus?.enabled && (
+            <label className="settings-sync-interval">
+              Intervallo di sync
+              <select
+                value={config.git_sync_interval_minutes}
+                onChange={(event) => void handleSyncIntervalChange(Number(event.target.value))}
+              >
+                {SYNC_INTERVAL_OPTIONS.map((minutes) => (
+                  <option key={minutes} value={minutes}>
+                    {minutes} minuti
+                  </option>
+                ))}
+              </select>
+            </label>
+          )}
+        </section>
+        )}
+        </div>
+      </div>
     </Modal>
   );
 }
