@@ -14,6 +14,10 @@ una milestone specifica — rifiniture, bugfix, refactor della fase di
 refinement — vanno in `refinement/`, stessa convenzione di nome e
 stato delle altre sottocartelle.
 
+Le spec relative alla distribuzione/pacchettizzazione dell'app (CSP,
+firma del codice, auto-update, CI, licenza, ecc. — "cosa manca per
+essere production ready") vanno in `release/`, stessa convenzione.
+
 Nome file: `YYYY-MM-DD-nome-spec.STATO.md`, con la data di creazione
 della spec (non di modifica: se una spec viene rivista più avanti, il
 nome non cambia) e `STATO` uno tra:
