@@ -1,7 +1,11 @@
 # Supporto mobile (Android/iOS) — fondamenta
 
-Stato: proposta, in attesa di conferma. Prima spec di M6. Il secondo
-documento, `specs/M6/2026-09-03-impatti-milestone-precedenti.TODO.md`,
+Stato: proposta, in attesa di conferma — **tranne la sezione 1**
+(refactor `Config::default_vault_path`/`config_file_path`), deciso in
+`specs/M6/2026-09-03-impatti-milestone-precedenti.TODO.md` come task
+da fare prima di iniziare M3, non insieme al resto di M6. Prima spec
+di M6. Il secondo documento,
+`specs/M6/2026-09-03-impatti-milestone-precedenti.TODO.md`,
 cataloga cosa nelle spec di M1-M5 va adattato — questa si concentra
 sulle fondamenta tecniche condivise da tutto il resto.
 

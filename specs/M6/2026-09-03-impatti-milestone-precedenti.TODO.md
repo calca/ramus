@@ -153,20 +153,25 @@ verifica:
   per costruzione (CLAUDE.md regola 1).
 - Indice SQLite (M2): nessun problema noto per mobile.
 
-## Domande aperte
+## Decisione: M6 non si anticipa, tranne un pezzo
 
-1. Ordine di lavoro suggerito, dato il costo molto diverso fra le
-   milestone: fondamenta (questa spec + l'altra di M6) → M1/M2 già
-   pronti sul mobile con adattamenti minori → M4 (adattamenti UI,
-   medio) → M3 (grande, credenziali + background task, probabilmente
-   una spec mobile dedicata quando ci si arriva) → M5 resta
-   desktop-only. Va bene come priorità, o preferisci un ordine
-   diverso?
-2. M3 e M4 non hanno ancora una riga di codice scritta: vale la pena
-   aspettare a implementarle su desktop finché il design mobile non è
-   più chiaro (per non dover rifare due volte l'interfaccia), o si
-   procede comunque su desktop e si accetta di ritoccare quando si
-   arriva al mobile?
+Deciso: M6 resta dov'è nell'ordine (dopo M5), **tranne** il refactor
+di `Config::default_vault_path`/`config_file_path` (path iniettato dal
+chiamante invece di calcolato con `dirs` — descritto in
+`specs/M6/2026-09-03-supporto-mobile-fondamenta.TODO.md`, sezione 1),
+che si fa **prima di iniziare M3**. Motivo: è piccolo, migliora
+l'architettura anche per il solo desktop, e più codice si scrive
+contro la firma attuale di quelle funzioni più costa cambiarle dopo —
+tutto il resto del lavoro mobile (init Tauri, credenziali via
+keychain, varianti touch, background task) resta a valle di M3/M4/M5
+com'era, non ha senso costruirlo prima di aver fissato l'UX desktop di
+quelle feature.
+
+Le due domande originarie (ordine di lavoro completo, se aspettare
+M3/M4 finché il mobile non è più chiaro) sono risolte da questa
+decisione: nessuna attesa, si procede su desktop, si accetta di
+ritoccare quando si arriva al mobile — eccetto il refactor dei path,
+che precede tutto.
 
 ## Verifica
 
