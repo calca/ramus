@@ -637,19 +637,10 @@ function App() {
             type="button"
             className="settings-button"
             aria-label="Comandi"
+            title="Comandi"
             onClick={() => setActivePanel("palette")}
           >
-            ⚡
-          </button>
-        )}
-        {config && (
-          <button
-            type="button"
-            className="settings-button"
-            aria-label="Impostazioni"
-            onClick={() => setActivePanel("settings")}
-          >
-            ⚙
+            ⌘
           </button>
         )}
       </header>
