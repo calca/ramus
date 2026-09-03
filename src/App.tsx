@@ -734,6 +734,7 @@ function App() {
             onShowCheatsheet: () => setActivePanel("cheatsheet"),
           })}
           recentPages={recentPages}
+          shortcuts={config?.shortcuts ?? {}}
           onClose={() => setActivePanel(null)}
           onSelect={(item) => void handlePaletteSelect(item)}
         />

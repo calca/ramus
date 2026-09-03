@@ -1,9 +1,10 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import type { KeyboardEvent as ReactKeyboardEvent } from "react";
+import type { KeyboardEvent as ReactKeyboardEvent, ReactNode } from "react";
 
 import { listPages, search } from "../lib/commands";
 import { formatJournalHeader, formatPrettyDate, journalDateFromPath, parseTypedDate } from "../lib/journal";
 import type { PaletteAction } from "../lib/paletteActions";
+import { formatShortcut, getShortcut } from "../lib/shortcut";
 import type { PageSummary, SearchHit } from "../lib/types";
 import { Modal } from "./Modal";
 
@@ -17,8 +18,30 @@ export type PaletteItem =
 interface CommandPaletteProps {
   actions: PaletteAction[];
   recentPages: string[];
+  shortcuts: Record<string, string>;
   onClose: () => void;
   onSelect: (item: PaletteItem) => void;
+}
+
+/** Evidenzia la prima occorrenza di `query` in `text` con `<mark>` — solo
+ * per etichette filtrate per sottostringa lato client (azioni, recenti),
+ * non per i risultati di ricerca full-text (già evidenziati dal backend,
+ * `snippet_html`). */
+function highlightMatch(text: string, query: string): ReactNode {
+  if (!query) {
+    return text;
+  }
+  const index = text.toLowerCase().indexOf(query.toLowerCase());
+  if (index === -1) {
+    return text;
+  }
+  return (
+    <>
+      {text.slice(0, index)}
+      <mark className="palette-match">{text.slice(index, index + query.length)}</mark>
+      {text.slice(index + query.length)}
+    </>
+  );
 }
 
 const DEBOUNCE_MS = 250;
@@ -34,7 +57,13 @@ const SECTION_LABELS: Record<PaletteItem["kind"], string> = {
 /** Evoluzione di SearchPanel (M2): ricerca full-text invariata, più
  * azioni dell'app, pagine aperte di recente e creazione pagine — vedi
  * specs/M4/2026-09-02-command-palette.TODO.md. */
-export function CommandPalette({ actions, recentPages, onClose, onSelect }: CommandPaletteProps) {
+export function CommandPalette({
+  actions,
+  recentPages,
+  shortcuts,
+  onClose,
+  onSelect,
+}: CommandPaletteProps) {
   const [query, setQuery] = useState("");
   const [hits, setHits] = useState<SearchHit[]>([]);
   const [pages, setPages] = useState<PageSummary[]>([]);
@@ -66,6 +95,8 @@ export function CommandPalette({ actions, recentPages, onClose, onSelect }: Comm
       }
     };
   }, [query]);
+
+  const trimmedQuery = query.trim();
 
   const items = useMemo<PaletteItem[]>(() => {
     const trimmed = query.trim();
@@ -122,7 +153,7 @@ export function CommandPalette({ actions, recentPages, onClose, onSelect }: Comm
         onChange={(event) => setQuery(event.target.value)}
         onKeyDown={handleKeyDown}
       />
-      {items.length > 0 && (
+      {items.length > 0 ? (
         <ul className="palette-results">
           {items.map((item, index) => {
             const showHeader = item.kind !== lastKind;
@@ -135,6 +166,7 @@ export function CommandPalette({ actions, recentPages, onClose, onSelect }: Comm
                   : item.kind === "date"
                     ? `date-${item.iso}`
                     : `${item.kind}-${item.title}`;
+            const shortcut = item.kind === "action" ? getShortcut(shortcuts, item.action.id) : "";
             return (
               <li key={key}>
                 {showHeader && <p className="palette-section-label">{SECTION_LABELS[item.kind]}</p>}
@@ -145,9 +177,18 @@ export function CommandPalette({ actions, recentPages, onClose, onSelect }: Comm
                   onClick={() => onSelect(item)}
                 >
                   {item.kind === "action" && (
-                    <span className="palette-item-title">{item.action.label}</span>
+                    <span className="palette-item-title">
+                      {highlightMatch(item.action.label, trimmedQuery)}
+                      {shortcut && (
+                        <span className="palette-item-shortcut">{formatShortcut(shortcut)}</span>
+                      )}
+                    </span>
                   )}
-                  {item.kind === "recent" && <span className="palette-item-title">{item.title}</span>}
+                  {item.kind === "recent" && (
+                    <span className="palette-item-title">
+                      {highlightMatch(item.title, trimmedQuery)}
+                    </span>
+                  )}
                   {item.kind === "create" && (
                     <span className="palette-item-title">Crea «{item.title}»</span>
                   )}
@@ -174,6 +215,8 @@ export function CommandPalette({ actions, recentPages, onClose, onSelect }: Comm
             );
           })}
         </ul>
+      ) : (
+        trimmedQuery && <p className="palette-empty">Nessun risultato per «{trimmedQuery}»</p>
       )}
     </Modal>
   );

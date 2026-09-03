@@ -809,7 +809,10 @@ body {
 }
 
 .palette-item-title {
-  display: block;
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.75rem;
   font-size: 0.9rem;
   font-weight: 600;
   margin-bottom: 0.15rem;
@@ -824,4 +827,33 @@ body {
 .palette-item-snippet b {
   color: var(--ramus-ink);
   font-weight: 600;
+}
+
+/* Scorciatoia dell'azione, quando ce l'ha (lib/shortcut.ts,
+   getShortcut) — peso normale, colore attenuato: il titolo resta
+   l'elemento con più enfasi della riga. */
+.palette-item-shortcut {
+  font-family: ui-monospace, "SF Mono", Menlo, monospace;
+  font-weight: 400;
+  font-size: 0.78rem;
+  color: var(--ramus-stone);
+  flex-shrink: 0;
+}
+
+/* Sottostringa che ha fatto match (azioni/recenti, filtro lato
+   client) — sfondo invece di grassetto/colore: il titolo è già al
+   massimo dell'enfasi disponibile (.palette-item-title). Sap, non
+   amber: l'amber resta riservato a giorno corrente/focus. */
+.palette-match {
+  background: color-mix(in srgb, var(--ramus-sap) 22%, transparent);
+  color: inherit;
+  border-radius: 3px;
+  padding: 0 0.1em;
+}
+
+.palette-empty {
+  color: var(--ramus-stone);
+  font-size: 0.85rem;
+  margin: 0.75rem 0 0;
+  padding: 0.5rem 0.6rem;
 }
