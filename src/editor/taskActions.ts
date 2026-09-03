@@ -49,6 +49,24 @@ export function toggleTaskMarker(editor: Editor, domNode: Node): boolean {
   return true;
 }
 
+/** Testo e spostamento del cursore per il prossimo stato del ciclo
+ * (normale → "[ ] " → "[x] " → normale) — separata da `cycleTaskState`
+ * per essere testabile in isolamento: non tocca `Editor`/`view`, a
+ * differenza del resto di questo file che richiede un editor Tiptap
+ * vero (DOM + ProseMirror view), fuori dall'ambito dei test unitari del
+ * progetto — vedi
+ * specs/release/2026-09-03-copertura-test-frontend.DONE.md. */
+export function nextTaskState(text: string): { nextText: string; cursorDelta: number } {
+  const match = TASK_PATTERN.exec(text);
+  if (!match) {
+    return { nextText: `[ ] ${text}`, cursorDelta: 4 };
+  }
+  if (match[1] === " ") {
+    return { nextText: `[x] ${text.slice(4)}`, cursorDelta: 0 };
+  }
+  return { nextText: text.slice(4), cursorDelta: -4 };
+}
+
 /** Scorciatoia Mod-Enter: ciclo a tre stati sul blocco a fuoco (normale →
  * "[ ] " → "[x] " → normale). Il cursore resta alla stessa posizione
  * relativa al testo "vero" del blocco (dopo il marker, se presente). */
@@ -67,23 +85,11 @@ export function cycleTaskState(editor: Editor): boolean {
     return false;
   }
   const text = paragraph.textContent;
-  const match = TASK_PATTERN.exec(text);
 
   const textStart = $from.before(depth) + 2;
   const textEnd = textStart + text.length;
 
-  let nextText: string;
-  let cursorDelta: number;
-  if (!match) {
-    nextText = `[ ] ${text}`;
-    cursorDelta = 4;
-  } else if (match[1] === " ") {
-    nextText = `[x] ${text.slice(4)}`;
-    cursorDelta = 0;
-  } else {
-    nextText = text.slice(4);
-    cursorDelta = -4;
-  }
+  const { nextText, cursorDelta } = nextTaskState(text);
 
   const tr = state.tr.insertText(nextText, textStart, textEnd);
   const newCursorPos = Math.max(

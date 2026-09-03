@@ -1,7 +1,7 @@
 # Estendere la copertura di test del frontend
 
-Stato: proposta, da implementare. Nessuna domanda bloccante — solo
-una priorità da confermare (vedi "Ordine proposto").
+Stato: implementata (i quattro punti dell'ordine proposto). Una
+correzione emersa scrivendo i test: vedi "Scoperta in corso d'opera".
 
 ## Motivazione
 
@@ -53,6 +53,29 @@ lista: più intrecciati con lo stato vivo di ProseMirror (plugin con
 side-effect sulla view), costerebbero un mock pesante per un beneficio
 minore — se un giorno servisse, spec a parte.
 
+## Scoperta in corso d'opera
+
+**`cycleTaskState` non era la funzione pura descritta sopra**: legge
+`editor.state`/`editor.view.dispatch` per davvero, stesso limite già
+scritto per linkAutocomplete/tagAutocomplete/moveBlock — non emerso
+finché non si è letto il file per scrivere il test. Estratta
+`nextTaskState(text): { nextText, cursorDelta }`, la logica di
+transizione a tre stati senza toccare `Editor`/`view` — refactor
+comportamento-preservante (stesso identico calcolo, solo separato),
+`cycleTaskState` la chiama invece di ripetere l'if/else inline. Il
+resto della lista (shortcut/journal/paletteActions) era già puro come
+previsto, nessun'altra sorpresa.
+
+**`lib/shortcut.ts` ha un rischio non anticipato**: `IS_MAC` legge
+`navigator.platform` una volta sola al caricamento del modulo — Node
+22 espone un `navigator` globale che riflette il sistema operativo
+REALE della macchina (diverso fra questa macchina, macOS, e il runner
+Linux della CI). Un test ingenuo sarebbe passato in locale e fallito
+(o viceversa) in CI. Ogni test di `shortcut.test.ts` sceglie la
+piattaforma esplicitamente con `vi.stubGlobal("navigator", ...)` +
+`vi.resetModules()` + un import dinamico dopo lo stub, invece di
+affidarsi a quella reale.
+
 ## Fuori scope
 
 - Test di integrazione end-to-end (avviare l'app vera, simulare click):
@@ -65,7 +88,10 @@ minore — se un giorno servisse, spec a parte.
 
 ## Verifica
 
-`npm run test` con i nuovi file (`shortcut.test.ts`,
-`journal.test.ts`, `taskActions.test.ts`, `paletteActions.test.ts`)
-verdi, `npm run typecheck` pulito — nessuna verifica manuale
-necessaria, è la natura stessa di questa spec.
+`npm run test`: 77 test totali (48 nuovi: 17 in `shortcut.test.ts`, 16
+in `journal.test.ts`, 10 in `taskActions.test.ts`, 5 in
+`paletteActions.test.ts`), tutti verdi. `npm run typecheck`, `cargo
+test`, `cargo clippy --all-targets -D warnings`, `cargo fmt --check`
+— puliti (il refactor di `nextTaskState` è l'unico cambio non-test,
+comportamento-preservante). Nessuna verifica manuale necessaria, è la
+natura stessa di questa spec.
