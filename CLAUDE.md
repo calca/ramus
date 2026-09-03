@@ -13,13 +13,15 @@ npm install                 # dipendenze frontend
 npm run tauri dev           # avvia l'app in sviluppo
 npm run tauri build         # build di release
 npm run typecheck           # tsc --noEmit
+npm run test                # vitest — solo per il parser/serializer inline in src/editor/
 cargo test -p ramus-core    # test del core (i più importanti)
 cargo clippy --all-targets -- -D warnings
 cargo fmt --all
 ```
 
-Prima di dichiarare finito un task: `cargo test`, `cargo clippy` e
-`npm run typecheck` devono passare tutti e tre.
+Prima di dichiarare finito un task: `cargo test`, `cargo clippy`,
+`npm run typecheck` e (se il task tocca `src/editor/`) `npm run test`
+devono passare tutti.
 
 ## Dove sta cosa
 

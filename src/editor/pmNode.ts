@@ -3,8 +3,13 @@
 // che l'editor outliner produce davvero (doc, bulletList, listItem,
 // paragraph, text).
 
+export interface PMMark {
+  type: string;
+}
+
 export interface PMNode {
   type: string;
   content?: PMNode[];
   text?: string;
+  marks?: PMMark[];
 }

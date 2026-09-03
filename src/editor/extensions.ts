@@ -5,9 +5,11 @@
 // milestone 1 (SPEC.md). orderedList e hardBreak sono disattivati anche
 // loro: il formato su disco non distingue liste ordinate (solo "- "), e un
 // hard break introdurrebbe un newline dentro un singolo blocco, violando
-// "un blocco = una riga". I marks inline (bold/italic/strike/code) sono
-// disattivati: il contenuto di un blocco è markdown grezzo come testo
-// semplice, non richiede un serializer di marks -> sintassi markdown.
+// "un blocco = una riga". Bold/italic sono attivi (scorciatoie Mod-B/Mod-I
+// di default di StarterKit, invariate) — serializzati a mano in
+// editor/inlineMarks.ts, vedi
+// specs/refinement/2026-09-03-testo-grassetto-corsivo.DONE.md. Strike e
+// code restano disattivati (fuori scope per ora, non serializzabili).
 //
 // Tab/Shift-Tab/Enter arrivano già corretti dai default di ListItem
 // (sinkListItem/liftListItem/splitListItem). Backspace su blocco vuoto è
@@ -76,8 +78,6 @@ export function createExtensions() {
       horizontalRule: false,
       orderedList: false,
       hardBreak: false,
-      bold: false,
-      italic: false,
       strike: false,
       code: false,
     }),
