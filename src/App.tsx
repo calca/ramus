@@ -8,7 +8,6 @@ import { Cheatsheet } from "./components/Cheatsheet";
 import { CommandPalette } from "./components/CommandPalette";
 import type { PaletteItem } from "./components/CommandPalette";
 import type { EditorHandle } from "./components/Editor";
-import { JournalControls } from "./components/JournalControls";
 import { JournalSection } from "./components/JournalSection";
 import { PageView } from "./components/PageView";
 import { SettingsPanel } from "./components/SettingsPanel";
@@ -578,6 +577,13 @@ function App() {
         await jumpToDate(journalDateFromPath(item.hit.path));
         return;
       }
+      if (item.kind === "date") {
+        if (viewRef.current.kind === "page") {
+          await returnToJournal();
+        }
+        await jumpToDate(item.iso);
+        return;
+      }
       const title =
         item.kind === "hit" ? (item.hit.title ?? item.hit.path.replace(/^pages\//, "").replace(/\.md$/, "")) : item.title;
       await navigateToPage(title);
@@ -674,9 +680,6 @@ function App() {
       )}
 
       <div className={isCompact ? "app-statusbar is-compact" : "app-statusbar"}>
-        {view.kind === "journal" && (
-          <JournalControls onJumpToDate={(iso) => void jumpToDate(iso)} />
-        )}
         {config && (
           <button
             type="button"

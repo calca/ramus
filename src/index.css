@@ -42,45 +42,6 @@ body {
   margin-right: auto;
 }
 
-.journal-controls {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-}
-
-/* Icona soltanto: il vecchio bottone "Oggi" testuale è sparito (già
-   raggiungibile da "Vai a oggi" nella command palette), resta solo
-   questo selettore — ridotto alla sola icona nativa del calendario,
-   niente più cifre della data visibili. Pseudo-elementi -webkit-,
-   supportati sia da WKWebView (macOS) sia da WebView2 (Windows), i due
-   motori usati da Tauri — non standard, ma qui non serve compatibilità
-   cross-browser essendo un runtime controllato. */
-.journal-date-picker {
-  border: 1px solid color-mix(in srgb, var(--ramus-stone) 40%, transparent);
-  background: transparent;
-  color: var(--ramus-stone);
-  border-radius: 6px;
-  width: 1.6rem;
-  padding: 0.15rem 0.3rem;
-  font-size: 0.85rem;
-  font-family: inherit;
-  cursor: pointer;
-}
-
-.journal-date-picker::-webkit-datetime-edit,
-.journal-date-picker::-webkit-datetime-edit-fields-wrapper,
-.journal-date-picker::-webkit-datetime-edit-text,
-.journal-date-picker::-webkit-datetime-edit-day-field,
-.journal-date-picker::-webkit-datetime-edit-month-field,
-.journal-date-picker::-webkit-datetime-edit-year-field {
-  display: none;
-}
-
-.journal-date-picker::-webkit-calendar-picker-indicator {
-  margin: 0;
-  padding: 0;
-}
-
 /* Bottoni icona compatti della status bar (⚙ Impostazioni, badge sync):
    più piccoli di .settings-button (header) per "ridurre la dimensione"
    — stessa lingua visiva di .sync-badge, che ora la riusa invece di

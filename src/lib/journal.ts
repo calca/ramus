@@ -57,10 +57,47 @@ function relativeLabel(iso: string): string | null {
 
 /** "2 settembre" nell'anno corrente, "2 settembre 2025" altrimenti: l'anno
  * è rumore quando è ovvio, utile quando non lo è. */
-function formatPrettyDate(iso: string): string {
+export function formatPrettyDate(iso: string): string {
   const date = parseIsoDate(iso);
   const isCurrentYear = date.getFullYear() === new Date().getFullYear();
   return (isCurrentYear ? PRETTY_DATE_FORMATTER : PRETTY_DATE_WITH_YEAR_FORMATTER).format(date);
+}
+
+const ISO_DATE_PATTERN = /^(\d{4})-(\d{1,2})-(\d{1,2})$/;
+const IT_DATE_PATTERN = /^(\d{1,2})[/-](\d{1,2})[/-](\d{4})$/;
+
+/** Riconosce una data digitata a mano in formato ISO (YYYY-MM-DD) o
+ * italiano (DD/MM/YYYY, anche con "-" come separatore) — usata dalla
+ * command palette al posto del vecchio date-picker nativo. `null` se il
+ * testo non è nel formato atteso, se la data non esiste (es. 31 aprile:
+ * `new Date` la farebbe scivolare silenziosamente all'1 maggio, da qui
+ * il controllo di round-trip) o se è nel futuro (stesso limite del
+ * vecchio picker, `max` = oggi). */
+export function parseTypedDate(input: string): string | null {
+  const trimmed = input.trim();
+  let year: number | undefined;
+  let month: number | undefined;
+  let day: number | undefined;
+
+  const iso = ISO_DATE_PATTERN.exec(trimmed);
+  if (iso) {
+    [year, month, day] = [Number(iso[1]), Number(iso[2]), Number(iso[3])];
+  } else {
+    const it = IT_DATE_PATTERN.exec(trimmed);
+    if (it) {
+      [day, month, year] = [Number(it[1]), Number(it[2]), Number(it[3])];
+    }
+  }
+  if (year === undefined || month === undefined || day === undefined) {
+    return null;
+  }
+
+  const date = new Date(year, month - 1, day);
+  if (date.getFullYear() !== year || date.getMonth() !== month - 1 || date.getDate() !== day) {
+    return null;
+  }
+  const result = formatIsoDate(date);
+  return result > formatIsoDate(new Date()) ? null : result;
 }
 
 function capitalizeFirst(text: string): string {

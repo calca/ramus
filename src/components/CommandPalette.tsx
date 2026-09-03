@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import type { KeyboardEvent as ReactKeyboardEvent } from "react";
 
 import { listPages, search } from "../lib/commands";
-import { formatJournalHeader, journalDateFromPath } from "../lib/journal";
+import { formatJournalHeader, formatPrettyDate, journalDateFromPath, parseTypedDate } from "../lib/journal";
 import type { PaletteAction } from "../lib/paletteActions";
 import type { PageSummary, SearchHit } from "../lib/types";
 import { Modal } from "./Modal";
@@ -11,7 +11,8 @@ export type PaletteItem =
   | { kind: "action"; action: PaletteAction }
   | { kind: "recent"; title: string }
   | { kind: "hit"; hit: SearchHit }
-  | { kind: "create"; title: string };
+  | { kind: "create"; title: string }
+  | { kind: "date"; iso: string };
 
 interface CommandPaletteProps {
   actions: PaletteAction[];
@@ -27,6 +28,7 @@ const SECTION_LABELS: Record<PaletteItem["kind"], string> = {
   recent: "Recenti",
   hit: "Risultati",
   create: "Crea",
+  date: "Data",
 };
 
 /** Evoluzione di SearchPanel (M2): ricerca full-text invariata, più
@@ -74,13 +76,18 @@ export function CommandPalette({ actions, recentPages, onClose, onSelect }: Comm
       ];
     }
     const lower = trimmed.toLowerCase();
+    const iso = parseTypedDate(trimmed);
+    // In cima, prima di azioni e risultati: se l'intero input è una data
+    // valida è quasi certamente quello che si vuole, più affidabile di un
+    // match fuzzy sul testo.
+    const dateItem: PaletteItem[] = iso ? [{ kind: "date", iso }] : [];
     const matchingActions = actions
       .filter((action) => action.label.toLowerCase().includes(lower))
       .map((action): PaletteItem => ({ kind: "action", action }));
     const hitItems = hits.map((hit): PaletteItem => ({ kind: "hit", hit }));
     const alreadyExists = pages.some((page) => page.title.toLowerCase() === lower);
     const createItem: PaletteItem[] = alreadyExists ? [] : [{ kind: "create", title: trimmed }];
-    return [...matchingActions, ...hitItems, ...createItem];
+    return [...dateItem, ...matchingActions, ...hitItems, ...createItem];
   }, [query, actions, recentPages, hits, pages]);
 
   const handleKeyDown = (event: ReactKeyboardEvent<HTMLInputElement>) => {
@@ -125,7 +132,9 @@ export function CommandPalette({ actions, recentPages, onClose, onSelect }: Comm
                 ? `action-${item.action.id}`
                 : item.kind === "hit"
                   ? `hit-${item.hit.path}-${index}`
-                  : `${item.kind}-${item.title}`;
+                  : item.kind === "date"
+                    ? `date-${item.iso}`
+                    : `${item.kind}-${item.title}`;
             return (
               <li key={key}>
                 {showHeader && <p className="palette-section-label">{SECTION_LABELS[item.kind]}</p>}
@@ -141,6 +150,9 @@ export function CommandPalette({ actions, recentPages, onClose, onSelect }: Comm
                   {item.kind === "recent" && <span className="palette-item-title">{item.title}</span>}
                   {item.kind === "create" && (
                     <span className="palette-item-title">Crea «{item.title}»</span>
+                  )}
+                  {item.kind === "date" && (
+                    <span className="palette-item-title">Vai al {formatPrettyDate(item.iso)}</span>
                   )}
                   {item.kind === "hit" && (
                     <>
