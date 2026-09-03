@@ -289,7 +289,13 @@ body {
   border-radius: 10px;
   border: 1px solid color-mix(in srgb, var(--ramus-stone) 30%, transparent);
   width: min(38rem, calc(100vw - 2rem));
-  max-height: calc(100vh - 4rem);
+  /* Altezza fissa (non solo un tetto): con max-height soltanto, il
+     pannello si restringeva al contenuto della sezione attiva e
+     "saltava" cambiando categoria — Sync e MCP, le più lunghe, non ci
+     stavano comodamente. Stessa altezza per tutte le sezioni, le più
+     corte lasciano semplicemente spazio vuoto sotto (normale in un
+     dialog di impostazioni). */
+  height: min(36rem, calc(100vh - 4rem));
   display: flex;
   flex-direction: column;
   overflow: hidden;

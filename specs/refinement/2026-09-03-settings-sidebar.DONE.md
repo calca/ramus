@@ -68,7 +68,12 @@ a destra — stesso pattern delle impostazioni di macOS/VS Code:
 **`index.css`**:
 - `.settings-panel`: larghezza da `min(28rem, calc(100vw - 2rem))` a
   `min(38rem, calc(100vw - 2rem))` (serve spazio per la sidebar);
-  `max-height` invariato.
+  `max-height` sostituito da `height: min(36rem, calc(100vh - 4rem))`
+  — altezza fissa invece di un tetto: con solo `max-height` il pannello
+  si restringeva al contenuto della sezione attiva e "saltava"
+  cambiando categoria, e Sync/MCP (le sezioni più lunghe) risultavano
+  compresse (bug segnalato dall'utente dopo il primo giro
+  d'implementazione).
 - Nuove regole `.settings-body` (flex row, `align-items: stretch`),
   `.settings-sidebar` (colonna di bottoni, larghezza fissa ~9rem,
   bordo destro sottile per separarla dal contenuto),
