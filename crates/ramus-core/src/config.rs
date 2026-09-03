@@ -48,6 +48,11 @@ pub struct Config {
     /// automatico dei task, in giorni prima di oggi.
     #[serde(default = "default_task_rollover_days")]
     pub task_rollover_days: u32,
+    /// Se `false`, `ramus-mcp` (M5) si rifiuta di avviarsi — letto da
+    /// entrambi i processi dallo stesso `config.json`. Un vero
+    /// interruttore, non solo uno stato mostrato nella GUI.
+    #[serde(default = "default_mcp_enabled")]
+    pub mcp_enabled: bool,
 }
 
 fn default_shortcuts() -> HashMap<String, String> {
@@ -65,6 +70,10 @@ fn default_git_sync_interval_minutes() -> u32 {
 }
 
 fn default_task_rollover_enabled() -> bool {
+    true
+}
+
+fn default_mcp_enabled() -> bool {
     true
 }
 
@@ -162,6 +171,7 @@ impl Config {
                 git_sync_interval_minutes: default_git_sync_interval_minutes(),
                 task_rollover_enabled: default_task_rollover_enabled(),
                 task_rollover_days: default_task_rollover_days(),
+                mcp_enabled: default_mcp_enabled(),
             };
             config.save(&path)?;
             Ok(config)
@@ -200,6 +210,13 @@ impl Config {
     pub fn set_task_rollover(&mut self, enabled: bool, days: u32) -> Result<(), CoreError> {
         self.task_rollover_enabled = enabled;
         self.task_rollover_days = days;
+        self.save(&Self::config_file_path())
+    }
+
+    /// Aggiorna e persiste l'attivazione del server MCP (M5) — letta da
+    /// `ramus-mcp` all'avvio dallo stesso `config.json`.
+    pub fn set_mcp_enabled(&mut self, enabled: bool) -> Result<(), CoreError> {
+        self.mcp_enabled = enabled;
         self.save(&Self::config_file_path())
     }
 }
@@ -265,6 +282,13 @@ mod tests {
         let config: Config = serde_json::from_str(json).unwrap();
         assert!(config.task_rollover_enabled);
         assert_eq!(config.task_rollover_days, 7);
+    }
+
+    #[test]
+    fn config_without_mcp_enabled_field_defaults_to_true() {
+        let json = r#"{"vault_path":"/home/x/Journal"}"#;
+        let config: Config = serde_json::from_str(json).unwrap();
+        assert!(config.mcp_enabled);
     }
 
     struct TempDir(PathBuf);
@@ -369,6 +393,7 @@ mod tests {
             git_sync_interval_minutes: default_git_sync_interval_minutes(),
             task_rollover_enabled: default_task_rollover_enabled(),
             task_rollover_days: default_task_rollover_days(),
+            mcp_enabled: default_mcp_enabled(),
         };
         config.save(&path).unwrap();
 

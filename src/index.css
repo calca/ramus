@@ -495,6 +495,37 @@ body {
   font-family: inherit;
 }
 
+.settings-mcp-toggle {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.9rem;
+}
+
+.settings-mcp-snippet {
+  background: color-mix(in srgb, var(--ramus-stone) 10%, transparent);
+  border: 1px solid color-mix(in srgb, var(--ramus-stone) 30%, transparent);
+  border-radius: 6px;
+  padding: 0.6rem 0.7rem;
+  margin: 0.6rem 0 0;
+  font-size: 0.78rem;
+  font-family: ui-monospace, monospace;
+  white-space: pre-wrap;
+  word-break: break-all;
+  user-select: text;
+}
+
+.settings-mcp-help {
+  color: var(--ramus-stone);
+  font-size: 0.78rem;
+  margin: 0.4rem 0 0;
+}
+
+.settings-mcp-help code {
+  font-family: ui-monospace, monospace;
+  font-size: 0.95em;
+}
+
 .settings-sync-remote input {
   flex: 1;
   min-width: 0;

@@ -531,6 +531,10 @@ function App() {
     setConfig(nextConfig);
   }, []);
 
+  const handleMcpEnabledChanged = useCallback((nextConfig: Config) => {
+    setConfig(nextConfig);
+  }, []);
+
   /** Apre (creando se manca) la pagina cliccata e ci passa la vista. Flush
    * di tutti gli editor montati prima di navigare, stesso Promise.all già
    * usato alla chiusura finestra. */
@@ -710,6 +714,7 @@ function App() {
           onShortcutChanged={handleShortcutChanged}
           onGitSyncIntervalChanged={handleGitSyncIntervalChanged}
           onTaskRolloverChanged={handleTaskRolloverChanged}
+          onMcpEnabledChanged={handleMcpEnabledChanged}
           onShowAbout={() => setActivePanel("about")}
         />
       )}

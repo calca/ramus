@@ -7,6 +7,7 @@ import type {
   Backlink,
   Block,
   Config,
+  McpInfo,
   Page,
   PageSummary,
   RolloverOutcome,
@@ -106,6 +107,14 @@ export function setGitSyncInterval(minutes: number): Promise<Config> {
 
 export function setTaskRollover(enabled: boolean, days: number): Promise<Config> {
   return invoke<Config>("set_task_rollover", { enabled, days });
+}
+
+export function setMcpEnabled(enabled: boolean): Promise<Config> {
+  return invoke<Config>("set_mcp_enabled", { enabled });
+}
+
+export function getMcpInfo(): Promise<McpInfo> {
+  return invoke<McpInfo>("get_mcp_info");
 }
 
 /** Imposta (o aggiorna) il remote "origin" e prova subito un pull. */

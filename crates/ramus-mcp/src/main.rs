@@ -44,6 +44,18 @@ fn core_error_to_rmcp(err: CoreError) -> ErrorData {
     ErrorData::internal_error(err.to_string(), None)
 }
 
+/// `None` se il server può avviarsi, altrimenti il messaggio da stampare
+/// su stderr prima di uscire — funzione pura (non chiama
+/// `std::process::exit` direttamente) per poter essere testata senza
+/// terminare il processo di test.
+fn mcp_disabled_message(enabled: bool) -> Option<&'static str> {
+    if enabled {
+        None
+    } else {
+        Some("ramus-mcp è disabilitato (Impostazioni → MCP in Ramus). Riabilitalo per usare questo server.")
+    }
+}
+
 /// Ogni strumento restituisce il proprio risultato come stringa JSON: gli
 /// stessi tipi `Serialize` già usati dai command Tauri (Page, Backlink,
 /// PageSummary, SearchHit, ...), nessun tipo di risposta MCP dedicato.
@@ -300,6 +312,11 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let read_only = args.iter().any(|arg| arg == "--read-only");
 
     let config = Config::load_or_init()?;
+    if let Some(message) = mcp_disabled_message(config.mcp_enabled) {
+        eprintln!("{message}");
+        std::process::exit(1);
+    }
+
     let vault_root = config.vault_path.clone();
     let vault = Vault::new(vault_root.clone());
     vault.ensure_exists()?;
@@ -612,5 +629,11 @@ mod tests {
         assert!(server.tool_router.has_route("write_page"));
         assert!(server.tool_router.has_route("open_today"));
         assert!(server.tool_router.has_route("open_page"));
+    }
+
+    #[test]
+    fn mcp_disabled_message_is_none_when_enabled_and_some_when_disabled() {
+        assert!(mcp_disabled_message(true).is_none());
+        assert!(mcp_disabled_message(false).is_some());
     }
 }

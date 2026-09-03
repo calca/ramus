@@ -11,6 +11,7 @@ use ramus_core::{
     PageSummary, RolloverOutcome, SearchHit, SearchIndex, SyncState, SyncStatus, Theme, Vault,
     VaultStats,
 };
+use serde::Serialize;
 use tauri::{AppHandle, Emitter, Manager, State};
 use tauri_plugin_dialog::DialogExt;
 
@@ -346,6 +347,60 @@ pub fn set_task_rollover(
     let mut config = lock_config(&state)?;
     config.set_task_rollover(enabled, days)?;
     Ok(config.clone())
+}
+
+#[tauri::command]
+pub fn set_mcp_enabled(enabled: bool, state: State<AppState>) -> Result<Config, CoreError> {
+    let mut config = lock_config(&state)?;
+    config.set_mcp_enabled(enabled)?;
+    Ok(config.clone())
+}
+
+#[derive(Serialize)]
+pub struct McpInfo {
+    pub enabled: bool,
+    pub binary_found: bool,
+    /// Snippet JSON pronto da incollare in `.mcp.json`/
+    /// `claude_desktop_config.json`, `None` se `binary_found` è `false`.
+    pub config_snippet: Option<String>,
+}
+
+/// `ramus-mcp` e il binario dell'app Tauri sono membri dello stesso
+/// workspace Cargo: `cargo build`/`cargo tauri dev` li compila nella
+/// stessa cartella — file fratelli. Smette di funzionare quando Ramus
+/// verrà pacchettizzato per la distribuzione (fuori scope, vedi
+/// specs/M5/2026-09-03-mcp-impostazioni.TODO.md).
+fn find_mcp_binary() -> Option<PathBuf> {
+    let current = std::env::current_exe().ok()?;
+    let dir = current.parent()?;
+    let name = if cfg!(windows) {
+        "ramus-mcp.exe"
+    } else {
+        "ramus-mcp"
+    };
+    let candidate = dir.join(name);
+    candidate.exists().then_some(candidate)
+}
+
+#[tauri::command]
+pub fn get_mcp_info(state: State<AppState>) -> Result<McpInfo, CoreError> {
+    let enabled = lock_config(&state)?.mcp_enabled;
+    let binary = find_mcp_binary();
+    let config_snippet = binary.as_ref().map(|path| {
+        let snippet = serde_json::json!({
+            "mcpServers": {
+                "ramus": {
+                    "command": path.to_string_lossy(),
+                }
+            }
+        });
+        serde_json::to_string_pretty(&snippet).unwrap_or_default()
+    });
+    Ok(McpInfo {
+        enabled,
+        binary_found: binary.is_some(),
+        config_snippet,
+    })
 }
 
 /// Imposta (o aggiorna) il remote `origin` e prova subito un pull — stessa

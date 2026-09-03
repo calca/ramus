@@ -92,6 +92,8 @@ pub fn run() {
             commands::set_git_sync_interval,
             commands::set_git_remote,
             commands::set_task_rollover,
+            commands::set_mcp_enabled,
+            commands::get_mcp_info,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

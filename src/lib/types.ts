@@ -28,10 +28,18 @@ export interface Config {
   git_sync_interval_minutes: number;
   task_rollover_enabled: boolean;
   task_rollover_days: number;
+  mcp_enabled: boolean;
 }
 
 export interface RolloverOutcome {
   moved_count: number;
+}
+
+export interface McpInfo {
+  enabled: boolean;
+  binary_found: boolean;
+  /** Snippet JSON pronto da incollare, `null` se `binary_found` è `false`. */
+  config_snippet: string | null;
 }
 
 export interface VaultStats {

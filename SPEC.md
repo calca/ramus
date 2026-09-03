@@ -279,6 +279,12 @@ il marchio contro il bordo.
   stesso crate — flag `--read-only` per escluderli del tutto
   dall'elenco esposto (scrittura abilitata di default) — vedi
   `specs/M5/2026-09-02-mcp-server-scrittura.DONE.md`.
+- Sezione "MCP" in Impostazioni: interruttore di attivazione (un vero
+  kill switch, letto da `ramus-mcp` all'avvio dallo stesso
+  `config.json` — non solo uno stato mostrato in GUI) e, se attivo e
+  il binario compilato viene trovato accanto a quello dell'app, lo
+  snippet di configurazione già pronto da incollare nel client — vedi
+  `specs/M5/2026-09-03-mcp-impostazioni.DONE.md`.
 
 **M6 — Mobile (Android/iOS)**
 - Supporto mobile nativo di Tauri v2 (stesso frontend, stesso

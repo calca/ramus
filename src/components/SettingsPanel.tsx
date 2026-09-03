@@ -2,11 +2,13 @@ import { useEffect, useState } from "react";
 import { revealItemInDir } from "@tauri-apps/plugin-opener";
 
 import {
+  getMcpInfo,
   getSyncStatus,
   initGitSync,
   pickVaultFolder,
   setGitRemote,
   setGitSyncInterval,
+  setMcpEnabled,
   setShortcut as setShortcutCommand,
   setTaskRollover,
   setTheme as setThemeCommand,
@@ -15,7 +17,7 @@ import {
 } from "../lib/commands";
 import { SHORTCUT_ACTIONS, formatShortcut, getShortcut, normalizeShortcut } from "../lib/shortcut";
 import { applyTheme } from "../lib/theme";
-import type { Config, SyncStatus, Theme, VaultStats } from "../lib/types";
+import type { Config, McpInfo, SyncStatus, Theme, VaultStats } from "../lib/types";
 import { Modal } from "./Modal";
 
 interface SettingsPanelProps {
@@ -26,6 +28,7 @@ interface SettingsPanelProps {
   onShortcutChanged: (config: Config) => void;
   onGitSyncIntervalChanged: (config: Config) => void;
   onTaskRolloverChanged: (config: Config) => void;
+  onMcpEnabledChanged: (config: Config) => void;
   onShowAbout: () => void;
 }
 
@@ -75,6 +78,7 @@ export function SettingsPanel({
   onShortcutChanged,
   onGitSyncIntervalChanged,
   onTaskRolloverChanged,
+  onMcpEnabledChanged,
   onShowAbout,
 }: SettingsPanelProps) {
   const [stats, setStats] = useState<VaultStats | null>(null);
@@ -84,12 +88,22 @@ export function SettingsPanel({
   const [syncStatus, setSyncStatus] = useState<SyncStatus | null>(null);
   const [syncBusy, setSyncBusy] = useState(false);
   const [remoteUrl, setRemoteUrl] = useState("");
+  const [mcpInfo, setMcpInfo] = useState<McpInfo | null>(null);
 
   useEffect(() => {
     void vaultStats()
       .then(setStats)
       .catch((err: unknown) => setError(String(err)));
   }, [config.vault_path]);
+
+  // Solo all'apertura del pannello: a differenza dello stato di sync Git,
+  // se il binario ramus-mcp compare/scompare non cambia mentre le
+  // Impostazioni restano aperte, nessun polling necessario.
+  useEffect(() => {
+    void getMcpInfo()
+      .then(setMcpInfo)
+      .catch((err: unknown) => setError(String(err)));
+  }, []);
 
   useEffect(() => {
     const refresh = () => {
@@ -157,6 +171,16 @@ export function SettingsPanel({
     try {
       const nextConfig = await setTaskRollover(enabled, days);
       onTaskRolloverChanged(nextConfig);
+    } catch (err) {
+      setError(String(err));
+    }
+  };
+
+  const handleMcpEnabledChange = async (enabled: boolean) => {
+    setError(null);
+    try {
+      const nextConfig = await setMcpEnabled(enabled);
+      onMcpEnabledChanged(nextConfig);
     } catch (err) {
       setError(String(err));
     }
@@ -310,6 +334,43 @@ export function SettingsPanel({
               ))}
             </select>
           </label>
+        )}
+      </section>
+
+      <section className="settings-section">
+        <h3>MCP</h3>
+        <label className="settings-mcp-toggle">
+          <input
+            type="checkbox"
+            checked={config.mcp_enabled}
+            onChange={(event) => void handleMcpEnabledChange(event.target.checked)}
+          />
+          Abilita server MCP
+        </label>
+        {config.mcp_enabled ? (
+          mcpInfo && (
+            <>
+              {mcpInfo.binary_found ? (
+                <>
+                  <pre className="settings-mcp-snippet">{mcpInfo.config_snippet}</pre>
+                  <p className="settings-mcp-help">
+                    Incollalo in <code>.mcp.json</code> (Claude Code) o{" "}
+                    <code>claude_desktop_config.json</code> (Claude Desktop). Riavvia il client
+                    dopo una modifica.
+                  </p>
+                </>
+              ) : (
+                <p className="settings-mcp-help">
+                  Binario <code>ramus-mcp</code> non trovato — esegui{" "}
+                  <code>cargo build -p ramus-mcp</code> e riapri questa sezione.
+                </p>
+              )}
+            </>
+          )
+        ) : (
+          <p className="settings-mcp-help">
+            Il server MCP si rifiuta di avviarsi finché non lo riattivi qui.
+          </p>
         )}
       </section>
 
