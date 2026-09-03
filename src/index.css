@@ -569,10 +569,10 @@ body {
 }
 
 .about-mascotte {
-  /* Il file ha viewBox 140x190 (non quadrato): height esplicita a un
-     valore diverso dal rapporto reale stirava/tagliava il disegno
-     (bug segnalato dall'utente) — solo width fissa, height segue il
-     rapporto naturale dell'SVG. */
+  /* L'SVG non è quadrato: height esplicita diversa dal rapporto reale
+     stirava/tagliava il disegno — solo width fissa, height segue il
+     rapporto naturale (vedi anche il viewBox corretto in mascotte.svg,
+     che prima tagliava un orecchio del disegno ruotato). */
   height: auto;
   margin-bottom: 0.5rem;
 }
