@@ -7,9 +7,9 @@ use std::sync::{Mutex, MutexGuard};
 use std::time::{Duration, Instant};
 
 use ramus_core::{
-    git_sync, rollover, watcher, Backlink, Block, Config, CoreError, Index, JournalDate, Page,
-    PageSummary, RolloverOutcome, SearchHit, SearchIndex, SyncState, SyncStatus, TaskHit, Theme,
-    Vault, VaultStats,
+    git_sync, rollover, watcher, Backlink, Block, Config, CoreError, Index, JournalDate, Locale,
+    Page, PageSummary, RolloverOutcome, SearchHit, SearchIndex, SyncState, SyncStatus, TaskHit,
+    Theme, Vault, VaultStats,
 };
 use serde::Serialize;
 use tauri::{AppHandle, Emitter, Manager, State};
@@ -263,6 +263,13 @@ pub fn vault_stats(state: State<AppState>) -> Result<VaultStats, CoreError> {
 pub fn set_theme(theme: Theme, state: State<AppState>) -> Result<Config, CoreError> {
     let mut config = lock_config(&state)?;
     config.set_theme(theme)?;
+    Ok(config.clone())
+}
+
+#[tauri::command]
+pub fn set_locale(locale: Locale, state: State<AppState>) -> Result<Config, CoreError> {
+    let mut config = lock_config(&state)?;
+    config.set_locale(locale)?;
     Ok(config.clone())
 }
 

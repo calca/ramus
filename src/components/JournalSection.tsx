@@ -1,4 +1,5 @@
 import { useCallback } from "react";
+import { useTranslation } from "react-i18next";
 
 import { formatJournalHeader, journalDateFromPath } from "../lib/journal";
 import type { Page } from "../lib/types";
@@ -24,6 +25,7 @@ export function JournalSection({
   registerElement,
   registerEditorHandle,
 }: JournalSectionProps) {
+  const { t } = useTranslation();
   const setElement = useCallback(
     (element: HTMLElement | null) => registerElement(page.path, element),
     [page.path, registerElement],
@@ -43,10 +45,7 @@ export function JournalSection({
         {formatJournalHeader(journalDateFromPath(page.path))}
       </h2>
       {externalChangeWarning && (
-        <div className="banner banner-warning">
-          Questo file è cambiato su disco. Ci sono modifiche non salvate: non è stato ricaricato per non
-          perderle.
-        </div>
+        <div className="banner banner-warning">{t("journal.externalChangeWarning")}</div>
       )}
       <Editor
         ref={setEditorHandle}

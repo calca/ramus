@@ -5,6 +5,8 @@
 // l'ordine cronologico, quindi non serve costruire `Date` per ordinare o
 // confrontare prima/dopo.
 
+import i18n from "../i18n";
+
 const JOURNAL_PATH_PATTERN = /^journals\/(\d{4}-\d{2}-\d{2})\.md$/;
 
 /** Data locale in formato ISO 8601 (YYYY-MM-DD). Mai `toISOString`: è UTC e
@@ -31,13 +33,27 @@ function parseIsoDate(iso: string): Date {
   return new Date(year, month - 1, day);
 }
 
-const WEEKDAY_FORMATTER = new Intl.DateTimeFormat("it-IT", { weekday: "long" });
-const PRETTY_DATE_FORMATTER = new Intl.DateTimeFormat("it-IT", { day: "numeric", month: "long" });
-const PRETTY_DATE_WITH_YEAR_FORMATTER = new Intl.DateTimeFormat("it-IT", {
-  day: "numeric",
-  month: "long",
-  year: "numeric",
-});
+/** `Intl.DateTimeFormat` locale corrispondente alla lingua i18next attiva
+ * (sempre "it"/"en" in pratica, mai "system" — vedi src/i18n/index.ts:
+ * `applyLocale` risolve "system" prima di chiamare `changeLanguage`). Letto
+ * ad ogni chiamata, non messo in cache in un const di modulo: deve
+ * riflettere un cambio di lingua a runtime da Impostazioni, non solo quella
+ * attiva al primo import. */
+function intlLocale(): string {
+  return i18n.language === "it" ? "it-IT" : "en-US";
+}
+
+function weekdayFormatter(): Intl.DateTimeFormat {
+  return new Intl.DateTimeFormat(intlLocale(), { weekday: "long" });
+}
+
+function prettyDateFormatter(): Intl.DateTimeFormat {
+  return new Intl.DateTimeFormat(intlLocale(), { day: "numeric", month: "long" });
+}
+
+function prettyDateWithYearFormatter(): Intl.DateTimeFormat {
+  return new Intl.DateTimeFormat(intlLocale(), { day: "numeric", month: "long", year: "numeric" });
+}
 
 function daysBetween(fromIso: string, toIso: string): number {
   const msPerDay = 24 * 60 * 60 * 1000;
@@ -49,9 +65,9 @@ function daysBetween(fromIso: string, toIso: string): number {
 
 function relativeLabel(iso: string): string | null {
   const days = daysBetween(iso, formatIsoDate(new Date()));
-  if (days === 0) return "Oggi";
-  if (days === 1) return "Ieri";
-  if (days >= 2 && days <= 6) return `${days} giorni fa`;
+  if (days === 0) return i18n.t("journal.today");
+  if (days === 1) return i18n.t("journal.yesterday");
+  if (days >= 2 && days <= 6) return i18n.t("journal.daysAgo", { count: days });
   return null;
 }
 
@@ -60,7 +76,7 @@ function relativeLabel(iso: string): string | null {
 export function formatPrettyDate(iso: string): string {
   const date = parseIsoDate(iso);
   const isCurrentYear = date.getFullYear() === new Date().getFullYear();
-  return (isCurrentYear ? PRETTY_DATE_FORMATTER : PRETTY_DATE_WITH_YEAR_FORMATTER).format(date);
+  return (isCurrentYear ? prettyDateFormatter() : prettyDateWithYearFormatter()).format(date);
 }
 
 const ISO_DATE_PATTERN = /^(\d{4})-(\d{1,2})-(\d{1,2})$/;
@@ -109,6 +125,6 @@ function capitalizeFirst(text: string): string {
  * assoluto ("Mercoledì 19 agosto"). Solo la prima lettera è maiuscola:
  * i nomi dei mesi in italiano restano minuscoli anche a metà stringa. */
 export function formatJournalHeader(iso: string): string {
-  const label = relativeLabel(iso) ?? WEEKDAY_FORMATTER.format(parseIsoDate(iso));
+  const label = relativeLabel(iso) ?? weekdayFormatter().format(parseIsoDate(iso));
   return capitalizeFirst(`${label} ${formatPrettyDate(iso)}`);
 }

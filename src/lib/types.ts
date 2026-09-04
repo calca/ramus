@@ -20,9 +20,12 @@ export interface PageSummary {
 
 export type Theme = "light" | "dark" | "system";
 
+export type Locale = "it" | "en" | "system";
+
 export interface Config {
   vault_path: string;
   theme: Theme;
+  locale: Locale;
   /** Chiave = id azione stabile ("command_palette", "cheatsheet", ...). */
   shortcuts: Record<string, string>;
   git_sync_interval_minutes: number;

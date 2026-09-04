@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 
 import { BacklinksSection } from "./BacklinksSection";
 import type { EditorHandle } from "./Editor";
@@ -26,6 +27,7 @@ function backlinkTarget(page: Page): string {
 }
 
 export function PageView({ page, onDirtyChange, onLinkClick, onBack, registerEditorHandle }: PageViewProps) {
+  const { t } = useTranslation();
   const [backlinks, setBacklinks] = useState<Backlink[]>([]);
 
   useEffect(() => {
@@ -44,7 +46,7 @@ export function PageView({ page, onDirtyChange, onLinkClick, onBack, registerEdi
     <div className="page-view">
       <div className="page-view-content">
         <button type="button" className="page-view-back" onClick={onBack}>
-          ← Journal
+          {t("pageView.backToJournal")}
         </button>
         <h1 className="page-view-title">{page.title ?? page.path}</h1>
         <Editor

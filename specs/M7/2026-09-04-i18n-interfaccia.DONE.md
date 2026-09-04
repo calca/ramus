@@ -1,6 +1,6 @@
 # Multilingua: interfaccia (react-i18next, italiano + inglese)
 
-Stato: proposta, da implementare. Prima delle due spec i18n (questa:
+Stato: implementata. Prima delle due spec i18n (questa:
 l'interfaccia; la seconda,
 `specs/M7/2026-09-04-i18n-errori.TODO.md`: i messaggi
 d'errore, dipende da questa). Decisioni già confermate dall'utente:
@@ -144,12 +144,116 @@ vitest analogo a `parseTypedDate`/`getShortcut` (stub di `navigator`,
 stesso pattern già usato in `shortcut.test.ts` per evitare che il
 risultato dipenda dalla macchina che esegue i test).
 
+## Scoperte e deviazioni durante l'implementazione
+
+**Le etichette derivate da array a livello di modulo non possono essere
+stringhe già tradotte.** `SHORTCUT_ACTIONS` (`src/lib/shortcut.ts`) ed
+`EDITOR_SHORTCUTS` (`Cheatsheet.tsx`) erano array costanti definiti al
+caricamento del modulo, con `label` già in italiano. Se quel campo
+diventasse `i18next.t("...")` chiamato una volta sola lì (lettura
+letterale della spec, "si usa l'API imperativa i18next.t(...)"), il
+risultato resterebbe congelato nella lingua attiva al primo import per
+sempre — un cambio di lingua da Impostazioni non aggiornerebbe più
+Cheatsheet/SettingsPanel finché l'app non viene riavviata, il che
+contraddice esplicitamente "verifica manuale... confermare che
+testo/date cambino subito senza riavvio" più sotto in questa stessa
+spec. Soluzione: gli array tengono solo `labelKey` (una chiave, non una
+stringa tradotta); `t(action.labelKey)` viene chiamato nel componente
+che la mostra (`Cheatsheet.tsx`, `SettingsPanel.tsx`, via
+`useTranslation()`), che react-i18next ri-renderizza da solo ad ogni
+`changeLanguage()`. `paletteActions.ts` (non un componente) resta
+sull'API imperativa come da spec, ma dentro `buildActions()` — chiamata
+di nuovo ad ogni render di `App.tsx` mentre la palette è aperta, quindi
+comunque reattiva — non in un array di modulo.
+
+**Lingua iniziale di i18next vs `Config.locale` asincrono.** `Config`
+si legge solo con un `invoke` Tauri asincrono (in `App.tsx`, dopo il
+render), ma `src/i18n/index.ts` deve inizializzare l'istanza i18next
+*prima* del render (`main.tsx`). `init()` parte quindi con
+`resolveSystemLocale()` come lingua iniziale — corretto nel caso comune,
+dato che anche `Config.locale` di default è `System` lato Rust — e
+`applyLocale(cfg.locale)` la corregge nello stesso effetto di
+`App.tsx` che già chiama `applyTheme(cfg.theme)`, non appena `Config`
+torna dal backend. Per un utente con una preferenza esplicita diversa
+dal sistema c'è quindi un breve istante (un giro di `invoke`, non
+percepibile nella pratica) in cui l'interfaccia usa la lingua di
+sistema prima di correggersi — stesso principio già in uso per il tema.
+
+**"Lingua" ha una sezione propria nella sidebar** di Impostazioni,
+subito dopo "Tema" — non annidata dentro "Tema": la sidebar è già una
+lista piatta di categorie indipendenti (Vault, Tema, Scorciatoie, Task,
+MCP, Sync, Informazioni), stesso trattamento per coerenza. Stesso
+controllo a radio button già usato per Chiaro/Scuro/Sistema.
+
+**I due paragrafi di aiuto MCP con `<code>` incorporato** ("Incollalo in
+`.mcp.json`... o `claude_desktop_config.json`...", "Binario `ramus-mcp`
+non trovato...") non si prestavano a un semplice `t()` con interpolazione
+di stringa (avrebbero perso gli elementi `<code>`, o richiesto
+`dangerouslySetInnerHTML`). Usato invece il componente `<Trans>` di
+react-i18next con `components={[<code key="0" />, <code key="1" />]}` e
+la sintassi `<0>...</0>`/`<1>...</1>` nel dizionario — l'unico punto del
+progetto che usa `<Trans>` invece di `t()`.
+
+**Test esistenti che assumevano l'italiano.** `journal.test.ts` e
+`paletteActions.test.ts` asserivano stringhe italiane letterali
+("Oggi", "Comprimi finestra", ...). La lingua iniziale di i18next segue
+`navigator.language`, che in Node riflette il locale reale della
+macchina (`LANG`/`LC_ALL`) — stesso problema già documentato per
+`IS_MAC` in `shortcut.test.ts`. Entrambi i file ora forzano
+`i18next.changeLanguage("it")` in un `beforeAll` prima delle asserzioni,
+invece di affidarsi alla lingua rilevata. Aggiunto anche un blocco
+`describe` in inglese a `journal.test.ts` (non richiesto esplicitamente
+dalla spec, ma a costo quasi nullo) per verificare che sia le etichette
+relative sia il locale `Intl.DateTimeFormat` seguano davvero
+`i18next.language` a runtime.
+
+**Pluralizzazione: solo dove il codice già trattava un conteggio.**
+`settings.task.days`/`settings.sync.minutes`/`journal.daysAgo` usano le
+convenzioni i18next `_one`/`_other` (erano già valori enumerati o un
+conteggio esplicito nel codice originale). `settings.vault.stats`
+("N journal, N pagine") non è stata pluralizzata: il codice originale
+non gestiva il singolare nemmeno in italiano ("1 journal, 1 pagine" era
+già il comportamento pre-esistente) — tradotta 1:1 senza introdurre un
+comportamento nuovo non richiesto dalla spec.
+
+**Nessuna deviazione sul resto**: `Locale` (Rust) rispecchia `Theme`
+esattamente come descritto, `set_locale` rispecchia `set_theme`,
+`src/i18n/` ha la forma descritta (dizionari annidati per area invece
+che piatti — esplicitamente lasciato a scelta dalla spec), niente
+toccato in `ramus-mcp` né in `CoreError`/messaggi d'errore Rust (fuori
+scope, spec separata).
+
 ## Verifica
 
-`cargo test`, `cargo clippy --all-targets -D warnings`, `cargo fmt
---check`, `npm run typecheck`, `npm run test` — tutti puliti prima di
-chiudere. Verifica manuale in `npm run tauri dev`: cambiare lingua da
-Impostazioni, confermare che testo/date cambino subito senza riavvio;
-avviare con `LANG`/locale di sistema in inglese (o forzare
-temporaneamente `resolveSystemLocale`) per verificare il rilevamento
-automatico.
+Eseguiti e tutti puliti, nell'ordine:
+
+- `cargo test` — 123 test in `ramus-core` (inclusi i 2 nuovi di
+  `Locale`: `config_without_locale_field_defaults_to_system`,
+  `locale_serializes_lowercase`), 16 in `ramus-mcp` (invariati,
+  `ramus-mcp` non tocca `Locale`), 0 in `ramus`/`ramus_lib` (nessun
+  test unitario lì, invariato).
+- `cargo clippy --all-targets -- -D warnings` — nessun warning.
+- `cargo fmt --all -- --check` — pulito.
+- `npm run typecheck` — pulito (`strict`, `noUnusedLocals`,
+  `noUnusedParameters` tutti attivi, nessun `any` introdotto).
+- `npm run test` — 86 test, tutti verdi (77 preesistenti + 9 nuovi:
+  5 in `resolveSystemLocale.test.ts`, 4 aggiunti a `journal.test.ts`
+  per il blocco inglese; `paletteActions.test.ts` invariato nel numero
+  di test ma con lingua forzata esplicitamente).
+- `npm run build` (non richiesto dalla checklist, eseguito comunque
+  come controllo aggiuntivo) — build di produzione pulita, nessun
+  errore da `tsc`/Vite legato a i18next/react-i18next/`<Trans>`.
+
+**Conteggio chiavi**: 93 chiavi foglia in `it.ts`, 93 in `en.ts` —
+verificato programmaticamente che i due insiemi di chiavi coincidano
+esattamente (nessuna chiave mancante da un lato o dall'altro).
+
+**Non verificato in questa sessione** (ambiente non interattivo, nessun
+`npm run tauri dev` disponibile qui): il giro manuale reale — aprire
+l'app, cambiare lingua da Impostazioni e vedere testo/date cambiare
+subito senza riavvio; avviare con `LANG`/locale di sistema in inglese
+per verificare il rilevamento automatico. Il codice è stato scritto e
+ragionato esplicitamente per questo requisito (vedi "Scoperte" sopra,
+in particolare il punto su `labelKey`/`useTranslation()`), ma la
+verifica visiva/interattiva resta da fare da chi rivede questa spec
+prima di committare.

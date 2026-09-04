@@ -1,9 +1,18 @@
 // formatJournalHeader dipende da "oggi" (etichette relative "Oggi"/"Ieri"/
 // "N giorni fa") — orologio di sistema fissato con vi.setSystemTime per
 // non far dipendere l'esito del test dal giorno reale in cui gira.
+//
+// formatJournalHeader/formatPrettyDate dipendono anche dalla lingua attiva
+// in i18next (src/i18n/index.ts la inizializza da navigator.language, che
+// in Node riflette il LANG/LC_ALL reale della macchina — stesso problema
+// documentato in src/lib/shortcut.test.ts per IS_MAC). Le asserzioni qui
+// sotto sono scritte per l'italiano: si forza esplicitamente la lingua
+// invece di affidarsi a quella rilevata, per non far dipendere l'esito dal
+// locale della macchina/CI che esegue i test.
 
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 
+import i18n from "../i18n";
 import {
   formatIsoDate,
   formatJournalHeader,
@@ -11,6 +20,10 @@ import {
   journalDateFromPath,
   parseTypedDate,
 } from "./journal";
+
+beforeAll(async () => {
+  await i18n.changeLanguage("it");
+});
 
 describe("formatIsoDate", () => {
   it("formats a local date as YYYY-MM-DD, zero-padded", () => {
@@ -117,5 +130,43 @@ describe("formatJournalHeader", () => {
     // 2026-08-20 è più di 7 giorni prima del 2026-09-03: niente etichetta
     // relativa, solo il giorno della settimana.
     expect(formatJournalHeader("2026-08-20")).toMatch(/^[A-ZÀ-Ü][a-zà-ü]+ 20 agosto$/);
+  });
+});
+
+// Stesse asserzioni della lingua italiana sopra, ma in inglese — verifica
+// sia la traduzione delle etichette relative sia il cambio di locale Intl
+// (Intl.DateTimeFormat("en-US", ...) invece di "it-IT").
+describe("formatJournalHeader/formatPrettyDate in English", () => {
+  beforeAll(async () => {
+    await i18n.changeLanguage("en");
+  });
+
+  afterAll(async () => {
+    await i18n.changeLanguage("it");
+  });
+
+  beforeEach(() => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date(2026, 8, 3));
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  it("formats the pretty date with the English month name", () => {
+    expect(formatPrettyDate("2026-08-15")).toBe("August 15");
+  });
+
+  it("labels today as Today", () => {
+    expect(formatJournalHeader("2026-09-03")).toBe("Today September 3");
+  });
+
+  it("labels yesterday as Yesterday", () => {
+    expect(formatJournalHeader("2026-09-02")).toBe("Yesterday September 2");
+  });
+
+  it("labels 2-6 days ago as relative", () => {
+    expect(formatJournalHeader("2026-08-30")).toBe("4 days ago August 30");
   });
 });

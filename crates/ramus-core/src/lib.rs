@@ -12,7 +12,7 @@ pub mod vault;
 pub mod watcher;
 
 pub use block::{Block, Page};
-pub use config::{Config, Theme};
+pub use config::{Config, Locale, Theme};
 pub use error::CoreError;
 pub use git_sync::{SyncState, SyncStatus};
 pub use index::{Backlink, Index, SyncOutcome, TaskHit};

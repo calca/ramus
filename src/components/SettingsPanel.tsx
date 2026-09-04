@@ -1,8 +1,11 @@
 import { useEffect, useState } from "react";
 import { getVersion } from "@tauri-apps/api/app";
 import { openUrl, revealItemInDir } from "@tauri-apps/plugin-opener";
+import type { TFunction } from "i18next";
+import { Trans, useTranslation } from "react-i18next";
 
 import mascotteUrl from "../../assets/mascotte.svg";
+import { applyLocale } from "../i18n";
 import {
   getMcpInfo,
   getSyncStatus,
@@ -10,6 +13,7 @@ import {
   pickVaultFolder,
   setGitRemote,
   setGitSyncInterval,
+  setLocale as setLocaleCommand,
   setMcpEnabled,
   setShortcut as setShortcutCommand,
   setTaskRollover,
@@ -19,7 +23,7 @@ import {
 } from "../lib/commands";
 import { SHORTCUT_ACTIONS, formatShortcut, getShortcut, normalizeShortcut } from "../lib/shortcut";
 import { applyTheme } from "../lib/theme";
-import type { Config, McpInfo, SyncStatus, Theme, VaultStats } from "../lib/types";
+import type { Config, Locale, McpInfo, SyncStatus, Theme, VaultStats } from "../lib/types";
 import { Modal } from "./Modal";
 
 const REPO_URL = "https://github.com/calca/ramus";
@@ -29,6 +33,7 @@ interface SettingsPanelProps {
   onClose: () => void;
   onVaultChanged: (config: Config) => void;
   onThemeChanged: (config: Config) => void;
+  onLocaleChanged: (config: Config) => void;
   onShortcutChanged: (config: Config) => void;
   onGitSyncIntervalChanged: (config: Config) => void;
   onTaskRolloverChanged: (config: Config) => void;
@@ -38,54 +43,53 @@ interface SettingsPanelProps {
   initialSection?: SettingsSectionId;
 }
 
-const THEME_LABELS: Record<Theme, string> = {
-  light: "Chiaro",
-  dark: "Scuro",
-  system: "Sistema",
-};
-
 const SYNC_INTERVAL_OPTIONS = [5, 10, 30, 60];
 const TASK_ROLLOVER_DAY_OPTIONS = [3, 7, 14, 30];
 
-type SettingsSectionId = "vault" | "theme" | "shortcuts" | "task" | "mcp" | "sync" | "about";
+type SettingsSectionId = "vault" | "theme" | "locale" | "shortcuts" | "task" | "mcp" | "sync" | "about";
 
-const SETTINGS_SECTIONS: { id: SettingsSectionId; label: string }[] = [
-  { id: "vault", label: "Vault" },
-  { id: "theme", label: "Tema" },
-  { id: "shortcuts", label: "Scorciatoie" },
-  { id: "task", label: "Task" },
-  { id: "mcp", label: "MCP" },
-  { id: "sync", label: "Sync" },
-  { id: "about", label: "Informazioni" },
+const SETTINGS_SECTION_IDS: SettingsSectionId[] = [
+  "vault",
+  "theme",
+  "locale",
+  "shortcuts",
+  "task",
+  "mcp",
+  "sync",
+  "about",
 ];
 
 /** Polling leggero mentre il pannello Sync è aperto: si ferma alla
  * chiusura (l'effetto che lo avvia viene smontato insieme al pannello). */
 const SYNC_STATUS_POLL_MS = 30_000;
 
-function syncStatusLabel(status: SyncStatus): string {
+// syncStatusLabel/syncActionLabel non sono componenti React: prendono `t`
+// come parametro (dalla chiamata a useTranslation() del componente) invece
+// di chiamare l'hook loro stesse — non è legale chiamare un hook fuori da
+// un componente/hook React.
+function syncStatusLabel(status: SyncStatus, t: TFunction): string {
   switch (status.state) {
     case "conflict":
-      return "Conflitto: sync automatica ferma";
+      return t("settings.sync.status.conflict");
     case "offline":
-      return "Rete non raggiungibile, riprovo al prossimo giro";
+      return t("settings.sync.status.offline");
     case "syncing":
-      return "Sincronizzazione in corso…";
+      return t("settings.sync.status.syncing");
     default:
-      return status.dirty
-        ? "Modifiche in attesa del prossimo commit automatico"
-        : "Tutto sincronizzato";
+      return status.dirty ? t("settings.sync.status.dirty") : t("settings.sync.status.clean");
   }
 }
 
 /** Un solo bottone per l'intero flusso (attiva/collega/aggiorna remote)
  * invece di due azioni distinte da scoprire — vedi discussione utente su
  * "non è chiaro come collegare git". */
-function syncActionLabel(status: SyncStatus | null): string {
+function syncActionLabel(status: SyncStatus | null, t: TFunction): string {
   if (!status?.enabled) {
-    return "Attiva sync";
+    return t("settings.sync.action.activate");
   }
-  return status.state === "noremote" ? "Collega remote" : "Aggiorna remote";
+  return status.state === "noremote"
+    ? t("settings.sync.action.connect")
+    : t("settings.sync.action.update");
 }
 
 export function SettingsPanel({
@@ -93,12 +97,14 @@ export function SettingsPanel({
   onClose,
   onVaultChanged,
   onThemeChanged,
+  onLocaleChanged,
   onShortcutChanged,
   onGitSyncIntervalChanged,
   onTaskRolloverChanged,
   onMcpEnabledChanged,
   initialSection,
 }: SettingsPanelProps) {
+  const { t } = useTranslation();
   const [stats, setStats] = useState<VaultStats | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -151,7 +157,7 @@ export function SettingsPanel({
       if (!picked || picked === config.vault_path) {
         return;
       }
-      if (!window.confirm(`Apro il vault in ${picked}. Procedere?`)) {
+      if (!window.confirm(t("settings.vault.confirmChange", { path: picked }))) {
         return;
       }
       setBusy(true);
@@ -179,6 +185,17 @@ export function SettingsPanel({
       const nextConfig = await setThemeCommand(theme);
       applyTheme(theme);
       onThemeChanged(nextConfig);
+    } catch (err) {
+      setError(String(err));
+    }
+  };
+
+  const handleLocaleChange = async (locale: Locale) => {
+    setError(null);
+    try {
+      const nextConfig = await setLocaleCommand(locale);
+      applyLocale(locale);
+      onLocaleChanged(nextConfig);
     } catch (err) {
       setError(String(err));
     }
@@ -267,11 +284,37 @@ export function SettingsPanel({
     return () => window.removeEventListener("keydown", onKeyDown, { capture: true });
   }, [recordingActionId, onShortcutChanged]);
 
+  // Non dei `const` a livello di modulo (come lo era THEME_LABELS prima di
+  // questa spec): devono chiamare t(), quindi vanno calcolati dentro al
+  // componente, ricalcolati automaticamente ad ogni render — react-i18next
+  // ri-renderizza da solo ogni componente con useTranslation() quando la
+  // lingua cambia (vedi src/i18n/index.ts).
+  const THEME_LABELS: Record<Theme, string> = {
+    light: t("settings.theme.light"),
+    dark: t("settings.theme.dark"),
+    system: t("settings.theme.system"),
+  };
+  const LOCALE_LABELS: Record<Locale, string> = {
+    it: t("settings.locale.it"),
+    en: t("settings.locale.en"),
+    system: t("settings.locale.system"),
+  };
+  const SECTION_LABELS: Record<SettingsSectionId, string> = {
+    vault: t("settings.sections.vault"),
+    theme: t("settings.sections.theme"),
+    locale: t("settings.sections.locale"),
+    shortcuts: t("settings.sections.shortcuts"),
+    task: t("settings.sections.task"),
+    mcp: t("settings.sections.mcp"),
+    sync: t("settings.sections.sync"),
+    about: t("settings.sections.about"),
+  };
+
   return (
-    <Modal onClose={onClose} ariaLabel="Impostazioni">
+    <Modal onClose={onClose} ariaLabel={t("settings.title")}>
       <header className="settings-panel-header">
-        <h2>Impostazioni</h2>
-        <button type="button" onClick={onClose} aria-label="Chiudi">
+        <h2>{t("settings.title")}</h2>
+        <button type="button" onClick={onClose} aria-label={t("common.close")}>
           ✕
         </button>
       </header>
@@ -280,14 +323,14 @@ export function SettingsPanel({
 
       <div className="settings-body">
         <nav className="settings-sidebar">
-          {SETTINGS_SECTIONS.map((section) => (
+          {SETTINGS_SECTION_IDS.map((id) => (
             <button
-              key={section.id}
+              key={id}
               type="button"
-              aria-current={activeSection === section.id ? "true" : undefined}
-              onClick={() => setActiveSection(section.id)}
+              aria-current={activeSection === id ? "true" : undefined}
+              onClick={() => setActiveSection(id)}
             >
-              {section.label}
+              {SECTION_LABELS[id]}
             </button>
           ))}
         </nav>
@@ -295,19 +338,22 @@ export function SettingsPanel({
         <div className="settings-content">
         {activeSection === "vault" && (
         <section className="settings-section">
-          <h3>Vault</h3>
+          <h3>{SECTION_LABELS.vault}</h3>
           <p className="settings-vault-path">{config.vault_path}</p>
           <div className="settings-vault-actions">
             <button type="button" disabled={busy} onClick={() => void handleChangeVault()}>
-              Cambia
+              {t("settings.vault.change")}
             </button>
             <button type="button" onClick={() => void handleOpenInFileManager()}>
-              Apri nel file manager
+              {t("settings.vault.openInFileManager")}
             </button>
           </div>
           {stats && (
             <p className="settings-vault-stats">
-              {stats.journal_count} journal, {stats.page_count} pagine
+              {t("settings.vault.stats", {
+                journals: stats.journal_count,
+                pages: stats.page_count,
+              })}
             </p>
           )}
         </section>
@@ -315,7 +361,7 @@ export function SettingsPanel({
 
         {activeSection === "theme" && (
         <section className="settings-section">
-          <h3>Tema</h3>
+          <h3>{SECTION_LABELS.theme}</h3>
           <div className="settings-theme-options">
             {(Object.keys(THEME_LABELS) as Theme[]).map((option) => (
               <label key={option}>
@@ -333,20 +379,40 @@ export function SettingsPanel({
         </section>
         )}
 
+        {activeSection === "locale" && (
+        <section className="settings-section">
+          <h3>{SECTION_LABELS.locale}</h3>
+          <div className="settings-theme-options">
+            {(Object.keys(LOCALE_LABELS) as Locale[]).map((option) => (
+              <label key={option}>
+                <input
+                  type="radio"
+                  name="locale"
+                  value={option}
+                  checked={config.locale === option}
+                  onChange={() => void handleLocaleChange(option)}
+                />
+                {LOCALE_LABELS[option]}
+              </label>
+            ))}
+          </div>
+        </section>
+        )}
+
         {activeSection === "shortcuts" && (
         <section className="settings-section">
-          <h3>Scorciatoie</h3>
+          <h3>{SECTION_LABELS.shortcuts}</h3>
           <ul className="settings-shortcut-list">
             {SHORTCUT_ACTIONS.map((action) => (
               <li key={action.id}>
-                <span>{action.label}</span>
+                <span>{t(action.labelKey)}</span>
                 <button
                   type="button"
                   className="settings-shortcut-button"
                   onClick={() => setRecordingActionId(action.id)}
                 >
                   {recordingActionId === action.id
-                    ? "Premi una combinazione…"
+                    ? t("settings.shortcuts.recording")
                     : formatShortcut(getShortcut(config.shortcuts, action.id))}
                 </button>
               </li>
@@ -357,7 +423,7 @@ export function SettingsPanel({
 
         {activeSection === "task" && (
         <section className="settings-section">
-          <h3>Task</h3>
+          <h3>{SECTION_LABELS.task}</h3>
           <label className="settings-task-rollover-toggle">
             <input
               type="checkbox"
@@ -366,11 +432,11 @@ export function SettingsPanel({
                 void handleTaskRolloverChange(event.target.checked, config.task_rollover_days)
               }
             />
-            Sposta automaticamente a oggi i task non fatti rimasti indietro
+            {t("settings.task.rolloverToggle")}
           </label>
           {config.task_rollover_enabled && (
             <label className="settings-task-rollover-days">
-              Considera gli ultimi
+              {t("settings.task.rolloverDaysLabel")}
               <select
                 value={config.task_rollover_days}
                 onChange={(event) =>
@@ -379,7 +445,7 @@ export function SettingsPanel({
               >
                 {TASK_ROLLOVER_DAY_OPTIONS.map((days) => (
                   <option key={days} value={days}>
-                    {days} giorni
+                    {t("settings.task.days", { count: days })}
                   </option>
                 ))}
               </select>
@@ -390,14 +456,14 @@ export function SettingsPanel({
 
         {activeSection === "mcp" && (
         <section className="settings-section">
-          <h3>MCP</h3>
+          <h3>{SECTION_LABELS.mcp}</h3>
           <label className="settings-mcp-toggle">
             <input
               type="checkbox"
               checked={config.mcp_enabled}
               onChange={(event) => void handleMcpEnabledChange(event.target.checked)}
             />
-            Abilita server MCP
+            {t("settings.mcp.enable")}
           </label>
           {config.mcp_enabled ? (
             mcpInfo && (
@@ -406,52 +472,40 @@ export function SettingsPanel({
                   <>
                     <pre className="settings-mcp-snippet">{mcpInfo.config_snippet}</pre>
                     <p className="settings-mcp-help">
-                      Incollalo in <code>.mcp.json</code> (Claude Code) o{" "}
-                      <code>claude_desktop_config.json</code> (Claude Desktop). Riavvia il client
-                      dopo una modifica.
+                      <Trans i18nKey="settings.mcp.help.pasteSnippet" components={[<code key="0" />, <code key="1" />]} />
                     </p>
                   </>
                 ) : (
                   <p className="settings-mcp-help">
-                    Binario <code>ramus-mcp</code> non trovato — esegui{" "}
-                    <code>cargo build -p ramus-mcp</code> e riapri questa sezione.
+                    <Trans i18nKey="settings.mcp.help.notFound" components={[<code key="0" />, <code key="1" />]} />
                   </p>
                 )}
               </>
             )
           ) : (
-            <p className="settings-mcp-help">
-              Il server MCP si rifiuta di avviarsi finché non lo riattivi qui.
-            </p>
+            <p className="settings-mcp-help">{t("settings.mcp.help.disabled")}</p>
           )}
         </section>
         )}
 
         {activeSection === "sync" && (
         <section className="settings-section">
-          <h3>Sync</h3>
-          <p className="settings-sync-intro">
-            Versiona il vault con Git — anche solo in locale, senza un
-            repository remoto, protegge da una scrittura andata male: ogni
-            modifica diventa un commit recuperabile. Lascia il campo vuoto
-            per questo (nessun account, nessun servizio esterno), oppure
-            incolla l'URL di un repository per sincronizzarlo anche fra
-            dispositivi.
-          </p>
+          <h3>{SECTION_LABELS.sync}</h3>
+          <p className="settings-sync-intro">{t("settings.sync.intro")}</p>
 
           {syncStatus?.enabled && syncStatus.state === "conflict" && (
-            <div className="banner banner-error">
-              Il vault locale e quello remoto sono divergenti, serve
-              intervento manuale: apri un terminale nel vault e risolvi con
-              git.
-            </div>
+            <div className="banner banner-error">{t("settings.sync.conflictBanner")}</div>
           )}
 
           {syncStatus?.enabled && (
             <p className="settings-sync-status">
-              {syncStatusLabel(syncStatus)}
+              {syncStatusLabel(syncStatus, t)}
               {syncStatus.last_commit_at !== null && (
-                <> — ultimo commit {new Date(syncStatus.last_commit_at * 1000).toLocaleString()}</>
+                <>
+                  {t("settings.sync.lastCommit", {
+                    datetime: new Date(syncStatus.last_commit_at * 1000).toLocaleString(),
+                  })}
+                </>
               )}
             </p>
           )}
@@ -459,7 +513,7 @@ export function SettingsPanel({
           <div className="settings-sync-remote">
             <input
               type="text"
-              placeholder="git@github.com:utente/vault.git (opzionale)"
+              placeholder={t("settings.sync.remotePlaceholder")}
               value={remoteUrl}
               onChange={(event) => setRemoteUrl(event.target.value)}
             />
@@ -468,25 +522,21 @@ export function SettingsPanel({
               disabled={syncBusy || (syncStatus?.enabled === true && !remoteUrl.trim())}
               onClick={() => void handleSyncAction()}
             >
-              {syncActionLabel(syncStatus)}
+              {syncActionLabel(syncStatus, t)}
             </button>
           </div>
-          <p className="settings-sync-help">
-            Su GitHub, GitLab o Bitbucket: apri il repository, premi "Code"
-            (o "Clone"), copia l'URL SSH (consigliato, richiede una chiave
-            già aggiunta al tuo account) o HTTPS, e incollalo qui sopra.
-          </p>
+          <p className="settings-sync-help">{t("settings.sync.help")}</p>
 
           {syncStatus?.enabled && (
             <label className="settings-sync-interval">
-              Intervallo di sync
+              {t("settings.sync.intervalLabel")}
               <select
                 value={config.git_sync_interval_minutes}
                 onChange={(event) => void handleSyncIntervalChange(Number(event.target.value))}
               >
                 {SYNC_INTERVAL_OPTIONS.map((minutes) => (
                   <option key={minutes} value={minutes}>
-                    {minutes} minuti
+                    {t("settings.sync.minutes", { count: minutes })}
                   </option>
                 ))}
               </select>
@@ -500,21 +550,19 @@ export function SettingsPanel({
           <div className="about-content">
             <img
               src={mascotteUrl}
-              alt="Stecco, la mascotte di Ramus"
+              alt={t("settings.about.mascotteAlt")}
               className="about-mascotte"
               width={128}
             />
             <h3 className="about-name">Ramus</h3>
-            {version && <p className="about-version">v{version}</p>}
-            <p className="about-tagline">
-              App desktop di journaling, outliner a blocchi su file markdown locali.
-            </p>
+            {version && <p className="about-version">{t("settings.about.version", { version })}</p>}
+            <p className="about-tagline">{t("settings.about.tagline")}</p>
             <button
               type="button"
               className="settings-about-link"
               onClick={() => void openUrl(REPO_URL)}
             >
-              Codice sorgente
+              {t("settings.about.sourceCode")}
             </button>
           </div>
         </section>

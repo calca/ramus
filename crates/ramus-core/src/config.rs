@@ -18,6 +18,18 @@ pub enum Theme {
     System,
 }
 
+/// Lingua dell'interfaccia. `System` segue `navigator.language` (vedi
+/// `src/i18n/resolveSystemLocale.ts`), stesso principio di `Theme::System`
+/// per `prefers-color-scheme`.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Default)]
+#[serde(rename_all = "lowercase")]
+pub enum Locale {
+    It,
+    En,
+    #[default]
+    System,
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Config {
     pub vault_path: PathBuf,
@@ -26,6 +38,10 @@ pub struct Config {
     /// deserializzazione fallirebbe al primo avvio dopo l'aggiornamento.
     #[serde(default)]
     pub theme: Theme,
+    /// Stessa migrazione sicura di `theme`: `config.json` scritti prima
+    /// di questo campo non hanno la chiave `locale`.
+    #[serde(default)]
+    pub locale: Locale,
     /// Scorciatoie app-level configurabili, chiave = id azione stabile
     /// (es. "command_palette", "cheatsheet"), valore = stringa canonica
     /// ("Mod+K", "Mod" = Cmd su macOS, Ctrl altrove — normalizzato lato
@@ -167,6 +183,7 @@ impl Config {
             let config = Config {
                 vault_path: default_vault_path,
                 theme: Theme::default(),
+                locale: Locale::default(),
                 shortcuts: default_shortcuts(),
                 git_sync_interval_minutes: default_git_sync_interval_minutes(),
                 task_rollover_enabled: default_task_rollover_enabled(),
@@ -188,6 +205,12 @@ impl Config {
     /// Aggiorna e persiste il tema.
     pub fn set_theme(&mut self, theme: Theme) -> Result<(), CoreError> {
         self.theme = theme;
+        self.save(&self.config_path)
+    }
+
+    /// Aggiorna e persiste la lingua.
+    pub fn set_locale(&mut self, locale: Locale) -> Result<(), CoreError> {
+        self.locale = locale;
         self.save(&self.config_path)
     }
 
@@ -236,6 +259,18 @@ mod tests {
     #[test]
     fn theme_serializes_lowercase() {
         assert_eq!(serde_json::to_string(&Theme::Dark).unwrap(), "\"dark\"");
+    }
+
+    #[test]
+    fn config_without_locale_field_defaults_to_system() {
+        let json = r#"{"vault_path":"/home/x/Journal"}"#;
+        let config: Config = serde_json::from_str(json).unwrap();
+        assert_eq!(config.locale, Locale::System);
+    }
+
+    #[test]
+    fn locale_serializes_lowercase() {
+        assert_eq!(serde_json::to_string(&Locale::It).unwrap(), "\"it\"");
     }
 
     #[test]
@@ -417,6 +452,7 @@ mod tests {
         let mut config = Config {
             vault_path: dir.0.clone(),
             theme: Theme::default(),
+            locale: Locale::default(),
             shortcuts: default_shortcuts(),
             git_sync_interval_minutes: default_git_sync_interval_minutes(),
             task_rollover_enabled: default_task_rollover_enabled(),

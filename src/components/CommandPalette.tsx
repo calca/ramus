@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { KeyboardEvent as ReactKeyboardEvent, ReactNode } from "react";
+import { useTranslation } from "react-i18next";
 
 import { listPages, search } from "../lib/commands";
 import { formatJournalHeader, formatPrettyDate, journalDateFromPath, parseTypedDate } from "../lib/journal";
@@ -46,14 +47,6 @@ function highlightMatch(text: string, query: string): ReactNode {
 
 const DEBOUNCE_MS = 250;
 
-const SECTION_LABELS: Record<PaletteItem["kind"], string> = {
-  action: "Azioni",
-  recent: "Recenti",
-  hit: "Risultati",
-  create: "Crea",
-  date: "Data",
-};
-
 /** Evoluzione di SearchPanel (M2): ricerca full-text invariata, più
  * azioni dell'app, pagine aperte di recente e creazione pagine — vedi
  * specs/M4/2026-09-02-command-palette.TODO.md. */
@@ -64,6 +57,14 @@ export function CommandPalette({
   onClose,
   onSelect,
 }: CommandPaletteProps) {
+  const { t } = useTranslation();
+  const SECTION_LABELS: Record<PaletteItem["kind"], string> = {
+    action: t("palette.section.actions"),
+    recent: t("palette.section.recent"),
+    hit: t("palette.section.results"),
+    create: t("palette.section.create"),
+    date: t("palette.section.date"),
+  };
   const [query, setQuery] = useState("");
   const [hits, setHits] = useState<SearchHit[]>([]);
   const [pages, setPages] = useState<PageSummary[]>([]);
@@ -143,12 +144,12 @@ export function CommandPalette({
   let lastKind: PaletteItem["kind"] | null = null;
 
   return (
-    <Modal onClose={onClose} ariaLabel="Comandi" panelClassName="palette-panel">
+    <Modal onClose={onClose} ariaLabel={t("app.commands")} panelClassName="palette-panel">
       <input
         ref={inputRef}
         type="text"
         className="palette-input"
-        placeholder="Cerca, crea o esegui un comando…"
+        placeholder={t("palette.searchPlaceholder")}
         value={query}
         onChange={(event) => setQuery(event.target.value)}
         onKeyDown={handleKeyDown}
@@ -190,10 +191,14 @@ export function CommandPalette({
                     </span>
                   )}
                   {item.kind === "create" && (
-                    <span className="palette-item-title">Crea «{item.title}»</span>
+                    <span className="palette-item-title">
+                      {t("common.createTitled", { title: item.title })}
+                    </span>
                   )}
                   {item.kind === "date" && (
-                    <span className="palette-item-title">Vai al {formatPrettyDate(item.iso)}</span>
+                    <span className="palette-item-title">
+                      {t("palette.goToDate", { date: formatPrettyDate(item.iso) })}
+                    </span>
                   )}
                   {item.kind === "hit" && (
                     <>
@@ -216,7 +221,9 @@ export function CommandPalette({
           })}
         </ul>
       ) : (
-        trimmedQuery && <p className="palette-empty">Nessun risultato per «{trimmedQuery}»</p>
+        trimmedQuery && (
+          <p className="palette-empty">{t("palette.noResults", { query: trimmedQuery })}</p>
+        )
       )}
     </Modal>
   );

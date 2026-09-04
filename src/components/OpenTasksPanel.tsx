@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 
 import { listOpenTasks } from "../lib/commands";
 import { formatJournalHeader, journalDateFromPath } from "../lib/journal";
@@ -25,6 +26,7 @@ function labelFor(task: TaskHit): string {
 }
 
 export function OpenTasksPanel({ onClose, onSelectTask }: OpenTasksPanelProps) {
+  const { t } = useTranslation();
   const [tasks, setTasks] = useState<TaskHit[] | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -47,18 +49,18 @@ export function OpenTasksPanel({ onClose, onSelectTask }: OpenTasksPanelProps) {
   }, []);
 
   return (
-    <Modal onClose={onClose} ariaLabel="Task aperti" panelClassName="tasks-panel">
+    <Modal onClose={onClose} ariaLabel={t("tasks.title")} panelClassName="tasks-panel">
       <header className="settings-panel-header">
-        <h2>Task aperti</h2>
-        <button type="button" onClick={onClose} aria-label="Chiudi">
+        <h2>{t("tasks.title")}</h2>
+        <button type="button" onClick={onClose} aria-label={t("common.close")}>
           ✕
         </button>
       </header>
 
       {error && <p className="tasks-panel-empty">{error}</p>}
-      {!error && tasks === null && <p className="tasks-panel-empty">Caricamento…</p>}
+      {!error && tasks === null && <p className="tasks-panel-empty">{t("common.loading")}</p>}
       {!error && tasks !== null && tasks.length === 0 && (
-        <p className="tasks-panel-empty">Nessun task aperto.</p>
+        <p className="tasks-panel-empty">{t("tasks.empty")}</p>
       )}
       {!error && tasks !== null && tasks.length > 0 && (
         <ul className="tasks-panel-list">

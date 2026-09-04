@@ -126,6 +126,7 @@ pub fn run() {
             commands::pick_vault_folder,
             commands::vault_stats,
             commands::set_theme,
+            commands::set_locale,
             commands::list_pages,
             commands::open_page,
             commands::find_backlinks,

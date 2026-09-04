@@ -1,7 +1,17 @@
-import { describe, expect, it, vi } from "vitest";
+import { beforeAll, describe, expect, it, vi } from "vitest";
 
+import i18n from "../i18n";
 import { buildActions } from "./paletteActions";
 import type { PaletteActionContext } from "./paletteActions";
+
+// buildActions() risolve le etichette con l'istanza i18next corrente
+// (src/i18n/index.ts), la cui lingua iniziale dipende da navigator.language
+// — reale, non stubbato, in questo file (stesso problema documentato in
+// src/lib/shortcut.test.ts). Le asserzioni sotto sono scritte per
+// l'italiano: si forza la lingua invece di affidarsi a quella rilevata.
+beforeAll(async () => {
+  await i18n.changeLanguage("it");
+});
 
 function baseContext(overrides: Partial<PaletteActionContext> = {}): PaletteActionContext {
   return {

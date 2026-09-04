@@ -9,20 +9,27 @@
 // Shift-Tab, Invio, Backspace e il riordino blocchi restano fisse, vivono
 // nella keymap ProseMirror dell'editor, non qui (vedi
 // specs/M4/2026-09-02-scorciatoie-configurabili.TODO.md, "Cosa resta fuori").
+//
+// `labelKey` invece di una `label` già tradotta: questo file non è un
+// componente React, ma l'etichetta va comunque risolta al momento in cui si
+// mostra (Cheatsheet.tsx, SettingsPanel.tsx, entrambi via useTranslation()),
+// non una volta sola qui al caricamento del modulo — altrimenti un cambio
+// di lingua da Impostazioni non aggiornerebbe queste etichette finché
+// l'app non viene riavviata (vedi src/i18n/index.ts).
 
 export interface ShortcutAction {
   id: string;
-  label: string;
+  labelKey: string;
   default: string;
 }
 
 export const SHORTCUT_ACTIONS: ShortcutAction[] = [
-  { id: "command_palette", label: "Apri command palette", default: "Mod+K" },
-  { id: "cheatsheet", label: "Mostra scorciatoie", default: "Mod+/" },
-  { id: "open_tasks", label: "Task aperti", default: "Mod+T" },
-  { id: "focus_mode", label: "Focus mode (nascondi tutto tranne l'editor)", default: "Mod+." },
-  { id: "journal_prev_day", label: "Giorno precedente del journal", default: "Mod+ArrowUp" },
-  { id: "journal_next_day", label: "Giorno successivo del journal", default: "Mod+ArrowDown" },
+  { id: "command_palette", labelKey: "actions.commandPalette.label", default: "Mod+K" },
+  { id: "cheatsheet", labelKey: "actions.cheatsheet.label", default: "Mod+/" },
+  { id: "open_tasks", labelKey: "tasks.title", default: "Mod+T" },
+  { id: "focus_mode", labelKey: "actions.focusMode.label", default: "Mod+." },
+  { id: "journal_prev_day", labelKey: "actions.journalPrevDay.label", default: "Mod+ArrowUp" },
+  { id: "journal_next_day", labelKey: "actions.journalNextDay.label", default: "Mod+ArrowDown" },
 ];
 
 /** Legge Config.shortcuts[actionId], ricade sul default del registro se la

@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { LogicalPosition, LogicalSize } from "@tauri-apps/api/dpi";
 import { listen } from "@tauri-apps/api/event";
 import { getCurrentWindow } from "@tauri-apps/api/window";
+import { useTranslation } from "react-i18next";
 
 import faviconUrl from "../assets/favicon.svg";
 import { Cheatsheet } from "./components/Cheatsheet";
@@ -27,6 +28,7 @@ import { loadRecentPages, pushRecentPage } from "./lib/recentPages";
 import { getShortcut, matchesShortcut } from "./lib/shortcut";
 import { applyTheme } from "./lib/theme";
 import type { Config, Page, SyncState, TaskHit } from "./lib/types";
+import { applyLocale } from "./i18n";
 
 const BATCH_SIZE = 14;
 const COMPACT_WIDTH = 420;
@@ -36,13 +38,6 @@ const COMPACT_WIDTH = 420;
  * perché il badge nell'header deve aggiornarsi anche a Impostazioni
  * chiuse. */
 const SYNC_STATE_POLL_MS = 30_000;
-
-const SYNC_BADGE_LABELS: Partial<Record<SyncState, string>> = {
-  noremote: "Sync locale attiva, nessun remote collegato",
-  syncing: "Sincronizzazione in corso…",
-  conflict: "Conflitto: sync automatica ferma, serve intervento manuale",
-  offline: "Rete non raggiungibile, riprovo al prossimo giro",
-};
 
 /** Da chiamare prima di aprire/riaprire "oggi" (avvio, o rollover di
  * mezzanotte): sposta i task non fatti rimasti indietro, se l'utente ha
@@ -62,6 +57,7 @@ async function tryRollOverUnfinishedTasks(): Promise<void> {
 type View = { kind: "journal" } | { kind: "page"; page: Page };
 
 function App() {
+  const { t } = useTranslation();
   const [config, setConfig] = useState<Config | null>(null);
   const [activePanel, setActivePanel] = useState<
     "settings" | "about" | "palette" | "cheatsheet" | "tasks" | null
@@ -299,14 +295,20 @@ function App() {
     [fetchNextBatch, scrollToPath],
   );
 
-  // Config (tema incluso) e apertura automatica del journal di oggi,
-  // senza schermate intermedie.
+  // Config (tema e lingua inclusi) e apertura automatica del journal di
+  // oggi, senza schermate intermedie. La lingua iniziale di i18next (vedi
+  // src/i18n/index.ts) è già un buon default prima che Config sia tornato
+  // dal backend (resolveSystemLocale(), corretto nel caso comune: il
+  // default di Config.locale è "system" anche lato Rust) — applyLocale
+  // qui la corregge se l'utente ha una preferenza esplicita diversa,
+  // stesso principio già seguito per applyTheme.
   useEffect(() => {
     void (async () => {
       try {
         const cfg = await getConfig();
         setConfig(cfg);
         applyTheme(cfg.theme);
+        applyLocale(cfg.locale);
       } catch (error) {
         setLoadError(String(error));
       }
@@ -521,6 +523,10 @@ function App() {
     setConfig(nextConfig);
   }, []);
 
+  const handleLocaleChanged = useCallback((nextConfig: Config) => {
+    setConfig(nextConfig);
+  }, []);
+
   const handleShortcutChanged = useCallback((nextConfig: Config) => {
     setConfig(nextConfig);
   }, []);
@@ -644,6 +650,13 @@ function App() {
     }
   }, [isCompact]);
 
+  const syncBadgeLabels: Partial<Record<SyncState, string>> = {
+    noremote: t("app.sync.noremote"),
+    syncing: t("app.sync.syncing"),
+    conflict: t("app.sync.conflict"),
+    offline: t("app.sync.offline"),
+  };
+
   return (
     <div className={isFocusMode ? "app is-focus" : "app"}>
       <header
@@ -655,8 +668,8 @@ function App() {
         <button
           type="button"
           className="settings-button compact-toggle"
-          aria-label={isCompact ? "Espandi finestra" : "Comprimi finestra"}
-          title={isCompact ? "Espandi finestra" : "Comprimi finestra"}
+          aria-label={isCompact ? t("app.compact.expand") : t("app.compact.collapse")}
+          title={isCompact ? t("app.compact.expand") : t("app.compact.collapse")}
           onClick={() => void toggleCompact()}
         >
           {isCompact ? "«" : "»"}
@@ -665,8 +678,8 @@ function App() {
           <button
             type="button"
             className="settings-button"
-            aria-label="Comandi"
-            title="Comandi"
+            aria-label={t("app.commands")}
+            title={t("app.commands")}
             onClick={() => setActivePanel("palette")}
           >
             ⌘
@@ -707,8 +720,8 @@ function App() {
           <button
             type="button"
             className="statusbar-icon-button"
-            aria-label="Impostazioni"
-            title="Impostazioni"
+            aria-label={t("settings.title")}
+            title={t("settings.title")}
             onClick={() => setActivePanel("settings")}
           >
             ⚙
@@ -722,8 +735,8 @@ function App() {
                 ? "statusbar-icon-button sync-badge is-conflict"
                 : "statusbar-icon-button sync-badge"
             }
-            aria-label={SYNC_BADGE_LABELS[syncState]}
-            title={SYNC_BADGE_LABELS[syncState]}
+            aria-label={syncBadgeLabels[syncState]}
+            title={syncBadgeLabels[syncState]}
             onClick={() => setActivePanel("settings")}
           >
             {syncState === "conflict" ? "⚠" : "⇄"}
@@ -738,6 +751,7 @@ function App() {
           onClose={() => setActivePanel(null)}
           onVaultChanged={handleVaultChanged}
           onThemeChanged={handleThemeChanged}
+          onLocaleChanged={handleLocaleChanged}
           onShortcutChanged={handleShortcutChanged}
           onGitSyncIntervalChanged={handleGitSyncIntervalChanged}
           onTaskRolloverChanged={handleTaskRolloverChanged}

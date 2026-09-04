@@ -1,5 +1,6 @@
 import { forwardRef, useEffect, useImperativeHandle, useState } from "react";
 import type { SuggestionKeyDownProps } from "@tiptap/suggestion";
+import { useTranslation } from "react-i18next";
 
 export interface LinkCandidate {
   kind: "existing" | "create";
@@ -20,6 +21,7 @@ export interface LinkSuggestionListHandle {
  * (il ciclo di vita è guidato dai callback di @tiptap/suggestion). */
 export const LinkSuggestionList = forwardRef<LinkSuggestionListHandle, LinkSuggestionListProps>(
   function LinkSuggestionList({ items, command }, ref) {
+    const { t } = useTranslation();
     const [selected, setSelected] = useState(0);
 
     useEffect(() => {
@@ -66,7 +68,7 @@ export const LinkSuggestionList = forwardRef<LinkSuggestionListHandle, LinkSugge
             onMouseEnter={() => setSelected(index)}
             onClick={() => command(item)}
           >
-            {item.kind === "create" ? `Crea «${item.title}»` : item.title}
+            {item.kind === "create" ? t("common.createTitled", { title: item.title }) : item.title}
           </button>
         ))}
       </div>

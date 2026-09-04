@@ -1,3 +1,5 @@
+import { useTranslation } from "react-i18next";
+
 import { formatJournalHeader, journalDateFromPath } from "../lib/journal";
 import type { Backlink } from "../lib/types";
 
@@ -12,13 +14,14 @@ interface BacklinksSectionProps {
  * sono cliccabili: non esiste ancora una vista/scroll-to-day isolata
  * per un singolo giorno. */
 export function BacklinksSection({ backlinks, onSelect }: BacklinksSectionProps) {
+  const { t } = useTranslation();
   if (backlinks.length === 0) {
     return null;
   }
 
   return (
     <section className="page-view-backlinks">
-      <h2>Backlink</h2>
+      <h2>{t("backlinks.title")}</h2>
       {backlinks.map((backlink, index) => {
         const isJournal = backlink.source_path.startsWith("journals/");
         const label = isJournal

@@ -7,6 +7,7 @@ import type {
   Backlink,
   Block,
   Config,
+  Locale,
   McpInfo,
   Page,
   PageSummary,
@@ -62,6 +63,10 @@ export function vaultStats(): Promise<VaultStats> {
 
 export function setTheme(theme: Theme): Promise<Config> {
   return invoke<Config>("set_theme", { theme });
+}
+
+export function setLocale(locale: Locale): Promise<Config> {
+  return invoke<Config>("set_locale", { locale });
 }
 
 export function listPages(): Promise<PageSummary[]> {
