@@ -2,7 +2,7 @@
 
 Stato: proposta, da implementare. Prima delle due spec i18n (questa:
 l'interfaccia; la seconda,
-`specs/refinement/2026-09-04-i18n-errori.TODO.md`: i messaggi
+`specs/M7/2026-09-04-i18n-errori.TODO.md`: i messaggi
 d'errore, dipende da questa). Decisioni già confermate dall'utente:
 libreria (react-i18next, non fatto in casa), italiano + inglese,
 lingua di default che segue il sistema operativo.

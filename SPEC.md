@@ -206,7 +206,11 @@ il marchio contro il bordo.
 architetturali (il resto — build Android/iOS reali — richiede
 Android Studio/Xcode, non ancora fatto). Da qui in poi: fase di
 refinement guidata dall'uso reale dell'app (test, correzioni,
-rifiniture), non più costruzione pianificata per milestone.
+rifiniture in `specs/refinement/`), non più costruzione pianificata
+per milestone salvo eccezioni — il multilingua (M7) è emerso da quella
+fase ma è abbastanza grande e definito (tocca l'intera interfaccia e
+la struttura di `CoreError`) da meritare una milestone pianificata a
+sé invece di restare una singola voce di rifinitura.
 
 **M1 — Journal funzionante** (completa)
 - Creazione vault di default al primo avvio, senza chiedere nulla
@@ -314,6 +318,27 @@ rifiniture), non più costruzione pianificata per milestone.
   (credenziali, sync in background) e M4 (scorciatoie da tastiera)
   richiedono adattamenti sostanziali quando ci si arriva, M5 resta
   desktop-only per natura.
+
+**M7 — Multilingua** (proposta, da implementare)
+- Interfaccia in italiano e inglese via `react-i18next` (nuova
+  dipendenza, motivata: gestisce interpolazione/pluralizzazione in
+  modo robusto, il progetto ne avrebbe comunque avuto bisogno).
+  `Config.locale` (`It`/`En`/`System`, default `System`), stesso
+  pattern di `Config.theme` — la lingua "sistema" si rileva da
+  `navigator.language` scritto a mano, nessun pacchetto dedicato solo
+  a quello. Ogni stringa dell'interfaccia estratta in dizionari
+  `it`/`en` — vedi `specs/M7/2026-09-04-i18n-interfaccia.TODO.md`.
+- Messaggi d'errore tradotti: `CoreError` passa da una stringa
+  italiana già composta (`impl Serialize` verso il frontend) a
+  `{code, params}` strutturato, tradotto lato frontend con un solo
+  punto di traduzione (`translateError`) — tocca 27 punti che oggi
+  costruiscono `CoreError::Config(String)` a testo libero (da rendere
+  varianti tipizzate dove il messaggio è fisso) e i 17 punti frontend
+  che oggi trattano l'errore come stringa diretta. I messaggi di log
+  Rust e quelli restituiti da `ramus-mcp` (letti da un agente, non da
+  una persona con una lingua preferita) restano in italiano per
+  scelta, non tradotti — vedi
+  `specs/M7/2026-09-04-i18n-errori.TODO.md`.
 
 ## Fuori scope (non implementare, nemmeno "in preparazione")
 
