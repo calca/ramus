@@ -159,6 +159,21 @@ const it = {
   backlinks: {
     title: "Backlink",
   },
+  errors: {
+    invalid_path: "Percorso non valido all'interno del vault: {{path}}",
+    page_not_found: "Pagina non trovata: {{path}}",
+    invalid_date: "Data non valida, atteso formato YYYY-MM-DD: {{date}}",
+    malformed_block: "Riga malformata nel blocco {{line}}: {{reason}}",
+    io: "Errore di I/O su {{path}}: {{detail}}",
+    config_error: "Errore di configurazione: {{detail}}",
+    poisoned_config_lock: "Stato di configurazione corrotto",
+    poisoned_index_lock: "Stato dell'indice corrotto",
+    poisoned_search_index_lock: "Stato dell'indice di ricerca corrotto",
+    poisoned_watcher_lock: "Stato del watcher corrotto",
+    index_error: "Errore di indice: {{detail}}",
+    search_error: "Errore di ricerca: {{detail}}",
+    git_error: "Errore Git: {{detail}}",
+  },
 };
 
 export default it;

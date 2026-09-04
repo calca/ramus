@@ -22,6 +22,7 @@ import {
   readPage,
   rollOverUnfinishedTasks,
 } from "./lib/commands";
+import { translateError } from "./lib/errors";
 import { formatIsoDate, journalDateFromPath } from "./lib/journal";
 import { buildActions } from "./lib/paletteActions";
 import { loadRecentPages, pushRecentPage } from "./lib/recentPages";
@@ -169,7 +170,7 @@ function App() {
       setHasMore(true);
       await fetchNextBatch();
     } catch (error) {
-      setLoadError(String(error));
+      setLoadError(translateError(error));
     }
   }, [fetchNextBatch]);
 
@@ -181,7 +182,7 @@ function App() {
     try {
       await fetchNextBatch();
     } catch (error) {
-      setLoadError(String(error));
+      setLoadError(translateError(error));
     } finally {
       loadingRef.current = false;
     }
@@ -241,7 +242,7 @@ function App() {
           requestAnimationFrame(() => scrollToPath(targetPage.path));
         }
       } catch (error) {
-        setLoadError(String(error));
+        setLoadError(translateError(error));
       } finally {
         loadingRef.current = false;
       }
@@ -310,7 +311,7 @@ function App() {
         applyTheme(cfg.theme);
         applyLocale(cfg.locale);
       } catch (error) {
-        setLoadError(String(error));
+        setLoadError(translateError(error));
       }
       await resetAndLoadJournal();
     })();
@@ -556,7 +557,7 @@ function App() {
           setRecentPages(pushRecentPage(config.vault_path, page.title ?? title));
         }
       } catch (error) {
-        setLoadError(String(error));
+        setLoadError(translateError(error));
       }
     },
     [config],

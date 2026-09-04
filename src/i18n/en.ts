@@ -157,6 +157,21 @@ const en = {
   backlinks: {
     title: "Backlinks",
   },
+  errors: {
+    invalid_path: "Invalid path inside the vault: {{path}}",
+    page_not_found: "Page not found: {{path}}",
+    invalid_date: "Invalid date, expected YYYY-MM-DD format: {{date}}",
+    malformed_block: "Malformed line in block {{line}}: {{reason}}",
+    io: "I/O error on {{path}}: {{detail}}",
+    config_error: "Configuration error: {{detail}}",
+    poisoned_config_lock: "Configuration state is corrupted",
+    poisoned_index_lock: "Index state is corrupted",
+    poisoned_search_index_lock: "Search index state is corrupted",
+    poisoned_watcher_lock: "Watcher state is corrupted",
+    index_error: "Index error: {{detail}}",
+    search_error: "Search error: {{detail}}",
+    git_error: "Git error: {{detail}}",
+  },
 };
 
 export default en;

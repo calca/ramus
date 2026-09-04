@@ -6,6 +6,7 @@ import { Trans, useTranslation } from "react-i18next";
 
 import mascotteUrl from "../../assets/mascotte.svg";
 import { applyLocale } from "../i18n";
+import { translateError } from "../lib/errors";
 import {
   getMcpInfo,
   getSyncStatus,
@@ -127,7 +128,7 @@ export function SettingsPanel({
   useEffect(() => {
     void vaultStats()
       .then(setStats)
-      .catch((err: unknown) => setError(String(err)));
+      .catch((err: unknown) => setError(translateError(err)));
   }, [config.vault_path]);
 
   // Solo all'apertura del pannello: a differenza dello stato di sync Git,
@@ -136,14 +137,14 @@ export function SettingsPanel({
   useEffect(() => {
     void getMcpInfo()
       .then(setMcpInfo)
-      .catch((err: unknown) => setError(String(err)));
+      .catch((err: unknown) => setError(translateError(err)));
   }, []);
 
   useEffect(() => {
     const refresh = () => {
       void getSyncStatus()
         .then(setSyncStatus)
-        .catch((err: unknown) => setError(String(err)));
+        .catch((err: unknown) => setError(translateError(err)));
     };
     refresh();
     const interval = setInterval(refresh, SYNC_STATUS_POLL_MS);
@@ -164,7 +165,7 @@ export function SettingsPanel({
       const nextConfig = await setVaultPath(picked);
       onVaultChanged(nextConfig);
     } catch (err) {
-      setError(String(err));
+      setError(translateError(err));
     } finally {
       setBusy(false);
     }
@@ -175,7 +176,7 @@ export function SettingsPanel({
     try {
       await revealItemInDir(config.vault_path);
     } catch (err) {
-      setError(String(err));
+      setError(translateError(err));
     }
   };
 
@@ -186,7 +187,7 @@ export function SettingsPanel({
       applyTheme(theme);
       onThemeChanged(nextConfig);
     } catch (err) {
-      setError(String(err));
+      setError(translateError(err));
     }
   };
 
@@ -197,7 +198,7 @@ export function SettingsPanel({
       applyLocale(locale);
       onLocaleChanged(nextConfig);
     } catch (err) {
-      setError(String(err));
+      setError(translateError(err));
     }
   };
 
@@ -207,7 +208,7 @@ export function SettingsPanel({
       const nextConfig = await setGitSyncInterval(minutes);
       onGitSyncIntervalChanged(nextConfig);
     } catch (err) {
-      setError(String(err));
+      setError(translateError(err));
     }
   };
 
@@ -217,7 +218,7 @@ export function SettingsPanel({
       const nextConfig = await setTaskRollover(enabled, days);
       onTaskRolloverChanged(nextConfig);
     } catch (err) {
-      setError(String(err));
+      setError(translateError(err));
     }
   };
 
@@ -227,7 +228,7 @@ export function SettingsPanel({
       const nextConfig = await setMcpEnabled(enabled);
       onMcpEnabledChanged(nextConfig);
     } catch (err) {
-      setError(String(err));
+      setError(translateError(err));
     }
   };
 
@@ -249,7 +250,7 @@ export function SettingsPanel({
       }
       setSyncStatus(status);
     } catch (err) {
-      setError(String(err));
+      setError(translateError(err));
     } finally {
       setSyncBusy(false);
     }
@@ -277,7 +278,7 @@ export function SettingsPanel({
         setError(null);
         void setShortcutCommand(actionId, shortcut)
           .then(onShortcutChanged)
-          .catch((err: unknown) => setError(String(err)));
+          .catch((err: unknown) => setError(translateError(err)));
       }
     };
     window.addEventListener("keydown", onKeyDown, { capture: true });

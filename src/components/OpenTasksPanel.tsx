@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 
 import { listOpenTasks } from "../lib/commands";
+import { translateError } from "../lib/errors";
 import { formatJournalHeader, journalDateFromPath } from "../lib/journal";
 import type { TaskHit } from "../lib/types";
 import { Modal } from "./Modal";
@@ -40,7 +41,7 @@ export function OpenTasksPanel({ onClose, onSelectTask }: OpenTasksPanelProps) {
       })
       .catch((err) => {
         if (!cancelled) {
-          setError(String(err));
+          setError(translateError(err));
         }
       });
     return () => {

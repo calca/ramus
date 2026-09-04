@@ -67,14 +67,11 @@ fn lock_config<'a>(state: &'a State<AppState>) -> Result<MutexGuard<'a, Config>,
     state
         .config
         .lock()
-        .map_err(|_| CoreError::Config("stato di configurazione corrotto".to_string()))
+        .map_err(|_| CoreError::PoisonedConfigLock)
 }
 
 fn lock_index<'a>(state: &'a State<AppState>) -> Result<MutexGuard<'a, Index>, CoreError> {
-    state
-        .index
-        .lock()
-        .map_err(|_| CoreError::Config("stato dell'indice corrotto".to_string()))
+    state.index.lock().map_err(|_| CoreError::PoisonedIndexLock)
 }
 
 fn lock_search_index<'a>(
@@ -83,7 +80,7 @@ fn lock_search_index<'a>(
     state
         .search_index
         .lock()
-        .map_err(|_| CoreError::Config("stato dell'indice di ricerca corrotto".to_string()))
+        .map_err(|_| CoreError::PoisonedSearchIndexLock)
 }
 
 /// Osserva `root` ed emette `vault://file-changed` per ogni file toccato
@@ -164,7 +161,7 @@ pub fn set_vault_path(
     let mut watcher_guard = state
         .watcher
         .lock()
-        .map_err(|_| CoreError::Config("stato del watcher corrotto".to_string()))?;
+        .map_err(|_| CoreError::PoisonedWatcherLock)?;
     *watcher_guard = Some(new_watcher);
 
     // Gli indici erano per il vault precedente: se ne aprono di nuovi per
