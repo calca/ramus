@@ -1,6 +1,6 @@
 # "Task aperti": lista di tutti i task non fatti nel vault
 
-Stato: proposta, da implementare. Prima delle due spec richieste
+Stato: implementata. Prima delle due spec richieste
 ("cosa manca rispetto a todo.txt" → 1) lista di tutti i task aperti,
 2) evidenziare `+progetto`/`@contesto`).
 
@@ -119,10 +119,45 @@ task aperto e uno fatto, verifica che solo il primo compaia).
 **Frontend**: nessuno, coerente con l'assenza di test per componenti
 React nel progetto.
 
+## Scoperta durante l'implementazione
+
+Il primo test di `list_open_tasks_finds_tasks_across_journals_and_pages`
+scriveva prima `vault.open_page("Progetto X")` e poi sovrascriveva la
+stessa pagina con `write_page` in una seconda chiamata a `sync` — fallito
+perché l'`mtime` (risoluzione al secondo, vedi
+`sync_after_external_modification_refreshes_only_that_page` più sopra
+nello stesso file) non cambiava abbastanza da far rilevare la modifica
+nello stesso secondo di wall-clock. Risolto scrivendo entrambe le pagine
+di test con `write_page` diretto e un solo `sync` finale, come già fanno
+gli altri test di `find_backlinks`/`list_tags` in questo file — non un
+problema del codice di produzione, solo del test.
+
+Nessun'altra deviazione dal design della spec: `TaskHit`, la query SQL,
+il command Tauri, il wrapper TS, il componente, l'azione di palette e il
+tool MCP sono stati implementati esattamente come descritto sopra.
+
 ## Verifica
 
-`cargo test`, `cargo clippy --all-targets -D warnings`, `cargo fmt
---check`, `npm run typecheck`, `npm run test` — tutti puliti prima di
-chiudere. Verifica manuale in `npm run tauri dev`: azione "Task
-aperti" dalla palette, lista corretta con task da journal e da
-pagina, click naviga al punto giusto.
+Eseguiti e tutti puliti:
+
+- `cargo test` — 121 test in `ramus-core` (inclusi i 4 nuovi di
+  `list_open_tasks`), 16 in `ramus-mcp` (incluso il nuovo
+  `list_open_tasks_lists_only_the_open_task`), 0 in `ramus`/`ramus_lib`
+  (nessun test unitario lì, invariato).
+- `cargo clippy --all-targets -- -D warnings` — nessun warning.
+- `cargo fmt --all -- --check` — pulito (dopo un `cargo fmt --all` per
+  normalizzare la formattazione dei nuovi test).
+- `npm run typecheck` — pulito.
+- `npm run test` — 77 test, tutti verdi (stesso numero di prima:
+  `paletteActions.test.ts` esisteva già ed è stato aggiornato per la
+  sesta azione `open-tasks`, nessun file di test nuovo — coerente con
+  "nessun test frontend" della spec, dato che `OpenTasksPanel.tsx` non
+  ne ha uno dedicato).
+
+Non verificato in questa sessione: comportamento manuale in `npm run
+tauri dev` (azione "Task aperti" dalla palette, navigazione al click) —
+lasciato all'utente, come da checklist della spec. Il codice della UI
+segue lo stesso pattern già testato manualmente per `CommandPalette`/
+`Cheatsheet`/`SettingsPanel` (stesso `Modal`, stessa gestione di
+`activePanel`), quindi il rischio principale non coperto da test
+automatici è la CSS di `.tasks-panel` (nessuna verifica visiva fatta).

@@ -1,6 +1,6 @@
 // Lista fissa di azioni dell'app eseguibili dalla Command Palette (M4).
-// Non configurabile, cinque voci deliberatamente poche: solo ciò a cui
-// serve davvero un accesso rapido da tastiera.
+// Non configurabile, deliberatamente poche voci: solo ciò a cui serve
+// davvero un accesso rapido da tastiera.
 
 export interface PaletteAction {
   id: string;
@@ -17,6 +17,7 @@ export interface PaletteActionContext {
   onOpenSettings: () => void;
   onShowAbout: () => void;
   onShowCheatsheet: () => void;
+  onShowOpenTasks: () => void;
 }
 
 export function buildActions(ctx: PaletteActionContext): PaletteAction[] {
@@ -34,5 +35,6 @@ export function buildActions(ctx: PaletteActionContext): PaletteAction[] {
   actions.push({ id: "settings", label: "Impostazioni", run: ctx.onOpenSettings });
   actions.push({ id: "about", label: "Informazioni su Ramus", run: ctx.onShowAbout });
   actions.push({ id: "cheatsheet", label: "Mostra scorciatoie", run: ctx.onShowCheatsheet });
+  actions.push({ id: "open-tasks", label: "Task aperti", run: ctx.onShowOpenTasks });
   return actions;
 }

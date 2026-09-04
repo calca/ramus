@@ -28,6 +28,17 @@ pub struct Backlink {
     pub block_content: String,
 }
 
+/// Una riga di risultato per "elenca tutti i task aperti del vault"
+/// ([`Index::list_open_tasks`]).
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
+pub struct TaskHit {
+    pub path: String,
+    /// "journal" | "page", da `pages.kind`.
+    pub kind: String,
+    pub title: Option<String>,
+    pub content: String,
+}
+
 /// Cosa ha effettivamente cambiato un `Index::sync`: guida `SearchIndex`
 /// (indice tantivy, `search.rs`) senza che debba tenere una propria
 /// contabilità di mtime — vedi specs/M2/2026-09-02-ricerca-full-text.DONE.md.
@@ -194,6 +205,37 @@ impl Index {
             .query_map([], |row| row.get::<_, String>(0))?
             .collect::<Result<Vec<_>, rusqlite::Error>>()?;
         Ok(tags)
+    }
+
+    /// Blocchi "[ ] ..." (task non fatti) in tutto il vault, in qualunque
+    /// pagina — journal o pagina, qualunque età. A differenza del rollover
+    /// automatico (`rollover.rs`, che copre solo `journals/` e una finestra
+    /// di N giorni configurati), questa copre tutto: nessuna scansione
+    /// nuova, i blocchi vengono già dall'indice sincronizzato da
+    /// `Index::sync`. `LIKE '[ ] %'`: `[`/`]` non sono wildcard LIKE in
+    /// SQLite (solo `%`/`_` lo sono), quindi è un confronto letterale sul
+    /// prefisso — esclude `[x] `/`[X] ` (task fatti) e qualunque testo che
+    /// non inizi esattamente con quel prefisso. Ordinato per path: i
+    /// journal, nominati per data ISO, escono in ordine cronologico.
+    pub fn list_open_tasks(&self) -> Result<Vec<TaskHit>, CoreError> {
+        let mut stmt = self.conn.prepare(
+            "SELECT blocks.content, pages.path, pages.kind, pages.title
+             FROM blocks
+             JOIN pages ON pages.id = blocks.page_id
+             WHERE blocks.content LIKE '[ ] %'
+             ORDER BY pages.path",
+        )?;
+        let tasks = stmt
+            .query_map([], |row| {
+                Ok(TaskHit {
+                    content: row.get::<_, String>(0)?,
+                    path: row.get::<_, String>(1)?,
+                    kind: row.get::<_, String>(2)?,
+                    title: row.get::<_, Option<String>>(3)?,
+                })
+            })?
+            .collect::<Result<Vec<_>, rusqlite::Error>>()?;
+        Ok(tasks)
     }
 }
 
@@ -639,6 +681,92 @@ mod tests {
         assert_eq!(
             index.list_tags().unwrap(),
             vec!["alpha".to_string(), "zeta".to_string()]
+        );
+    }
+
+    #[test]
+    fn list_open_tasks_finds_tasks_across_journals_and_pages() {
+        let dir = TempDir::new("open-tasks-across-journals-and-pages");
+        let (vault, index) = open_index(dir.path());
+        vault
+            .write_page(
+                "journals/2026-01-01.md",
+                &[Block::new("[ ] task nel journal")],
+            )
+            .unwrap();
+        vault
+            .write_page(
+                "pages/progetto-x.md",
+                &[Block::new("[ ] task nella pagina")],
+            )
+            .unwrap();
+        index.sync(&vault).unwrap();
+
+        let tasks = index.list_open_tasks().unwrap();
+        assert_eq!(tasks.len(), 2);
+        let (journal_task, page_task) = if tasks[0].kind == "journal" {
+            (&tasks[0], &tasks[1])
+        } else {
+            (&tasks[1], &tasks[0])
+        };
+        assert_eq!(journal_task.path, "journals/2026-01-01.md");
+        assert_eq!(journal_task.kind, "journal");
+        assert_eq!(journal_task.content, "[ ] task nel journal");
+        assert_eq!(page_task.path, "pages/progetto-x.md");
+        assert_eq!(page_task.kind, "page");
+        assert_eq!(page_task.content, "[ ] task nella pagina");
+    }
+
+    #[test]
+    fn list_open_tasks_excludes_done_tasks() {
+        let dir = TempDir::new("open-tasks-excludes-done");
+        let (vault, index) = open_index(dir.path());
+        vault
+            .write_page(
+                "pages/uno.md",
+                &[
+                    Block::new("[ ] non fatto"),
+                    Block::new("[x] fatto minuscolo"),
+                    Block::new("[X] fatto maiuscolo"),
+                    Block::new("testo qualunque"),
+                ],
+            )
+            .unwrap();
+        index.sync(&vault).unwrap();
+
+        let tasks = index.list_open_tasks().unwrap();
+        assert_eq!(tasks.len(), 1);
+        assert_eq!(tasks[0].content, "[ ] non fatto");
+    }
+
+    #[test]
+    fn list_open_tasks_on_empty_vault_is_empty() {
+        let dir = TempDir::new("open-tasks-empty-vault");
+        let (vault, index) = open_index(dir.path());
+        index.sync(&vault).unwrap();
+        assert_eq!(index.list_open_tasks().unwrap(), Vec::new());
+    }
+
+    #[test]
+    fn list_open_tasks_orders_by_path() {
+        let dir = TempDir::new("open-tasks-orders-by-path");
+        let (vault, index) = open_index(dir.path());
+        vault
+            .write_page("pages/zeta.md", &[Block::new("[ ] task zeta")])
+            .unwrap();
+        vault
+            .write_page("pages/alfa.md", &[Block::new("[ ] task alfa")])
+            .unwrap();
+        vault
+            .write_page("journals/2026-01-01.md", &[Block::new("[ ] task journal")])
+            .unwrap();
+        index.sync(&vault).unwrap();
+
+        let tasks = index.list_open_tasks().unwrap();
+        let paths: Vec<&str> = tasks.iter().map(|t| t.path.as_str()).collect();
+        assert_eq!(
+            paths,
+            vec!["journals/2026-01-01.md", "pages/alfa.md", "pages/zeta.md",]
         );
     }
 

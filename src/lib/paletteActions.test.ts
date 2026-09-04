@@ -13,6 +13,7 @@ function baseContext(overrides: Partial<PaletteActionContext> = {}): PaletteActi
     onOpenSettings: vi.fn(),
     onShowAbout: vi.fn(),
     onShowCheatsheet: vi.fn(),
+    onShowOpenTasks: vi.fn(),
     ...overrides,
   };
 }
@@ -38,9 +39,11 @@ describe("buildActions", () => {
     expect(compact.find((a) => a.id === "toggle-compact")?.label).toBe("Espandi finestra");
   });
 
-  it("always includes settings, about and cheatsheet", () => {
+  it("always includes settings, about, cheatsheet and open-tasks", () => {
     const ids = buildActions(baseContext()).map((a) => a.id);
-    expect(ids).toEqual(expect.arrayContaining(["settings", "about", "cheatsheet"]));
+    expect(ids).toEqual(
+      expect.arrayContaining(["settings", "about", "cheatsheet", "open-tasks"]),
+    );
   });
 
   it("wires each action's run callback to the matching context handler", () => {
@@ -50,8 +53,8 @@ describe("buildActions", () => {
     expect(onToday).toHaveBeenCalledOnce();
   });
 
-  it("returns exactly five actions (viewKind contributes exactly one)", () => {
-    expect(buildActions(baseContext({ viewKind: "journal" }))).toHaveLength(5);
-    expect(buildActions(baseContext({ viewKind: "page" }))).toHaveLength(5);
+  it("returns exactly six actions (viewKind contributes exactly one)", () => {
+    expect(buildActions(baseContext({ viewKind: "journal" }))).toHaveLength(6);
+    expect(buildActions(baseContext({ viewKind: "page" }))).toHaveLength(6);
   });
 });

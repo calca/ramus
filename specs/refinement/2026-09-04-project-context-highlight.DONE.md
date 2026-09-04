@@ -1,6 +1,6 @@
 # Evidenziare `+progetto` e `@contesto` (sintassi todo.txt)
 
-Stato: proposta, da implementare. Seconda delle due spec richieste
+Stato: implementata. Seconda delle due spec richieste
 ("cosa manca rispetto a todo.txt").
 
 ## Motivazione
@@ -66,10 +66,36 @@ file testabili senza un mock pesante di `EditorView`.
 
 ## Verifica
 
-`npm run typecheck`, `cargo test`, `cargo clippy --all-targets -D
-warnings`, `cargo fmt --check` — zero modifiche Rust, verificati
-comunque per la regola di CLAUDE.md. Verifica manuale in `npm run
-tauri dev`: scrivere `+progetto` e `@contesto` in un blocco, colore
-sap applicato, testo del blocco invariato dopo un giro di
-salvataggio/ricaricamento (nessuna modifica al parser: già garantito
-per costruzione, ma verificabile a occhio).
+Implementate le due modifiche descritte sopra: `PROJECT_PATTERN`/
+`CONTEXT_PATTERN` e i due loop `matchAll` in
+`src/editor/linkTagHighlight.ts` (stesso pattern del loop
+`TAG_PATTERN` esistente), `.editor-project`/`.editor-context` aggiunte
+alla stessa regola `color: var(--ramus-sap)` di `.editor-link`/
+`.editor-tag` in `src/index.css` (nessun `cursor: pointer`, nessun
+uso di `--ramus-amber`). Zero modifiche Rust.
+
+Checklist eseguita (in un working directory condiviso con un altro
+agente che stava implementando in parallelo una feature Rust/TS più
+grande — riportati i risultati grezzi, incluso ciò che non riguarda
+questa modifica):
+
+- `npm run typecheck`: **pass** (0 errori).
+- `npm run test` (vitest): **pass**, 77/77 test, 6 file.
+- `cargo clippy --all-targets -- -D warnings`: **pass**, nessun
+  warning.
+- `cargo test`: **fail**, ma per un motivo indipendente da questa
+  modifica — `index::tests::list_open_tasks_finds_tasks_across_journals_and_pages`
+  in `crates/ramus-core/src/index.rs` (feature "open tasks" ancora in
+  corso da parte dell'altro agente concorrente; nessun file toccato
+  da questa spec è coinvolto). Tutti gli altri test passano
+  (120 passed, 1 failed).
+- `cargo fmt --all -- --check`: **fail**, ma anche qui solo su
+  `crates/ramus-core/src/index.rs` e `crates/ramus-mcp/src/main.rs`
+  — stessa feature concorrente, non file di questa spec.
+
+Verifica manuale in `npm run tauri dev` non eseguita in questa sessione
+(ambiente CI/non interattivo); il comportamento è meccanicamente
+identico a quello già in produzione per `#tag` (stesso `matchAll` +
+`Decoration.inline`), quindi non richiede una verifica visiva separata
+per fiducia nell'implementazione — da fare comunque al primo avvio utile
+dell'app.

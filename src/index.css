@@ -626,10 +626,15 @@ body {
   margin: 0.5rem 0 0.25rem;
 }
 
-/* [[link]] e #tag: solo sap, mai amber (SPEC.md — "l'amber non va usato
-   per link, tag o notifiche"). Parentesi quadre restano visibili. */
+/* [[link]], #tag, +progetto, @contesto: solo sap, mai amber (SPEC.md —
+   "l'amber non va usato per link, tag o notifiche"). Parentesi quadre
+   restano visibili. Solo .editor-link è cliccabile: tag/progetto/contesto
+   sono decorazione senza comportamento (nessuna query/filtro, vedi
+   specs/refinement/2026-09-04-project-context-highlight.TODO.md). */
 .editor-link,
-.editor-tag {
+.editor-tag,
+.editor-project,
+.editor-context {
   color: var(--ramus-sap);
 }
 
@@ -875,4 +880,59 @@ body {
   color: var(--ramus-stone);
   font-size: 0.85rem;
   margin: 0.75rem 0 0;
+}
+
+/* Stesso modificatore additivo di .palette-panel: altezza che si adatta
+   al contenuto fino a un tetto massimo. A differenza di .palette-panel
+   questo pannello ha un header (.settings-panel-header, che ha già il
+   proprio padding orizzontale) — dare padding anche qui raddoppierebbe
+   l'inset del titolo. Il padding orizzontale vive invece su
+   .tasks-panel-list/.tasks-panel-empty, non sul pannello. */
+.tasks-panel {
+  height: auto;
+  max-height: min(28rem, calc(100vh - 4rem));
+}
+
+.tasks-panel-list {
+  list-style: none;
+  margin: 1rem 0 0;
+  padding: 0 1.25rem 1rem;
+  max-height: 20rem;
+  overflow-y: auto;
+}
+
+.tasks-panel-item {
+  display: block;
+  width: 100%;
+  text-align: left;
+  border: none;
+  background: transparent;
+  color: var(--ramus-ink);
+  border-radius: 6px;
+  padding: 0.5rem 0.6rem;
+  cursor: pointer;
+}
+
+.tasks-panel-item:hover {
+  background: color-mix(in srgb, var(--ramus-sap) 12%, transparent);
+}
+
+.tasks-panel-item-content {
+  display: block;
+  font-size: 0.9rem;
+  font-weight: 600;
+  margin-bottom: 0.15rem;
+}
+
+.tasks-panel-item-source {
+  display: block;
+  font-size: 0.8rem;
+  color: var(--ramus-stone);
+}
+
+.tasks-panel-empty {
+  color: var(--ramus-stone);
+  font-size: 0.85rem;
+  margin: 1rem 0 0;
+  padding: 0 1.25rem 1rem;
 }

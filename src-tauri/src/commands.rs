@@ -8,8 +8,8 @@ use std::time::{Duration, Instant};
 
 use ramus_core::{
     git_sync, rollover, watcher, Backlink, Block, Config, CoreError, Index, JournalDate, Page,
-    PageSummary, RolloverOutcome, SearchHit, SearchIndex, SyncState, SyncStatus, Theme, Vault,
-    VaultStats,
+    PageSummary, RolloverOutcome, SearchHit, SearchIndex, SyncState, SyncStatus, TaskHit, Theme,
+    Vault, VaultStats,
 };
 use serde::Serialize;
 use tauri::{AppHandle, Emitter, Manager, State};
@@ -296,6 +296,11 @@ pub fn find_backlinks(
 #[tauri::command]
 pub fn list_tags(state: State<AppState>) -> Result<Vec<String>, CoreError> {
     lock_index(&state)?.list_tags()
+}
+
+#[tauri::command]
+pub fn list_open_tasks(state: State<AppState>) -> Result<Vec<TaskHit>, CoreError> {
+    lock_index(&state)?.list_open_tasks()
 }
 
 #[tauri::command]

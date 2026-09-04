@@ -12,6 +12,8 @@ import { slugify } from "../lib/pages";
 
 const LINK_PATTERN = /\[\[([^\]]+)\]\]/g;
 const TAG_PATTERN = /#[\w-]+/g;
+const PROJECT_PATTERN = /\+[\w-]+/g;
+const CONTEXT_PATTERN = /@[\w-]+/g;
 
 export const LinkTagHighlight = Extension.create({
   name: "linkTagHighlight",
@@ -43,6 +45,18 @@ export const LinkTagHighlight = Extension.create({
                 const from = pos + (match.index ?? 0);
                 decorations.push(
                   Decoration.inline(from, from + match[0].length, { class: "editor-tag" }),
+                );
+              }
+              for (const match of text.matchAll(PROJECT_PATTERN)) {
+                const from = pos + (match.index ?? 0);
+                decorations.push(
+                  Decoration.inline(from, from + match[0].length, { class: "editor-project" }),
+                );
+              }
+              for (const match of text.matchAll(CONTEXT_PATTERN)) {
+                const from = pos + (match.index ?? 0);
+                decorations.push(
+                  Decoration.inline(from, from + match[0].length, { class: "editor-context" }),
                 );
               }
             });

@@ -60,6 +60,13 @@ export interface SearchHit {
   snippet_html: string;
 }
 
+export interface TaskHit {
+  path: string;
+  kind: "page" | "journal";
+  title: string | null;
+  content: string;
+}
+
 export type SyncState = "disabled" | "noremote" | "idle" | "syncing" | "conflict" | "offline";
 
 export interface SyncStatus {

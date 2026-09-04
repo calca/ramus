@@ -130,6 +130,7 @@ pub fn run() {
             commands::open_page,
             commands::find_backlinks,
             commands::list_tags,
+            commands::list_open_tasks,
             commands::search,
             commands::set_shortcut,
             commands::init_git_sync,

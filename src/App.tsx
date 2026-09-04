@@ -9,6 +9,7 @@ import { CommandPalette } from "./components/CommandPalette";
 import type { PaletteItem } from "./components/CommandPalette";
 import type { EditorHandle } from "./components/Editor";
 import { JournalSection } from "./components/JournalSection";
+import { OpenTasksPanel } from "./components/OpenTasksPanel";
 import { PageView } from "./components/PageView";
 import { SettingsPanel } from "./components/SettingsPanel";
 import {
@@ -25,7 +26,7 @@ import { buildActions } from "./lib/paletteActions";
 import { loadRecentPages, pushRecentPage } from "./lib/recentPages";
 import { getShortcut, matchesShortcut } from "./lib/shortcut";
 import { applyTheme } from "./lib/theme";
-import type { Config, Page, SyncState } from "./lib/types";
+import type { Config, Page, SyncState, TaskHit } from "./lib/types";
 
 const BATCH_SIZE = 14;
 const COMPACT_WIDTH = 420;
@@ -63,7 +64,7 @@ type View = { kind: "journal" } | { kind: "page"; page: Page };
 function App() {
   const [config, setConfig] = useState<Config | null>(null);
   const [activePanel, setActivePanel] = useState<
-    "settings" | "about" | "palette" | "cheatsheet" | null
+    "settings" | "about" | "palette" | "cheatsheet" | "tasks" | null
   >(null);
   const [syncState, setSyncState] = useState<SyncState | null>(null);
   const [isCompact, setIsCompact] = useState(false);
@@ -591,6 +592,25 @@ function App() {
     [navigateToPage, returnToJournal, jumpToDate],
   );
 
+  /** Click su un task in OpenTasksPanel: naviga alla sua pagina sorgente,
+   * stessa logica del ramo journal/pagina di handlePaletteSelect — sola
+   * navigazione, non un modo di segnare il task fatto da qui. */
+  const handleSelectTask = useCallback(
+    async (task: TaskHit) => {
+      setActivePanel(null);
+      if (task.kind === "journal") {
+        if (viewRef.current.kind === "page") {
+          await returnToJournal();
+        }
+        await jumpToDate(journalDateFromPath(task.path));
+        return;
+      }
+      const title = task.title ?? task.path.replace(/^pages\//, "").replace(/\.md$/, "");
+      await navigateToPage(title);
+    },
+    [navigateToPage, returnToJournal, jumpToDate],
+  );
+
   /** Restringe la finestra a COMPACT_WIDTH per affiancarla a un'altra
    * finestra (note, appunti), memorizzando la dimensione attuale per
    * ripristinarla esattamente all'uscita — non un default fisso. Solo
@@ -732,6 +752,7 @@ function App() {
             onOpenSettings: () => setActivePanel("settings"),
             onShowAbout: () => setActivePanel("about"),
             onShowCheatsheet: () => setActivePanel("cheatsheet"),
+            onShowOpenTasks: () => setActivePanel("tasks"),
           })}
           recentPages={recentPages}
           shortcuts={config?.shortcuts ?? {}}
@@ -741,6 +762,12 @@ function App() {
       )}
       {activePanel === "cheatsheet" && config && (
         <Cheatsheet config={config} onClose={() => setActivePanel(null)} />
+      )}
+      {activePanel === "tasks" && (
+        <OpenTasksPanel
+          onClose={() => setActivePanel(null)}
+          onSelectTask={(task) => void handleSelectTask(task)}
+        />
       )}
     </div>
   );

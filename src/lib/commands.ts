@@ -13,6 +13,7 @@ import type {
   RolloverOutcome,
   SearchHit,
   SyncStatus,
+  TaskHit,
   Theme,
   VaultStats,
 } from "./types";
@@ -80,6 +81,12 @@ export function findBacklinks(targetTitle: string): Promise<Backlink[]> {
 /** Tag distinti presenti nel vault, in ordine alfabetico. */
 export function listTags(): Promise<string[]> {
   return invoke<string[]>("list_tags");
+}
+
+/** Tutti i task "[ ] " aperti nel vault, in qualunque journal o pagina,
+ * ordinati per path. */
+export function listOpenTasks(): Promise<TaskHit[]> {
+  return invoke<TaskHit[]>("list_open_tasks");
 }
 
 /** Ricerca full-text su titolo + contenuto di pagine e journal. */

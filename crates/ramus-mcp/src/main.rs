@@ -264,6 +264,17 @@ impl Server {
             .map_err(|_| ErrorData::internal_error("indice non disponibile", None))?;
         json_result(index.list_tags())
     }
+
+    #[tool(
+        description = "Elenca tutti i task \"[ ] \" aperti (non fatti) nel vault, in qualunque journal o pagina."
+    )]
+    async fn list_open_tasks(&self) -> Result<String, ErrorData> {
+        let index = self
+            .index
+            .lock()
+            .map_err(|_| ErrorData::internal_error("indice non disponibile", None))?;
+        json_result(index.list_open_tasks())
+    }
 }
 
 #[tool_router(router = write_tool_router)]
@@ -313,7 +324,7 @@ impl Server {
 #[tool_handler(
     router = self.tool_router,
     name = "ramus-mcp",
-    instructions = "Strumenti sul vault di Ramus (journal e pagine markdown). Lettura: list_journals, read_page, list_pages, search, find_backlinks, list_tags. Scrittura (assenti se avviato con --read-only): write_page, open_today, open_page."
+    instructions = "Strumenti sul vault di Ramus (journal e pagine markdown). Lettura: list_journals, read_page, list_pages, search, find_backlinks, list_tags, list_open_tasks. Scrittura (assenti se avviato con --read-only): write_page, open_today, open_page."
 )]
 impl ServerHandler for Server {}
 
@@ -548,6 +559,24 @@ mod tests {
         let server = test_server(&dir);
         let json = server.list_tags().await.unwrap();
         assert!(json.contains("ramus"), "risposta: {json}");
+    }
+
+    #[tokio::test]
+    async fn list_open_tasks_lists_only_the_open_task() {
+        let dir = TempDir::new("open-tasks");
+        let vault = Vault::new(dir.0.clone());
+        vault.ensure_exists().unwrap();
+        vault
+            .write_page(
+                "pages/nota.md",
+                &[Block::new("[ ] task aperto"), Block::new("[x] task fatto")],
+            )
+            .unwrap();
+
+        let server = test_server(&dir);
+        let json = server.list_open_tasks().await.unwrap();
+        assert!(json.contains("task aperto"), "risposta: {json}");
+        assert!(!json.contains("task fatto"), "risposta: {json}");
     }
 
     #[tokio::test]
