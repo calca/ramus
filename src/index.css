@@ -753,27 +753,47 @@ body {
   margin: 0;
 }
 
+/* .settings-panel ha altezza fissa e zero padding propri — pensati per
+   il dialog di Impostazioni (sidebar + contenuto a riempire tutto lo
+   spazio). CommandPalette non ha né header né sidebar: senza questo
+   modificatore il campo di ricerca finiva a toccare i bordi del
+   pannello (bug segnalato dall'utente) e il pannello restava sempre
+   alto 36rem anche con pochi risultati, lasciando spazio vuoto sotto.
+   Qui invece si restringe/allarga con il contenuto, come un vero
+   command palette. */
+.palette-panel {
+  height: auto;
+  max-height: min(28rem, calc(100vh - 4rem));
+  padding: 1rem 1.25rem;
+}
+
+/* Senza bordo pieno, solo una riga sotto: stessa direzione già presa
+   per i bottoni icona di header/status bar (decluttering), più vicino
+   ai command palette di riferimento (Raycast, Spotlight) di un input
+   in una scatola bordata. */
 .palette-input {
+  display: block;
   width: 100%;
-  border: 1px solid color-mix(in srgb, var(--ramus-stone) 40%, transparent);
+  border: none;
+  border-bottom: 1px solid color-mix(in srgb, var(--ramus-stone) 30%, transparent);
+  border-radius: 0;
   background: transparent;
   color: var(--ramus-ink);
-  border-radius: 6px;
-  padding: 0.5rem 0.7rem;
-  font-size: 1rem;
+  padding: 0.4rem 0.1rem 0.6rem;
+  font-size: 1.05rem;
   font-family: inherit;
 }
 
 .palette-input:focus {
   outline: none;
-  border-color: var(--ramus-sap);
+  border-bottom-color: var(--ramus-sap);
 }
 
 .palette-results {
   list-style: none;
   margin: 0.75rem 0 0;
   padding: 0;
-  max-height: 22rem;
+  max-height: 20rem;
   overflow-y: auto;
 }
 
@@ -855,5 +875,4 @@ body {
   color: var(--ramus-stone);
   font-size: 0.85rem;
   margin: 0.75rem 0 0;
-  padding: 0.5rem 0.6rem;
 }

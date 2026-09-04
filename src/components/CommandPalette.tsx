@@ -143,7 +143,7 @@ export function CommandPalette({
   let lastKind: PaletteItem["kind"] | null = null;
 
   return (
-    <Modal onClose={onClose} ariaLabel="Comandi">
+    <Modal onClose={onClose} ariaLabel="Comandi" panelClassName="palette-panel">
       <input
         ref={inputRef}
         type="text"
