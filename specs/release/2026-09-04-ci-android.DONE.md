@@ -1,6 +1,6 @@
 # CI: build automatica dell'APK Android
 
-Stato: proposta, da implementare. Segue
+Stato: implementata e verificata con un run reale. Segue
 `specs/M6/2026-09-04-prima-build-android-reale.DONE.md` — quella spec
 ha prodotto una ricetta di build verificata per davvero (non solo
 progettata), questa la automatizza. Decisioni confermate dall'utente:
@@ -117,6 +117,13 @@ anche per una release reale sul Play Store, non affrontata qui).
 
 ## Verifica
 
-YAML validato, workflow eseguito per davvero via
-`workflow_dispatch` (non solo scritto e mai fatto girare) prima di
-chiudere questa spec — vedi sotto per l'esito reale.
+YAML validato, workflow eseguito per davvero via `gh workflow run
+android.yml` (`workflow_dispatch`, non solo scritto e mai fatto
+girare) subito dopo il push — **riuscito al primo tentativo**, run
+33888049160, 11m26s su un runner `ubuntu-latest` reale. Artifact
+confermato per davvero (non solo "il job è verde"): `gh api
+repos/calca/ramus/actions/runs/33888049160/artifacts` conferma
+`ramus-android-apk`, 70.7 MB, non scaduto, legato al commit
+`b0561be`. Le variabili `AR_*`/`RANLIB_*` per NDK r23+ (stesso fix
+della build locale) hanno funzionato identiche su Linux, solo il
+percorso del prebuilt cambiato da `darwin-x86_64` a `linux-x86_64`.
