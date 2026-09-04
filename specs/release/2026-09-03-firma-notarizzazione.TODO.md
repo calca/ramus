@@ -1,7 +1,9 @@
 # Firma del codice e notarizzazione (macOS + Windows)
 
-Stato: proposta, bloccata su decisioni che solo l'utente può prendere
-(vedi "Domande aperte") — non implementabile senza quelle risposte.
+Stato: proposta, bloccata. Risposta dell'utente alla prima domanda:
+non ha ancora un Apple Developer ID — richiede registrazione/pagamento
+presso Apple, fuori dal controllo di questa sessione. Le altre due
+domande restano aperte, non ha senso deciderle prima della prima.
 
 ## Motivazione
 
@@ -36,18 +38,16 @@ necessaria qui.
 
 ## Domande aperte (bloccanti)
 
-1. **Hai già un Apple Developer ID?** Se sì, la spec procede
-   configurando le variabili d'ambiente/secrets per firma+notarizzazione
-   in CI (vedi `specs/release/2026-09-03-ci.TODO.md`). Se no, è una
-   spesa/registrazione che va fatta prima — fuori dal controllo di
-   questo lavoro.
+1. ~~Hai già un Apple Developer ID?~~ **Risposto: no, non ancora.**
+   Serve registrarsi (99$/anno) prima di poter procedere — quando
+   fatto, questa spec riprende da qui.
 2. **Vuoi firmare anche per Windows fin da subito**, o accettare
    l'avviso SmartScreen per ora (molti progetti open source piccoli
-   partono così, lo tolgono quando hanno budget/utenti)?
+   partono così, lo tolgono quando hanno budget/utenti)? — non ancora
+   chiesta: non ha senso deciderla prima della domanda 1.
 3. **Chi/dove ospita le credenziali di firma?** (GitHub Actions
-   secrets è l'opzione naturale se si accetta la spec CI — vedi quella
-   spec — ma è una decisione a sé: le chiavi private di firma sono
-   materiale sensibile.)
+   secrets è l'opzione naturale, coerente con la CI già scritta in
+   `specs/release/2026-09-03-ci.TODO.md`) — stessa cosa, in sospeso.
 
 ## Fuori scope
 

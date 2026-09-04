@@ -1,8 +1,9 @@
 # Auto-update
 
-Stato: proposta, bloccata su una decisione dell'utente (dove ospitare
-i manifest di aggiornamento) — non implementabile senza quella
-risposta.
+Stato: proposta. Hosting deciso (GitHub Releases), ma resta bloccata:
+dipende dalla firma del codice
+(`specs/release/2026-09-03-firma-notarizzazione.TODO.md`), a sua volta
+bloccata sulla registrazione di un Apple Developer ID.
 
 ## Motivazione
 
@@ -25,20 +26,18 @@ release**, non è statico.
 
 ## Domande aperte (bloccanti)
 
-1. **Dove ospitare il manifest di aggiornamento?** Opzione più
-   naturale dato che il codice è già su GitHub: GitHub Releases (Tauri
-   ha un endpoint pattern pronto per questo,
-   `https://github.com/.../releases/latest/download/latest.json`) —
-   nessun hosting nuovo da gestire, ma richiede che ogni release sia
-   pubblicata lì con gli asset giusti (coerente con la spec CI,
-   `specs/release/2026-09-03-ci.TODO.md`, che dovrebbe generarli).
-   Alternativa: un endpoint proprio (richiede un server/hosting
-   dedicato) — più controllo, più manutenzione.
-2. **Auto-update dipende dalla firma del codice** (spec
-   `2026-09-03-firma-notarizzazione.TODO.md`): un binario non firmato
-   che si scarica e sostituisce se stesso è un rischio di sicurezza
-   più serio di uno semplicemente non firmato all'installazione — va
-   fatto insieme, non prima.
+1. ~~Dove ospitare il manifest di aggiornamento?~~ **Risposto: GitHub
+   Releases** — nessun hosting nuovo da gestire, ma richiede che ogni
+   release sia pubblicata lì con gli asset giusti (coerente con
+   `specs/release/2026-09-03-ci.TODO.md`, che dovrebbe generarli
+   quando `release.yml` verrà scritto).
+2. **Resta bloccata sulla firma del codice** (spec
+   `2026-09-03-firma-notarizzazione.TODO.md`, a sua volta ferma
+   sull'Apple Developer ID): un binario non firmato che si scarica e
+   sostituisce se stesso è un rischio di sicurezza più serio di uno
+   semplicemente non firmato all'installazione — va fatto insieme, non
+   prima. Nessuna implementazione possibile finché quella catena non
+   si sblocca.
 
 ## Modifiche (una volta risolte le domande)
 
