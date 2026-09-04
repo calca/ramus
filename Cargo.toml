@@ -4,3 +4,5 @@ members = ["crates/ramus-core", "crates/ramus-mcp", "src-tauri"]
 
 [workspace.package]
 edition = "2021"
+license = "MIT"
+authors = ["Gianluigi Calcaterra"]
