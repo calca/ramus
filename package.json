@@ -2,7 +2,13 @@
   "name": "ramus",
   "private": true,
   "version": "0.1.0",
+  "description": "A local-first, block-outliner journal — for people and for their AI agents.",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/calca/ramus.git"
+  },
+  "homepage": "https://github.com/calca/ramus",
   "type": "module",
   "scripts": {
     "dev": "vite",
