@@ -130,11 +130,22 @@ body {
 
 /* Focus mode (M4): nasconde tutta la chrome, editor e contenuto restano
    dove sono e occupano lo spazio liberato (.app-body { flex: 1 } già
-   basta, nessun CSS aggiuntivo lì). Indipendente dalla modalità compatta
-   — le due si possono combinare senza conflitti. */
+   basta). Indipendente dalla modalità compatta — le due si possono
+   combinare senza conflitti. */
 .app.is-focus .app-header,
 .app.is-focus .app-statusbar {
   display: none;
+}
+
+/* .app-header riserva 84px a sinistra per i pallini overlay di macOS
+   (titleBarStyle: Overlay, tauri.conf.json) — nascondendo l'header in
+   focus mode quello spazio non veniva riservato da nessuno, il testo
+   finiva sotto/troppo vicino ai pallini (bug segnalato dall'utente).
+   I pallini sono un overlay nativo del sistema operativo, non
+   scompaiono insieme al nostro header. */
+.app.is-focus .app-body {
+  padding-top: 2.5rem;
+  padding-left: 84px;
 }
 
 .banner {
