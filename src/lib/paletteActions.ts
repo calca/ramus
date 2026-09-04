@@ -35,6 +35,10 @@ export function buildActions(ctx: PaletteActionContext): PaletteAction[] {
   actions.push({ id: "settings", label: "Impostazioni", run: ctx.onOpenSettings });
   actions.push({ id: "about", label: "Informazioni su Ramus", run: ctx.onShowAbout });
   actions.push({ id: "cheatsheet", label: "Mostra scorciatoie", run: ctx.onShowCheatsheet });
-  actions.push({ id: "open-tasks", label: "Task aperti", run: ctx.onShowOpenTasks });
+  // Stesso id di SHORTCUT_ACTIONS ("open_tasks", non "open-tasks" come le
+  // altre azioni qui): getShortcut fa un confronto esatto sull'id, serve
+  // per mostrare la scorciatoia accanto all'etichetta nella palette
+  // (CommandPalette.tsx, stesso meccanismo già usato per "cheatsheet").
+  actions.push({ id: "open_tasks", label: "Task aperti", run: ctx.onShowOpenTasks });
   return actions;
 }

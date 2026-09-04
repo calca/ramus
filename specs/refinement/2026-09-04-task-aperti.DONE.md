@@ -161,3 +161,28 @@ segue lo stesso pattern già testato manualmente per `CommandPalette`/
 `Cheatsheet`/`SettingsPanel` (stesso `Modal`, stessa gestione di
 `activePanel`), quindi il rischio principale non coperto da test
 automatici è la CSS di `.tasks-panel` (nessuna verifica visiva fatta).
+
+## Revisione post-implementazione
+
+Trovato in review (prima della verifica visiva dell'utente, non da
+uno screenshot): `.tasks-panel` aggiungeva il proprio padding
+orizzontale oltre a quello già presente su `.settings-panel-header`
+(che `OpenTasksPanel` riusa per l'header) — lo stesso raddoppio
+dell'inset già risolto per `CommandPalette` in
+`specs/refinement/2026-09-04-palette-padding.DONE.md`. Corretto
+spostando il padding orizzontale su `.tasks-panel-list`/
+`.tasks-panel-empty` invece che sul pannello.
+
+**Scorciatoia da tastiera aggiunta** (richiesta separata
+dell'utente, dopo la chiusura iniziale di questa spec): nuova voce
+`{ id: "open_tasks", label: "Task aperti", default: "Mod+T" }` in
+`SHORTCUT_ACTIONS` (`lib/shortcut.ts`) — compare automaticamente in
+Impostazioni e nel Cheatsheet (entrambi già iterano il registro),
+nuovo ramo nel listener keydown globale di `App.tsx`. L'id
+dell'azione della command palette è stato allineato da `"open-tasks"`
+a `"open_tasks"` (unica eccezione alla convenzione con trattino di
+`paletteActions.ts`, documentata lì con un commento) proprio per farlo
+coincidere con l'id del registro: `getShortcut` fa un confronto
+esatto sull'id, e questo è ciò che permette alla scorciatoia `⌘T` di
+comparire accanto a "Task aperti" nella palette (stesso meccanismo già
+usato per "Mostra scorciatoie"/`⌘/`).

@@ -19,6 +19,7 @@ export interface ShortcutAction {
 export const SHORTCUT_ACTIONS: ShortcutAction[] = [
   { id: "command_palette", label: "Apri command palette", default: "Mod+K" },
   { id: "cheatsheet", label: "Mostra scorciatoie", default: "Mod+/" },
+  { id: "open_tasks", label: "Task aperti", default: "Mod+T" },
   { id: "focus_mode", label: "Focus mode (nascondi tutto tranne l'editor)", default: "Mod+." },
   { id: "journal_prev_day", label: "Giorno precedente del journal", default: "Mod+ArrowUp" },
   { id: "journal_next_day", label: "Giorno successivo del journal", default: "Mod+ArrowDown" },

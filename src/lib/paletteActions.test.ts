@@ -39,10 +39,10 @@ describe("buildActions", () => {
     expect(compact.find((a) => a.id === "toggle-compact")?.label).toBe("Espandi finestra");
   });
 
-  it("always includes settings, about, cheatsheet and open-tasks", () => {
+  it("always includes settings, about, cheatsheet and open_tasks", () => {
     const ids = buildActions(baseContext()).map((a) => a.id);
     expect(ids).toEqual(
-      expect.arrayContaining(["settings", "about", "cheatsheet", "open-tasks"]),
+      expect.arrayContaining(["settings", "about", "cheatsheet", "open_tasks"]),
     );
   });
 

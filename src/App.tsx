@@ -435,6 +435,9 @@ function App() {
       } else if (matchesShortcut(event, getShortcut(config.shortcuts, "cheatsheet"))) {
         event.preventDefault();
         setActivePanel("cheatsheet");
+      } else if (matchesShortcut(event, getShortcut(config.shortcuts, "open_tasks"))) {
+        event.preventDefault();
+        setActivePanel("tasks");
       } else if (matchesShortcut(event, getShortcut(config.shortcuts, "focus_mode"))) {
         event.preventDefault();
         setIsFocusMode((prev) => !prev);
