@@ -431,9 +431,12 @@ export function SettingsPanel({
         <section className="settings-section">
           <h3>Sync</h3>
           <p className="settings-sync-intro">
-            Versiona il vault con Git. Lascia il campo vuoto per una
-            cronologia solo locale, oppure incolla l'URL di un repository
-            per sincronizzarlo fra dispositivi.
+            Versiona il vault con Git — anche solo in locale, senza un
+            repository remoto, protegge da una scrittura andata male: ogni
+            modifica diventa un commit recuperabile. Lascia il campo vuoto
+            per questo (nessun account, nessun servizio esterno), oppure
+            incolla l'URL di un repository per sincronizzarlo anche fra
+            dispositivi.
           </p>
 
           {syncStatus?.enabled && syncStatus.state === "conflict" && (
