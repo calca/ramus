@@ -1,0 +1,60 @@
+name: android
+
+# Build dell'APK Android (debug, arm64) — solo su tag di release o a
+# mano, non su ogni push/PR: una build Android (SDK, NDK, Gradle,
+# compilazione Rust per un target nuovo) aggiunge diversi minuti a
+# quella che oggi è una verifica veloce (test.yml). Vedi
+# specs/release/2026-09-04-ci-android.TODO.md.
+
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch: {}
+
+jobs:
+  build-apk:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: aarch64-linux-android
+
+      - uses: Swatinem/rust-cache@v2
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - uses: android-actions/setup-android@v3
+
+      - name: Install NDK
+        run: sdkmanager --install "ndk;28.2.13676358"
+
+      - name: Set NDK cross-compile env vars
+        # openssl-sys (via git2, per la sync Git) non trova i binutils
+        # prefissati per tripla che NDK r23+ non fornisce più — stessa
+        # causa e stesso fix scoperti nella build locale, vedi
+        # specs/M6/2026-09-04-prima-build-android-reale.DONE.md.
+        run: |
+          NDK_BIN="$ANDROID_HOME/ndk/28.2.13676358/toolchains/llvm/prebuilt/linux-x86_64/bin"
+          echo "AR_aarch64_linux_android=$NDK_BIN/llvm-ar" >> "$GITHUB_ENV"
+          echo "RANLIB_aarch64_linux_android=$NDK_BIN/llvm-ranlib" >> "$GITHUB_ENV"
+
+      - run: npm ci
+
+      - name: Build Android APK (debug)
+        run: npx tauri android build --debug --target aarch64 --apk
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ramus-android-apk
+          path: src-tauri/gen/android/app/build/outputs/apk/**/*.apk
