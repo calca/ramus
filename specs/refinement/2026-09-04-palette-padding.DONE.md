@@ -66,6 +66,13 @@ spec a parte.
   modifiche alle regole esistenti), zero rischio per Impostazioni già
   verificata.
 
+## Rifinitura dopo la prima verifica
+
+Confermato via screenshot: bene, tranne lo spazio fra la riga
+dell'input e "RECENTI" troppo stretto. `.palette-results` da `margin:
+0.75rem 0 0` a `1.25rem 0 0` (stesso ritmo verticale da 1.25rem già
+in uso altrove nell'app).
+
 ## Verifica
 
 `npm run typecheck`, `cargo test`, `cargo clippy --all-targets -D
