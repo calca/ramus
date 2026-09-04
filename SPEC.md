@@ -300,7 +300,7 @@ sé invece di restare una singola voce di rifinitura.
   snippet di configurazione già pronto da incollare nel client — vedi
   `specs/M5/2026-09-03-mcp-impostazioni.DONE.md`.
 
-**M6 — Mobile (Android/iOS)** (solo fondamenta)
+**M6 — Mobile (Android/iOS)** (fondamenta + prima build Android reale)
 - Supporto mobile nativo di Tauri v2 (stesso frontend, stesso
   `ramus-core`), non un client FFI separato. Percorsi vault/config
   spostati da `dirs` al resolver di Tauri (Android non è coperto in
@@ -308,16 +308,28 @@ sé invece di restare una singola voce di rifinitura.
   li calcola più da sé, li riceve iniettati dal chiamante — `dirs` su
   desktop (invariato), `app.path()` su mobile (`app_data_dir()` per il
   vault, `app_config_dir()` per `config.json`) — vedi
-  `specs/M6/2026-09-03-supporto-mobile-fondamenta.DONE.md`. Il ramo
-  mobile è scritto ma non compilato/verificato in questo sandbox
-  (nessun target Android/iOS installato); il resto della spec
-  (`tauri android/ios init`, build reale) resta da fare. Nessun
+  `specs/M6/2026-09-03-supporto-mobile-fondamenta.DONE.md`. Nessun
   selettore di cartella su mobile (non esiste nell'API), il vault vive
   in un percorso fisso. Impatti su M1-M5 catalogati in
   `specs/M6/2026-09-03-impatti-milestone-precedenti.DONE.md` — M3
   (credenziali, sync in background) e M4 (scorciatoie da tastiera)
   richiedono adattamenti sostanziali quando ci si arriva, M5 resta
   desktop-only per natura.
+- **Android**: `tauri android init` + prima build di debug reale
+  eseguiti ed **entrambi riusciti**, non solo progettati — vedi
+  `specs/M6/2026-09-04-prima-build-android-reale.DONE.md`. Due bug
+  reali trovati e corretti in quel giro: `openssl-sys` (via `git2`)
+  non cross-compila con NDK r23+ senza variabili d'ambiente
+  `AR_*`/`RANLIB_*` dedicate (fix a livello di ambiente di build, non
+  di codice); `pick_vault_folder` non esiste su mobile (l'API del
+  plugin dialog non ha un selettore di cartelle lì), corretto con
+  `#[cfg(desktop)]`/`#[cfg(mobile)]`. `tantivy` (M2, segnato "da
+  verificare" prima d'ora) confermato compilare pulito. Non ancora
+  fatto: firma per una release reale, test su device/emulatore, UI
+  mobile dedicata per il cambio vault (oggi un no-op silenzioso), una
+  pipeline CI che automatizzi questa build.
+- **iOS**: non tentato, richiede una macchina macOS con Xcode
+  configurato per il code signing — stesso "resta da fare" di prima.
 
 **M7 — Multilingua** (proposta, da implementare)
 - Interfaccia in italiano e inglese via `react-i18next` (nuova

@@ -13,6 +13,7 @@ use ramus_core::{
 };
 use serde::Serialize;
 use tauri::{AppHandle, Emitter, Manager, State};
+#[cfg(desktop)]
 use tauri_plugin_dialog::DialogExt;
 
 /// Quanto a lungo un path scritto da un command dell'app viene ignorato dal
@@ -517,15 +518,32 @@ fn now_epoch_secs() -> i64 {
 
 /// Apre la dialog nativa "scegli cartella". `None` se l'utente annulla.
 /// Puro I/O di sistema delegato al plugin: nessuna decisione qui.
+///
+/// Su mobile non esiste un selettore di cartella nell'API del plugin
+/// dialog (`blocking_pick_folder` è desktop-only) — scelta già presa in
+/// `specs/M6/2026-09-03-supporto-mobile-fondamenta.DONE.md`, "il vault
+/// vive in un percorso fisso". Il comando resta registrato su entrambe
+/// le piattaforme (nessuna modifica a `generate_handler!`/al frontend,
+/// che già gestisce `None` come "annullato, nessuna modifica"): su
+/// mobile si comporta sempre come un annullamento invece di provare a
+/// compilare una chiamata che lì non esiste.
 #[tauri::command]
 pub fn pick_vault_folder(app: AppHandle) -> Result<Option<String>, CoreError> {
-    match app.dialog().file().blocking_pick_folder() {
-        None => Ok(None),
-        Some(file_path) => {
-            let path = file_path
-                .into_path()
-                .map_err(|e| CoreError::Config(e.to_string()))?;
-            Ok(Some(path.to_string_lossy().to_string()))
+    #[cfg(desktop)]
+    {
+        match app.dialog().file().blocking_pick_folder() {
+            None => Ok(None),
+            Some(file_path) => {
+                let path = file_path
+                    .into_path()
+                    .map_err(|e| CoreError::Config(e.to_string()))?;
+                Ok(Some(path.to_string_lossy().to_string()))
+            }
         }
+    }
+    #[cfg(mobile)]
+    {
+        let _ = app;
+        Ok(None)
     }
 }

@@ -62,12 +62,11 @@ device/emulatore), tranne il refactor dei path già fatto — vedi
   bundled/vendored si compila di routine per target mobile — non
   verificato con una build reale in questo sandbox, ma non è un
   rischio noto.
-- **tantivy**: **da verificare**, non dato per scontato. È una
-  dipendenza pesante con componenti nativi (mmap, eventualmente
-  simd/codec specifici) — non ho verificato in questo sandbox se
-  compila pulito per `aarch64-linux-android`/`aarch64-apple-ios`.
-  Prima cosa da controllare quando si passa dalla progettazione alla
-  build reale, prima di scrivere altro codice mobile che ne dipende.
+- **tantivy**: ~~da verificare~~ **verificato**: compila pulito per
+  `aarch64-linux-android` (prima build Android reale, vedi
+  `specs/M6/2026-09-04-prima-build-android-reale.DONE.md`) — nessun
+  problema di componenti nativi/mmap incontrato. `aarch64-apple-ios`
+  resta da verificare (iOS non ancora tentato).
 - **Autocomplete `[[`/`#`** (`specs/M2/2026-09-02-link-tag-parsing.DONE.md`,
   `specs/M2/2026-09-02-autocomplete-tag.DONE.md`): popup posizionato
   via `clientRect()`, dovrebbe funzionare in una webview mobile senza
